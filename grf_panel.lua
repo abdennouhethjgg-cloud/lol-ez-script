@@ -563,17 +563,54 @@ local function GetClosestMonster()
 end
 
 local autoFarmLevel = false
-bloxFruitTab:AddToggle("Auto Farm Level", function(state)
-    autoFarmLevel = state
+local function GetQuestData()
+    local level = LocalPlayer.Data.Level.Value
+    local quests = {
+        -- Sea 1
+        {MinLevel = 0, MaxLevel = 10, Name = "Bandit", NPC = "Bandit Quest Giver", Island = "Starter Island"},
+        {MinLevel = 10, MaxLevel = 15, Name = "Monkey", NPC = "Adventurer", Island = "Jungle"},
+        {MinLevel = 15, MaxLevel = 30, Name = "Gorilla", NPC = "Adventurer", Island = "Jungle"},
+        {MinLevel = 30, MaxLevel = 45, Name = "Pirate", NPC = "Pirate Quest Giver", Island = "Pirate Village"},
+        {MinLevel = 45, MaxLevel = 60, Name = "Brute", NPC = "Pirate Quest Giver", Island = "Pirate Village"},
+        {MinLevel = 60, MaxLevel = 75, Name = "Desert Bandit", NPC = "Desert Quest Giver", Island = "Desert"},
+        {MinLevel = 75, MaxLevel = 90, Name = "Desert Officer", NPC = "Desert Quest Giver", Island = "Desert"},
+        {MinLevel = 90, MaxLevel = 100, Name = "Snow Bandit", NPC = "Snow Quest Giver", Island = "Frozen Village"},
+        {MinLevel = 100, MaxLevel = 120, Name = "Snowman", NPC = "Snow Quest Giver", Island = "Frozen Village"},
+        {MinLevel = 120, MaxLevel = 150, Name = "Chief Petty Officer", NPC = "Marine Quest Giver", Island = "Marine Fortress"},
+        -- Sea 2 (Simplified for example)
+        {MinLevel = 700, MaxLevel = 725, Name = "Raider", NPC = "Quest Giver", Island = "Kingdom of Rose"},
+        -- Sea 3 (Simplified for example)
+        {MinLevel = 1500, MaxLevel = 1525, Name = "Pirate Millionaire", NPC = "Quest Giver", Island = "Port Town"}
+    }
+    
+    for _, q in ipairs(quests) do
+        if level >= q.MinLevel and level < q.MaxLevel then
+            return q
+        end
+    end
+    return quests[#quests] -- Return last quest if level is higher
+end
+
+local smartFarm = false
+bloxFruitTab:AddToggle("Smart Farm (Auto Level)", function(state)
+    smartFarm = state
     task.spawn(function()
-        while autoFarmLevel do
-            local enemy = GetClosestMonster()
-            if enemy and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
-                -- Simuler l'attaque (à adapter selon les outils du joueur)
-                local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
-                if tool then
-                    tool:Activate()
+        while smartFarm do
+            local quest = GetQuestData()
+            -- Logic to check if quest is active
+            local hasQuest = LocalPlayer.PlayerGui.Main.Quest.Visible
+            
+            if not hasQuest then
+                -- Teleport to NPC and take quest
+                -- Note: This requires specific NPC positions which vary by game version
+                -- For this example, we assume a generic quest system
+                print("Taking quest: " .. quest.Name)
+            else
+                local enemy = GetClosestMonster()
+                if enemy and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+                    local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                    if tool then tool:Activate() end
                 end
             end
             task.wait(0.1)
