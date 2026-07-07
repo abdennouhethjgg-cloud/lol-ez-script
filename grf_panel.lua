@@ -480,6 +480,7 @@ local win = Library:CreateWindow("GRF BRAINROT V2")
 local brainrotTab = win:CreateTab("Brainrot")
 local playerTab = win:CreateTab("Player")
 local visualTab = win:CreateTab("Visuals")
+local bloxFruitTab = win:CreateTab("Blox Fruits")
 
 -- Brainrot Features
 brainrotTab:AddButton("Spawn Random Brainrot", function()
@@ -543,6 +544,66 @@ playerTab:AddButton("Teleport to Brainrot (If any)", function()
             break
         end
     end
+end)
+
+-- Blox Fruits Features
+local function GetClosestMonster()
+    local target = nil
+    local distance = math.huge
+    for _, v in pairs(workspace.Enemies:GetChildren()) do
+        if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
+            local mag = (v.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).magnitude
+            if mag < distance then
+                distance = mag
+                target = v
+            end
+        end
+    end
+    return target
+end
+
+local autoFarmLevel = false
+bloxFruitTab:AddToggle("Auto Farm Level", function(state)
+    autoFarmLevel = state
+    task.spawn(function()
+        while autoFarmLevel do
+            local enemy = GetClosestMonster()
+            if enemy and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+                -- Simuler l'attaque (à adapter selon les outils du joueur)
+                local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                if tool then
+                    tool:Activate()
+                end
+            end
+            task.wait(0.1)
+        end
+    end)
+end)
+
+local autoChest = false
+bloxFruitTab:AddToggle("Auto Farm Chests", function(state)
+    autoChest = state
+    task.spawn(function()
+        while autoChest do
+            for _, v in pairs(workspace:GetChildren()) do
+                if v.Name:find("Chest") and v:IsA("BasePart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
+                    task.wait(0.2)
+                    if not autoChest then break end
+                end
+            end
+            task.wait(1)
+        end
+    end)
+end)
+
+bloxFruitTab:AddButton("Teleport to Cafe (Second Sea)", function()
+    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1134, 18, -446)
+end)
+
+bloxFruitTab:AddButton("Teleport to Mansion (Third Sea)", function()
+    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-12463, 375, -7560)
 end)
 
 -- Visual Features
