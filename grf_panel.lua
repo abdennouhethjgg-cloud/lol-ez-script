@@ -233,6 +233,201 @@ function Library:CreateWindow(title)
             Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
         end
 
+        function Tab:AddSlider(text, min, max, defaultValue, callback)
+            local SliderFrame = Instance.new("Frame")
+            local UICorner_S = Instance.new("UICorner")
+            local Title_S = Instance.new("TextLabel")
+            local Slider = Instance.new("Frame")
+            local SliderHandle = Instance.new("Frame")
+            local UICorner_H = Instance.new("UICorner")
+            local ValueLabel = Instance.new("TextLabel")
+
+            SliderFrame.Name = text .. "Slider"
+            SliderFrame.Parent = Page
+            SliderFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            SliderFrame.Size = UDim2.new(1, -5, 0, 50)
+
+            UICorner_S.CornerRadius = UDim.new(0, 6)
+            UICorner_S.Parent = SliderFrame
+
+            Title_S.Parent = SliderFrame
+            Title_S.BackgroundTransparency = 1.000
+            Title_S.Position = UDim2.new(0, 10, 0, 5)
+            Title_S.Size = UDim2.new(1, -20, 0, 15)
+            Title_S.Font = Enum.Font.Gotham
+            Title_S.Text = text
+            Title_S.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Title_S.TextSize = 12.000
+            Title_S.TextXAlignment = Enum.TextXAlignment.Left
+
+            Slider.Name = "Slider"
+            Slider.Parent = SliderFrame
+            Slider.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            Slider.Position = UDim2.new(0, 10, 0, 25)
+            Slider.Size = UDim2.new(1, -60, 0, 10)
+
+            SliderHandle.Name = "SliderHandle"
+            SliderHandle.Parent = Slider
+            SliderHandle.BackgroundColor3 = Color3.fromRGB(50, 255, 50)
+            SliderHandle.Size = UDim2.new(0, 10, 1, 0)
+
+            UICorner_H.CornerRadius = UDim.new(1, 0)
+            UICorner_H.Parent = SliderHandle
+
+            ValueLabel.Name = "ValueLabel"
+            ValueLabel.Parent = SliderFrame
+            ValueLabel.BackgroundTransparency = 1.000
+            ValueLabel.Position = UDim2.new(1, -45, 0, 20)
+            ValueLabel.Size = UDim2.new(0, 30, 0, 20)
+            ValueLabel.Font = Enum.Font.Gotham
+            ValueLabel.Text = tostring(defaultValue)
+            ValueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            ValueLabel.TextSize = 12.000
+
+            local currentValue = defaultValue
+            local draggingSlider = false
+
+            local function updateSlider(input)
+                local mouseX = input.Position.X
+                local sliderX = Slider.AbsolutePosition.X
+                local sliderWidth = Slider.AbsoluteSize.X
+
+                local relativeX = math.clamp(mouseX - sliderX, 0, sliderWidth)
+                local percentage = relativeX / sliderWidth
+                currentValue = min + (max - min) * percentage
+                currentValue = math.floor(currentValue * 10 + 0.5) / 10 -- Round to 1 decimal place
+
+                SliderHandle.Position = UDim2.new(percentage, 0, 0, 0)
+                ValueLabel.Text = tostring(currentValue)
+                pcall(function() callback(currentValue) end)
+            end
+
+            Slider.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingSlider = true
+                    updateSlider(input)
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(input)
+                if draggingSlider and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    updateSlider(input)
+                end
+            end)
+
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingSlider = false
+                end
+            end)
+
+            -- Set initial handle position
+            local initialPercentage = (defaultValue - min) / (max - min)
+            SliderHandle.Position = UDim2.new(initialPercentage, 0, 0, 0)
+
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
+        end
+
+        return Tab
+    end
+            local ToggleButton = Instance.new("TextButton")
+            local UICorner_T = Instance.new("UICorner")
+            local Title_T = Instance.new("TextLabel")
+            local Status = Instance.new("Frame")
+            local UICorner_S = Instance.new("UICorner")
+
+            ToggleFrame.Name = text .. "Toggle"
+            ToggleFrame.Parent = Page
+            ToggleFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            ToggleFrame.Size = UDim2.new(1, -5, 0, 35)
+
+            UICorner_T.CornerRadius = UDim.new(0, 6)
+            UICorner_T.Parent = ToggleFrame
+
+            Title_T.Parent = ToggleFrame
+            Title_T.BackgroundTransparency = 1.000
+            Title_T.Position = UDim2.new(0, 10, 0, 0)
+            Title_T.Size = UDim2.new(1, -60, 1, 0)
+            Title_T.Font = Enum.Font.Gotham
+            Title_T.Text = text
+            Title_T.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Title_T.TextSize = 13.000
+            Title_T.TextXAlignment = Enum.TextXAlignment.Left
+
+            Status.Name = "Status"
+            Status.Parent = ToggleFrame
+            Status.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+            Status.Position = UDim2.new(1, -30, 0.5, -8)
+            Status.Size = UDim2.new(0, 16, 0, 16)
+
+            UICorner_S.CornerRadius = UDim.new(1, 0)
+            UICorner_S.Parent = Status
+
+            ToggleButton.Parent = ToggleFrame
+            ToggleButton.BackgroundTransparency = 1.000
+            ToggleButton.Size = UDim2.new(1, 0, 1, 0)
+            ToggleButton.Text = ""
+
+            local enabled = false
+            ToggleButton.MouseButton1Click:Connect(function()
+                enabled = not enabled
+                Status.BackgroundColor3 = enabled and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
+                pcall(function() callback(enabled) end)
+            end)
+
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
+        end
+
+        return Tab
+    end
+            local ToggleButton = Instance.new("TextButton")
+            local UICorner_T = Instance.new("UICorner")
+            local Title_T = Instance.new("TextLabel")
+            local Status = Instance.new("Frame")
+            local UICorner_S = Instance.new("UICorner")
+
+            ToggleFrame.Name = text .. "Toggle"
+            ToggleFrame.Parent = Page
+            ToggleFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            ToggleFrame.Size = UDim2.new(1, -5, 0, 35)
+
+            UICorner_T.CornerRadius = UDim.new(0, 6)
+            UICorner_T.Parent = ToggleFrame
+
+            Title_T.Parent = ToggleFrame
+            Title_T.BackgroundTransparency = 1.000
+            Title_T.Position = UDim2.new(0, 10, 0, 0)
+            Title_T.Size = UDim2.new(1, -60, 1, 0)
+            Title_T.Font = Enum.Font.Gotham
+            Title_T.Text = text
+            Title_T.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Title_T.TextSize = 13.000
+            Title_T.TextXAlignment = Enum.TextXAlignment.Left
+
+            Status.Name = "Status"
+            Status.Parent = ToggleFrame
+            Status.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+            Status.Position = UDim2.new(1, -30, 0.5, -8)
+            Status.Size = UDim2.new(0, 16, 0, 16)
+
+            UICorner_S.CornerRadius = UDim.new(1, 0)
+            UICorner_S.Parent = Status
+
+            ToggleButton.Parent = ToggleFrame
+            ToggleButton.BackgroundTransparency = 1.000
+            ToggleButton.Size = UDim2.new(1, 0, 1, 0)
+            ToggleButton.Text = ""
+
+            local enabled = false
+            ToggleButton.MouseButton1Click:Connect(function()
+                enabled = not enabled
+                Status.BackgroundColor3 = enabled and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
+                pcall(function() callback(enabled) end)
+            end)
+
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
+        end
+
         return Tab
     end
 
@@ -291,15 +486,22 @@ brainrotTab:AddButton("Spawn Random Brainrot", function()
     SpawnBrainrot()
 end)
 
-local autoSpawn = false
+local brainrotSpawnDelay = 5 -- Default spawn delay in seconds
+local autoSpawnEnabled = false
+brainrotTab:AddSlider("Spawn Delay (seconds)", 1, 10, brainrotSpawnDelay, function(value)
+    brainrotSpawnDelay = value
+end)
+
 brainrotTab:AddToggle("Auto Spawn Brainrot", function(state)
-    autoSpawn = state
-    task.spawn(function()
-        while autoSpawn do
-            SpawnBrainrot()
-            task.wait(5)
-        end
-    end)
+    autoSpawnEnabled = state
+    if autoSpawnEnabled then
+        task.spawn(function()
+            while autoSpawnEnabled do
+                SpawnBrainrot()
+                task.wait(brainrotSpawnDelay)
+            end
+        end)
+    end
 end)
 
 brainrotTab:AddButton("Skibidi Sound Blast", function()
