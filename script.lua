@@ -234,9 +234,9 @@ local startAutoSteal,stopAutoSteal,enableAntiKick,disableAntiKick,toggleCarryMod
 local function addShimmerToLabel(lbl,color1,color2)
     local gr=Instance.new("UIGradient",lbl)
     gr.Color=ColorSequence.new({
-        ColorSequenceKeypoint.new(0,color1 or Color3.fromRGB(255,105,180)),
+        ColorSequenceKeypoint.new(0,color1 or Color3.fromRGB(255,100,180)),
         ColorSequenceKeypoint.new(0.5,color2 or Color3.fromRGB(255,255,255)),
-        ColorSequenceKeypoint.new(1,color1 or Color3.fromRGB(255,105,180))
+        ColorSequenceKeypoint.new(1,color1 or Color3.fromRGB(255,100,180))
     })
     gr.Transparency=NumberSequence.new({
         NumberSequenceKeypoint.new(0,0.3,0),
@@ -260,7 +260,7 @@ applyFOV()
 
 local function createRagdollBillboard(duration,labelText,color)
     if not ragdollGuiEnabled then return nil end
-    local PINK = color or Color3.fromRGB(255,105,180)
+    local PINK = color or Color3.fromRGB(255,100,180)
     local BG = Color3.fromRGB(12,5,10)
     local WHITE = Color3.fromRGB(255,255,255)
     local W,H = 210,80
@@ -386,7 +386,7 @@ local function onHumanoidStateChanged(old,new)
     if not hum then return end
     local isRag=(new==Enum.HumanoidStateType.Physics or new==Enum.HumanoidStateType.Ragdoll or new==Enum.HumanoidStateType.FallingDown)
     if isRag and not hum.PlatformStand and not activeBatBillboard then
-        activeBatBillboard=createRagdollBillboard(2.6,"RAGDOLL",Color3.fromRGB(255,105,180))
+        activeBatBillboard=createRagdollBillboard(2.6,"RAGDOLL",Color3.fromRGB(255,100,180))
         task.delay(2.6,function() 
             if activeBatBillboard then 
                 pcall(function() activeBatBillboard:Destroy() end)
@@ -449,7 +449,7 @@ local function setupSpeedIndicator(char)
     speedLabel.Font=Enum.Font.GothamBold
     speedLabel.TextScaled=true
     speedLabel.TextStrokeTransparency=0
-    local gr1=addShimmerToLabel(speedLabel,Color3.fromRGB(255,105,180),Color3.fromRGB(255,255,255))
+    local gr1=addShimmerToLabel(speedLabel,Color3.fromRGB(255,100,180),Color3.fromRGB(255,255,255))
     local gr2=addShimmerToLabel(discordLabel,Color3.fromRGB(255,150,200),Color3.fromRGB(255,255,255))
     task.spawn(function() 
         local t=0
@@ -1804,9 +1804,9 @@ refreshSpeedModeLabel=function()
         local dot=laggerModePillRef.dot
         local on=laggerModeEnabled
         local PINK2=Color3.fromRGB(225,80,150)
-        local OFF=Color3.fromRGB(46,24,38)
+        local OFF=Color3.fromRGB(20,35,60)
         local WHITE=Color3.fromRGB(255,255,255)
-        local GRAY=Color3.fromRGB(180,150,165)
+        local GRAY=Color3.fromRGB(120,180,220)
         TweenService:Create(pill,TweenInfo.new(0.16,Enum.EasingStyle.Quad),{BackgroundColor3=on and PINK2 or OFF}):Play()
         TweenService:Create(dot,TweenInfo.new(0.16,Enum.EasingStyle.Back),{Position=on and UDim2.new(1,-13,0.5,-5) or UDim2.new(0,3,0.5,-5),BackgroundColor3=on and WHITE or GRAY}):Play()
     end
@@ -1815,9 +1815,9 @@ refreshSpeedModeLabel=function()
         local dot=carryModePillRef.dot
         local on=carrySpeedActive
         local PINK2=Color3.fromRGB(225,80,150)
-        local OFF=Color3.fromRGB(46,24,38)
+        local OFF=Color3.fromRGB(20,35,60)
         local WHITE=Color3.fromRGB(255,255,255)
-        local GRAY=Color3.fromRGB(180,150,165)
+        local GRAY=Color3.fromRGB(120,180,220)
         TweenService:Create(pill,TweenInfo.new(0.16,Enum.EasingStyle.Quad),{BackgroundColor3=on and PINK2 or OFF}):Play()
         TweenService:Create(dot,TweenInfo.new(0.16,Enum.EasingStyle.Back),{Position=on and UDim2.new(1,-13,0.5,-5) or UDim2.new(0,3,0.5,-5),BackgroundColor3=on and WHITE or GRAY}):Play()
     end
@@ -1913,7 +1913,7 @@ local function createStealBar()
             if o then o:Destroy() end 
         end
     end
-    local PINK=Color3.fromRGB(255,105,180)
+    local PINK=Color3.fromRGB(255,100,180)
     local WHITE=Color3.fromRGB(255,255,255)
     local BARBG=Color3.fromRGB(18,10,15)
     local SB_W,SB_H=260,32
@@ -2133,11 +2133,11 @@ local function buildMobileButtons()
         mobGui.Parent=LP:WaitForChild("PlayerGui") 
     end
     mobGuiRef=mobGui
-    local PINK_ON      = Color3.fromRGB(255,105,180)
+    local PINK_ON      = Color3.fromRGB(255,100,180)
     local BTN_BG_OFF   = Color3.fromRGB(46,18,36)
     local PANEL_BG     = Color3.fromRGB(32,12,26)
     local BORDER_OFF   = Color3.fromRGB(150,50,100)
-    local BORDER_ON    = Color3.fromRGB(255,105,180)
+    local BORDER_ON    = Color3.fromRGB(255,100,180)
     local TEXT_OFF     = Color3.fromRGB(255,190,215)
     local TEXT_ON      = Color3.fromRGB(255,255,255)
     local STROKE_W     = math.max(2,math.floor(BTN_SIZE*0.05))
