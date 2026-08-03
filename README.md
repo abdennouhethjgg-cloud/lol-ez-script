@@ -14,16 +14,22 @@ Le script `blox_fruits_update.lua` a été spécialement conçu pour la dernièr
 - **Fast Attack & Auto Stats** : Optimisation du combat et des statistiques.
 
 ### Comment utiliser :
-Copiez et collez cette commande dans votre exécuteur (Delta, Fluxus, Hydrogen, etc.) :
 
+**Pour Blox Fruits Hub :**
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/lol-ez-script/main/blox_fruits_update.lua"))()
+```
+
+**Pour le Brainrot Lag Panel (Sigma Edition) :**
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/lol-ez-script/main/brainrot_lag_panel.lua"))()
 ```
 
 ## Autres Scripts
 - `script.lua` : Utilitaire général.
 - `el2b_best.lua` : Code Sniper & Auto Redeemer.
 - `grf_panel.lua` : Bibliothèque UI utilisée pour nos hubs.
+- `brainrot_lag_panel.lua` : **NOUVEAU** - Panel style "Brainrot" (Sigma/Skibidi) avec Lag Switch et Ping Spiker pour les duels.
 
 ---
 *Créé avec passion par LOL Ez Team.*
