@@ -1,81 +1,123 @@
 --[[
-    GIGA SIGMA USAGE GUIDE - V5 PLAYER DESTROYER EDITION
-    
-    This script contains documentation and code examples on how to 
-    effectively use the Brainrot Lag Panel to dominate servers.
-    
-    ---------------------------------------------------------
-    SCENARIO 1: THE "OHIO" SERVER WIPE (Global Disruption)
-    ---------------------------------------------------------
-    Goal: Make the game unplayable for everyone but YOU.
-    
-    Strategy:
-    1. Open the Panel.
-    2. Set "Intensity" to 250 (Start medium).
-    3. Toggle "SIGMA NUKE 🤫🧏‍♂️" to ON.
-    
-    Result: 
-    - The server's incoming buffer will be flooded.
-    - Other players will experience 2000+ ping.
-    - You will remain smooth because the script uses 'task.spawn' to offload the work.
-    
-    ---------------------------------------------------------
-    SCENARIO 2: THE "RIZZLER" COMBAT (PvP Advantage)
-    ---------------------------------------------------------
-    Goal: Win fights by making opponents unable to hit you.
-    
-    Strategy:
-    1. Toggle "AUTO-LAG DUEL ⚔️" to ON.
-    2. When you reach 20% HP, you will automatically freeze (Self-Freeze).
-    3. While you are frozen, opponents' hits won't register on you.
-    4. After 1.5 seconds, you unfreeze and can counter-attack.
-    
-    Pro Tip: Use the "X" keybind to manually lag-spike yourself right 
-    as an opponent uses their strongest move.
-    
-    ---------------------------------------------------------
-    SCENARIO 3: THE "FANUM TAX" (Stealing Resources)
-    ---------------------------------------------------------
-    Goal: Secure boss drops or items before others can react.
-    
-    Strategy:
-    1. Right before a boss dies or a chest spawns, toggle "DATA FLOOD 🌊".
-    2. The server will lag, delaying everyone else's "Collect" or "Interact" remotes.
-    3. Walk up and take the loot. Since your client is smooth, your 
-       remote call will reach the server first once the flood stops.
-    
-    ---------------------------------------------------------
-    TECHNICAL TIPS FOR MAX SIGMA STATUS:
-    ---------------------------------------------------------
-    - KEYBIND (X): Use this for "Lag Walking". Tap it quickly to 
-      teleport around on other people's screens.
-      
-    - SELF-DESTRUCT (Right-Control): If a Moderator/Admin joins, 
-      hit this immediately to hide all evidence.
-      
-    - INTENSITY: 
-        * 1-100: Subtle lag (Good for trolling without being obvious).
-        * 100-300: Heavy lag (Players will start complaining).
-        * 300-500: Server Death (Players will start leaving).
-        
-    ---------------------------------------------------------
-    QUICK-START CODE SNIPPET:
-    ---------------------------------------------------------
-    If you want to trigger the Sigma Nuke via another script:
+    GIGA SIGMA USAGE GUIDE UI
+    Style: Minimalist Sigma
 ]]
 
--- Example: Triggering from another script
-local function ActivateSigmaNuke()
-    if getgenv().BrainrotLag then
-        getgenv().BrainrotLag.SigmaMode = true
-        getgenv().BrainrotLag.ServerLagIntensity = 500
-        print("SIGMA NUKE INITIATED. PREPARE FOR OHIO.")
-    else
-        warn("Brainrot Panel not loaded!")
-    end
+local cloneref = cloneref or function(object) return object end
+local CoreGui = cloneref(game:GetService("CoreGui"))
+local UserInputService = cloneref(game:GetService("UserInputService"))
+
+-- Cleanup old UI
+if CoreGui:FindFirstChild("SigmaGuideUI") then
+    CoreGui.SigmaGuideUI:Destroy()
 end
 
--- Uncomment the line below to test it:
--- ActivateSigmaNuke()
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SigmaGuideUI"
+ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
 
-print("SIGMA GUIDE LOADED. READ THE COMMENTS IN THE SOURCE CODE.")
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Parent = ScreenGui
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Main.BorderSizePixel = 0
+Main.Position = UDim2.new(0.5, 160, 0.5, -150) -- Positioned to the right of the main panel
+Main.Size = UDim2.new(0, 250, 0, 300)
+Main.Active = true
+Main.Draggable = true
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = Main
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Thickness = 2
+UIStroke.Color = Color3.fromRGB(0, 255, 255)
+UIStroke.Parent = Main
+
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Parent = Main
+Title.BackgroundTransparency = 1
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "SIGMA BIBLE 📖"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 16
+
+local Content = Instance.new("ScrollingFrame")
+Content.Name = "Content"
+Content.Parent = Main
+Content.BackgroundTransparency = 1
+Content.Position = UDim2.new(0, 10, 0, 45)
+Content.Size = UDim2.new(1, -20, 1, -85)
+Content.ScrollBarThickness = 2
+Content.CanvasSize = UDim2.new(0, 0, 0, 800)
+
+local GuideText = Instance.new("TextLabel")
+GuideText.Name = "GuideText"
+GuideText.Parent = Content
+GuideText.BackgroundTransparency = 1
+GuideText.Size = UDim2.new(1, 0, 1, 0)
+GuideText.Font = Enum.Font.Gotham
+GuideText.Text = [[
+--- THE OHIO WIPE ---
+1. Set Intensity to 250+
+2. Toggle SIGMA NUKE ON
+Result: Server lag for others, smooth for you.
+
+--- RIZZLER COMBAT ---
+1. Toggle AUTO-LAG DUEL ON
+2. Auto-freezes at 20% HP
+3. Enemies can't hit you!
+
+--- FANUM TAX ---
+1. Toggle DATA FLOOD
+2. Steal loot while server lags
+3. Turn off to finish steal.
+
+--- TIPS ---
+- Keybind (X): Lag Walk
+- Right-Ctrl: Self Destruct
+- Intensity 500: Server Death
+
+--- V6 GOD MODE ---
+- Auto Steal: Collects all!
+- Inf Rebirth: Instant levels!
+- Anti-Hit: Never die!
+]]
+GuideText.TextColor3 = Color3.fromRGB(200, 200, 200)
+GuideText.TextSize = 12
+GuideText.TextXAlignment = Enum.TextXAlignment.Left
+GuideText.TextYAlignment = Enum.TextYAlignment.Top
+GuideText.TextWrapped = true
+
+local Close = Instance.new("TextButton")
+Close.Name = "Close"
+Close.Parent = Main
+Close.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+Close.Position = UDim2.new(0.1, 0, 0.85, 0)
+Close.Size = UDim2.new(0.8, 0, 0, 30)
+Close.Font = Enum.Font.GothamBold
+Close.Text = "CLOSE GUIDE"
+Close.TextColor3 = Color3.fromRGB(255, 255, 255)
+Close.TextSize = 14
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = Close
+
+Close.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- Rainbow Stroke Effect
+task.spawn(function()
+    while ScreenGui.Parent do
+        UIStroke.Color = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+        task.wait(0.1)
+    end
+end)
+
+print("SIGMA GUIDE UI LOADED. 🤫🧏‍♂️")
