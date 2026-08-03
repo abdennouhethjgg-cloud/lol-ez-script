@@ -29,7 +29,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud
 - `script.lua` : Utilitaire général.
 - `el2b_best.lua` : Code Sniper & Auto Redeemer.
 - `grf_panel.lua` : Bibliothèque UI utilisée pour nos hubs.
-- `brainrot_lag_panel.lua` : **MISE À JOUR** - Panel style "Brainrot" (Sigma/Skibidi) avec Lag Switch, Ping Spiker, et **Server Lag** (Void Lagger, Paintball Crash, Laser Spam) pour les duels et serveurs privés de "Steal a Brainrot".
+- `brainrot_lag_panel.lua` : **ULTRA SIGMA V3** - Panel de destruction serveur massif. Inclut le **Data Spam**, **Physics Overload** et **Void Lagger V3** pour faire lagger TOUS les joueurs dans "Steal a Brainrot" (spécialement en serveur privé).
 
 ---
 *Créé avec passion par LOL Ez Team.*
