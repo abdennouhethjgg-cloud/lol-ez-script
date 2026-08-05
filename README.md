@@ -25,6 +25,22 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud
 loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/lol-ez-script/main/brainrot_lag_panel.lua"))()
 ```
 
+## 👑 Zyro Hub V2 (Brainrot Edition)
+
+Le script `zyro_hub_v2.lua` est une version améliorée et optimisée du Zyro Hub original.
+
+### Fonctionnalités :
+- **Auto Buy Optimisé** : Utilise `ProximityPromptService` pour une efficacité maximale sans lag.
+- **Anchored Mode** : Fixation du personnage résistante à la réapparition (Respawn Proof).
+- **Auto Steal** : Logique de vol automatique pour les objets et remotes.
+- **Sigma Speed & Ohio Jump** : Améliorations de mouvement (Vitesse et Saut infini).
+- **Interface Brainrot** : Design néon arc-en-ciel avec support du glisser-déposer (Drag & Drop).
+
+### Utilisation :
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/lol-ez-script/main/zyro_hub_v2.lua"))()
+```
+
 ## Autres Scripts
 - `script.lua` : Utilitaire général.
 - `el2b_best.lua` : Code Sniper & Auto Redeemer.
