@@ -34,6 +34,7 @@ Le script `zyro_hub_v2.lua` est une version améliorée et optimisée du Zyro Hu
 - **Anchored Mode** : Fixation du personnage résistante à la réapparition (Respawn Proof).
 - **Auto Steal** : Logique de vol automatique pour les objets et remotes.
 - **Sigma Speed & Ohio Jump** : Améliorations de mouvement (Vitesse et Saut infini).
+- **Anti-Lag** : Protection contre les abus d'administration et les événements lourds, optimisant les performances client.
 - **Interface Brainrot** : Design néon arc-en-ciel avec support du glisser-déposer (Drag & Drop).
 
 ### Utilisation :

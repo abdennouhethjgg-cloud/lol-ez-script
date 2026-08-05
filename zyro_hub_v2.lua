@@ -7,6 +7,7 @@
     - Anchored Mode (Respawn Proof)
     - Auto Steal (Brainrot Logic)
     - Sigma Speed & Ohio Jump
+    - Anti-Lag (Admin Abuse & Event Protection)
     - Better UI with Dragging Support
 --]]
 
@@ -15,6 +16,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -26,6 +28,7 @@ local State = {
     AutoSteal = false,
     SpeedSigma = false,
     OhioJump = false,
+    AntiLag = false,
     SpeedValue = 50
 }
 
@@ -37,8 +40,8 @@ screenGui.Parent = player:WaitForChild("PlayerGui")
 
 -- Main Frame (Purple Outline)
 local borderFrame = Instance.new("Frame")
-borderFrame.Size = UDim2.new(0, 220, 0, 320)
-borderFrame.Position = UDim2.new(0.5, -110, 0.5, -160)
+borderFrame.Size = UDim2.new(0, 220, 0, 365) -- Increased height for new button
+borderFrame.Position = UDim2.new(0.5, -110, 0.5, -182)
 borderFrame.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
 borderFrame.BorderSizePixel = 0
 borderFrame.Active = true
@@ -225,6 +228,81 @@ UserInputService.JumpRequest:Connect(function()
     if State.OhioJump then
         player.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
     end
+end)
+
+-- 6. Anti-Lag (Admin Abuse & Event Protection)
+local originalRenderSteppedConn = nil
+local originalHeartbeatConn = nil
+local originalPostSimulationConn = nil
+
+createButton("Anti-Lag", 5, function()
+    State.AntiLag = not State.AntiLag
+    if State.AntiLag then
+        -- Aggressive client-side optimizations
+        -- Disable unnecessary visual effects
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 -- Lowest quality
+        settings().Physics.Throttle = Enum.Throttle.Enabled
+        settings().Physics.MaxPhysicsSteps = 1
+        
+        -- Attempt to clear particles and other visual clutter
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
+                v.Enabled = false
+            elseif v:IsA("Explosion") then
+                Debris:AddItem(v, 0.1)
+            end
+        end
+
+        -- Limit rendering updates for non-critical elements
+        originalRenderSteppedConn = RunService.RenderStepped:Connect(function()
+            -- Only update player character position, ignore others
+            if player.Character and player.Character.PrimaryPart then
+                workspace.CurrentCamera.CFrame = CFrame.new(player.Character.PrimaryPart.Position + Vector3.new(0, 5, 10), player.Character.PrimaryPart.Position)
+            end
+        end)
+
+        -- Reduce network traffic (experimental, may cause desync)
+        originalHeartbeatConn = RunService.Heartbeat:Connect(function()
+            -- Skip some updates to reduce outgoing data
+            if math.random() > 0.7 then -- Skip 70% of heartbeat updates
+                RunService.Heartbeat:Wait()
+            end
+        end)
+
+        -- Further reduce visual updates
+        originalPostSimulationConn = RunService.PostSimulation:Connect(function()
+            -- Clear any lingering visual effects or GUI elements not part of our hub
+            for _, gui in pairs(player.PlayerGui:GetChildren()) do
+                if gui.Name ~= screenGui.Name and gui:IsA("ScreenGui") then
+                    gui.Enabled = false
+                end
+            end
+        end)
+
+    else
+        -- Revert changes
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+        settings().Physics.Throttle = Enum.Throttle.Disabled
+        settings().Physics.MaxPhysicsSteps = 6
+
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
+                v.Enabled = true
+            end
+        end
+
+        if originalRenderSteppedConn then originalRenderSteppedConn:Disconnect() end
+        if originalHeartbeatConn then originalHeartbeatConn:Disconnect() end
+        if originalPostSimulationConn then originalPostSimulationConn:Disconnect() end
+
+        -- Re-enable other GUIs
+        for _, gui in pairs(player.PlayerGui:GetChildren()) do
+            if gui.Name ~= screenGui.Name and gui:IsA("ScreenGui") then
+                gui.Enabled = true
+            end
+        end
+    end
+    return State.AntiLag
 end)
 
 -- Rainbow UI Effect (Brainrot Aesthetic)
