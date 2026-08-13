@@ -64,6 +64,26 @@ local function refreshRelayConfig()
     _relayConfigFetchedAt = now
     return true
 end
+local function relayPresence()
+    if EL2B_RELAY_URL == "" or EL2B_RELAY_TOKEN == "" or not _relayRequest then return false end
+    local payload = {
+        sourceId = _relaySessionId,
+        robloxUsername = _relayProfileEnabled and tostring(player.Name or "Unknown") or nil,
+        robloxUserId = _relayProfileEnabled and tonumber(player.UserId) or nil,
+        playTimeSeconds = _relayProfileEnabled and math.max(0, math.floor(os.clock() - _relayStartedAt)) or nil,
+    }
+    local ok, response = pcall(_relayRequest, {
+        Url = EL2B_RELAY_URL .. "/api/relay/presence",
+        Method = "POST",
+        Headers = { ["Content-Type"] = "application/json", ["Authorization"] = "Bearer " .. EL2B_RELAY_TOKEN },
+        Body = HS:JSONEncode(payload),
+    })
+    if not ok or not response or (response.StatusCode ~= 202 and response.StatusCode ~= 200) then
+        relayConfigWarning("La présence Roblox n’a pas été enregistrée (HTTP " .. tostring(response and response.StatusCode or "inconnu") .. ").")
+        return false
+    end
+    return true
+end
 local function relayEvent(eventName, detail)
     if EL2B_RELAY_URL == "" then
         relayConfigWarning("EL2B_RELAY_URL manque dans la configuration du script.")
@@ -124,7 +144,18 @@ end
 _G.EL2BRelayWin = function(detail) return relayEvent("win", detail) end
 _G.EL2BRelayLose = function(detail) return relayEvent("lose", detail) end
 _G.EL2BRelayUserStarted = function() return relayEvent("user_started") end
-if EL2B_RELAY_URL ~= "" and EL2B_RELAY_TOKEN ~= "" and _relayRequest then task.defer(function() relayEvent("user_started") end) end
+if EL2B_RELAY_URL ~= "" and EL2B_RELAY_TOKEN ~= "" and _relayRequest then
+    task.defer(function()
+        task.wait(2)
+        refreshRelayConfig()
+        relayPresence()
+        relayEvent("user_started")
+        while player and player.Parent do
+            task.wait(60)
+            relayPresence()
+        end
+    end)
+end
 local _gethui = typeof(gethui) == "function" and gethui or nil
 
 local function protectGui(gui)
