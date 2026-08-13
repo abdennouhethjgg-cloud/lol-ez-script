@@ -30,6 +30,7 @@ local _relayLastSent = {}
 local _relayConfigFetchedAt = 0
 local _relayConfigWarningShown = false
 local _relayStatusNoticeShown = false
+local _relayProfileNoticeShown = false
 local function relayNotice(message)
     pcall(function()
         StarterGui:SetCore("SendNotification", { Title = "EL2B Discord Relay", Text = message, Duration = 8 })
@@ -66,6 +67,11 @@ local function refreshRelayConfig()
 end
 local function relayPresence()
     if EL2B_RELAY_URL == "" or EL2B_RELAY_TOKEN == "" or not _relayRequest then return false end
+    if not refreshRelayConfig() then return false end
+    if not _relayProfileEnabled and not _relayProfileNoticeShown then
+        _relayProfileNoticeShown = true
+        relayNotice("Profil non transmis : active Roblox Name + Play Time sur le website.")
+    end
     local payload = {
         sourceId = _relaySessionId,
         robloxUsername = _relayProfileEnabled and tostring(player.Name or "Unknown") or nil,
