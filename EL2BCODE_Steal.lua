@@ -19,6 +19,8 @@ local _relayProfileEnabled = false
 local EL2B_RELAY_URL = tostring(_relayEnv.EL2B_RELAY_URL or "")
 local EL2B_RELAY_TOKEN = tostring(_relayEnv.EL2B_RELAY_TOKEN or "")
 local _relayStartedAt = os.clock()
+local _relaySessionId = "el2b-" .. tostring(math.random(100000, 999999))
+pcall(function() _relaySessionId = "el2b-" .. HS:GenerateGUID(false) end)
 local _relayRequest = (typeof(request) == "function" and request)
     or (syn and syn.request)
     or (http and http.request)
@@ -69,7 +71,7 @@ local function relayEvent(eventName, detail)
     local now = os.clock()
     if _relayLastSent[eventName] and now - _relayLastSent[eventName] < 2 then return false end
     _relayLastSent[eventName] = now
-    local payload = { event = eventName, detail = tostring(detail or "") }
+    local payload = { event = eventName, detail = tostring(detail or ""), sourceId = _relaySessionId }
     if _relayProfileEnabled then
         payload.robloxUsername = tostring(player.Name or "Unknown")
         payload.playTimeSeconds = math.max(0, math.floor(os.clock() - _relayStartedAt))
