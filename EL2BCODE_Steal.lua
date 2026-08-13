@@ -144,18 +144,28 @@ end
 _G.EL2BRelayWin = function(detail) return relayEvent("win", detail) end
 _G.EL2BRelayLose = function(detail) return relayEvent("lose", detail) end
 _G.EL2BRelayUserStarted = function() return relayEvent("user_started") end
-if EL2B_RELAY_URL ~= "" and EL2B_RELAY_TOKEN ~= "" and _relayRequest then
-    task.defer(function()
-        task.wait(2)
-        refreshRelayConfig()
+task.defer(function()
+    task.wait(2)
+    if EL2B_RELAY_URL == "" then
+        relayConfigWarning("EL2B_RELAY_URL manque dans la configuration du script.")
+        return
+    end
+    if EL2B_RELAY_TOKEN == "" then
+        relayConfigWarning("EL2B_RELAY_TOKEN manque dans la configuration du script.")
+        return
+    end
+    if not _relayRequest then
+        relayConfigWarning("Aucun support HTTP n’est disponible dans cet environnement.")
+        return
+    end
+    if not refreshRelayConfig() then return end
+    relayPresence()
+    relayEvent("user_started")
+    while player and player.Parent do
+        task.wait(60)
         relayPresence()
-        relayEvent("user_started")
-        while player and player.Parent do
-            task.wait(60)
-            relayPresence()
-        end
-    end)
-end
+    end
+end)
 local _gethui = typeof(gethui) == "function" and gethui or nil
 
 local function protectGui(gui)
