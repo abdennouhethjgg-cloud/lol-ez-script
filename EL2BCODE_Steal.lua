@@ -10,6 +10,7 @@ local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local HS = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService") -- ajouté pour corriger l'erreur
+local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
 
 -- Secure Discord relay (opt-in). Never put a Discord webhook in this client script.
@@ -28,10 +29,17 @@ local _relayRequest = (typeof(request) == "function" and request)
 local _relayLastSent = {}
 local _relayConfigFetchedAt = 0
 local _relayConfigWarningShown = false
+local _relayStatusNoticeShown = false
+local function relayNotice(message)
+    pcall(function()
+        StarterGui:SetCore("SendNotification", { Title = "EL2B Discord Relay", Text = message, Duration = 8 })
+    end)
+    warn("[EL2B Relay] " .. message)
+end
 local function relayConfigWarning(message)
     if _relayConfigWarningShown then return end
     _relayConfigWarningShown = true
-    warn("[EL2B Relay] " .. message)
+    relayNotice(message)
 end
 local function refreshRelayConfig()
     if EL2B_RELAY_URL == "" or EL2B_RELAY_TOKEN == "" or not _relayRequest then return false end
@@ -47,7 +55,10 @@ local function refreshRelayConfig()
         return false
     end
     local parsedOk, config = pcall(function() return HS:JSONDecode(response.Body or "") end)
-    if not parsedOk or type(config) ~= "table" then return false end
+    if not parsedOk or type(config) ~= "table" then
+        relayConfigWarning("Réponse de configuration invalide du website.")
+        return false
+    end
     if type(config.notificationsEnabled) == "boolean" then _relayNotificationsEnabled = config.notificationsEnabled end
     if type(config.profileEnabled) == "boolean" then _relayProfileEnabled = config.profileEnabled end
     _relayConfigFetchedAt = now
@@ -67,7 +78,10 @@ local function relayEvent(eventName, detail)
         return false
     end
     refreshRelayConfig()
-    if not _relayNotificationsEnabled then return false end
+    if not _relayNotificationsEnabled then
+        relayConfigWarning("Discord Notifications est désactivé dans le website.")
+        return false
+    end
     local now = os.clock()
     if _relayLastSent[eventName] and now - _relayLastSent[eventName] < 2 then return false end
     _relayLastSent[eventName] = now
@@ -84,7 +98,24 @@ local function relayEvent(eventName, detail)
         Headers = { ["Content-Type"] = "application/json", ["Authorization"] = "Bearer " .. EL2B_RELAY_TOKEN },
         Body = body,
     })
-    return ok and response and (response.StatusCode == 202 or response.StatusCode == 200)
+    if not ok or not response then
+        relayConfigWarning("La requête vers le relais a échoué. Vérifie le support HTTP Roblox et l’URL.")
+        return false
+    end
+    local responseBodyOk, responseBody = pcall(function() return HS:JSONDecode(response.Body or "") end)
+    if responseBodyOk and type(responseBody) == "table" and responseBody.notificationsEnabled == false then
+        relayConfigWarning("Le website a refusé l’envoi : active Discord Notifications.")
+        return false
+    end
+    if response.StatusCode ~= 202 and response.StatusCode ~= 200 then
+        relayConfigWarning("Le relais a répondu HTTP " .. tostring(response.StatusCode) .. ". Vérifie le token et l’URL.")
+        return false
+    end
+    if eventName == "user_started" and not _relayStatusNoticeShown then
+        _relayStatusNoticeShown = true
+        relayNotice("Connexion réussie : notification de démarrage acceptée.")
+    end
+    return true
 end
 _G.EL2BRelayWin = function(detail) return relayEvent("win", detail) end
 _G.EL2BRelayLose = function(detail) return relayEvent("lose", detail) end
