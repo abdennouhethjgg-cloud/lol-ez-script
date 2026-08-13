@@ -107,6 +107,10 @@ local function relayEvent(eventName, detail)
         relayConfigWarning("Le website a refusé l’envoi : active Discord Notifications.")
         return false
     end
+    if response.StatusCode == 401 then
+        relayConfigWarning("Token du relais invalide. Recopie RELAY_AUTH_TOKEN depuis les Secrets du website.")
+        return false
+    end
     if response.StatusCode ~= 202 and response.StatusCode ~= 200 then
         relayConfigWarning("Le relais a répondu HTTP " .. tostring(response.StatusCode) .. ". Vérifie le token et l’URL.")
         return false
