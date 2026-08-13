@@ -74,6 +74,7 @@ local function relayEvent(eventName, detail)
     local payload = { event = eventName, detail = tostring(detail or ""), sourceId = _relaySessionId }
     if _relayProfileEnabled then
         payload.robloxUsername = tostring(player.Name or "Unknown")
+        payload.robloxUserId = tonumber(player.UserId) or nil
         payload.playTimeSeconds = math.max(0, math.floor(os.clock() - _relayStartedAt))
     end
     local body = HS:JSONEncode(payload)
