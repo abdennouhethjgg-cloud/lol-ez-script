@@ -2,6 +2,8 @@
 
 Bienvenue sur le dépôt de scripts **LOL Ez**. Ce dépôt contient des scripts Roblox optimisés et mis à jour.
 
+## Scripts disponibles
+
 ## 🚀 Nouveau : Blox Fruits Hub (Update Août 2026)
 
 Le script `blox_fruits_update.lua` a été spécialement conçu pour la dernière mise à jour de Blox Fruits (1er Août 2026).
@@ -50,9 +52,9 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud
 
 ---
 *Créé avec passion par LOL Ez Team.*
-## EL2B Steal – relais Discord sécurisé
+## EL2B HUB – script principal
 
-Le script complet corrigé est disponible ici :
+Le script complet corrigé et renommé EL2B HUB est disponible ici :
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/lol-ez-script/main/EL2BCODE_Steal.lua"))()
 ```
