@@ -5284,6 +5284,155 @@ if Helper then
 end
 
 ----------------------------------------------------------------
+-- COMPACT HELPER — raccourcis locaux, réversibles et déplaçables
+----------------------------------------------------------------
+pcall(function()
+	local oldHelper = PlayerGui:FindFirstChild("EL2BHubHelper")
+	if oldHelper then oldHelper:Destroy() end
+end)
+local HelperGui = Instance.new("ScreenGui")
+HelperGui.Name = "EL2BHubHelper"
+HelperGui.ResetOnSpawn = false
+HelperGui.IgnoreGuiInset = true
+HelperGui.DisplayOrder = 122
+HelperGui.Parent = PlayerGui
+
+local HelperPanel = Instance.new("Frame")
+HelperPanel.Name = "Panel"
+HelperPanel.Size = UDim2.new(0, 142, 0, 174)
+HelperPanel.Position = UDim2.new(1, -156, 0, 92)
+HelperPanel.BackgroundColor3 = C.bg
+HelperPanel.BorderSizePixel = 0
+HelperPanel.Active = true
+HelperPanel.Parent = HelperGui
+corner(HelperPanel, 10)
+local helperStroke = stroke(HelperPanel, C.accent)
+helperStroke.Thickness = 1.5
+helperStroke.Transparency = 0.1
+
+pcall(function()
+	local p = St._helperPos
+	if type(p) == "table" and p[1] ~= nil then
+		HelperPanel.Position = UDim2.new(p[1], p[2], p[3], p[4])
+	end
+end)
+
+local helperHeader = Instance.new("Frame")
+helperHeader.Size = UDim2.new(1, 0, 0, 30)
+helperHeader.BackgroundColor3 = C.card
+helperHeader.BorderSizePixel = 0
+helperHeader.Active = true
+helperHeader.Parent = HelperPanel
+corner(helperHeader, 10)
+
+local helperTitle = Instance.new("TextLabel")
+helperTitle.Size = UDim2.new(1, -38, 1, 0)
+helperTitle.Position = UDim2.new(0, 10, 0, 0)
+helperTitle.BackgroundTransparency = 1
+helperTitle.Text = "EL2B HELPER"
+helperTitle.TextColor3 = C.text
+helperTitle.TextSize = 11
+helperTitle.Font = Enum.Font.GothamBold
+helperTitle.TextXAlignment = Enum.TextXAlignment.Left
+helperTitle.Parent = helperHeader
+
+local helperCollapse = Instance.new("TextButton")
+helperCollapse.Size = UDim2.new(0, 28, 0, 24)
+helperCollapse.Position = UDim2.new(1, -32, 0.5, -12)
+helperCollapse.BackgroundColor3 = C.box
+helperCollapse.BorderSizePixel = 0
+helperCollapse.Text = "−"
+helperCollapse.TextColor3 = C.text
+helperCollapse.TextSize = 16
+helperCollapse.Font = Enum.Font.GothamBold
+helperCollapse.AutoButtonColor = false
+helperCollapse.Parent = helperHeader
+corner(helperCollapse, 6)
+
+local helperBody = Instance.new("Frame")
+helperBody.Size = UDim2.new(1, -12, 1, -40)
+helperBody.Position = UDim2.new(0, 6, 0, 34)
+helperBody.BackgroundTransparency = 1
+helperBody.Parent = HelperPanel
+
+local helperCollapsed = false
+local function setHelperCollapsed(on)
+	helperCollapsed = on == true
+	helperBody.Visible = not helperCollapsed
+	helperCollapse.Text = helperCollapsed and "+" or "−"
+	HelperPanel.Size = helperCollapsed and UDim2.new(0, 142, 0, 30) or UDim2.new(0, 142, 0, 174)
+end
+helperCollapse.Activated:Connect(function()
+	setHelperCollapsed(not helperCollapsed)
+end)
+
+local function helperButton(text, xScale, xOffset, yOffset, widthScale, widthOffset, color, callback)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(widthScale, widthOffset, 0, 28)
+	button.Position = UDim2.new(xScale, xOffset, 0, yOffset)
+	button.BackgroundColor3 = color or C.box
+	button.BorderSizePixel = 0
+	button.Text = text
+	button.TextColor3 = Color3.fromRGB(255, 255, 255)
+	button.TextSize = 10
+	button.Font = Enum.Font.GothamBold
+	button.AutoButtonColor = false
+	button.ZIndex = 125
+	button.Parent = helperBody
+	corner(button, 6)
+	button.Activated:Connect(function()
+		pcall(callback)
+	end)
+	return button
+end
+
+helperButton("MENU", 0, 0, 0, 1, 0, C.accent, function()
+	openMenu()
+	setTab("Player")
+end)
+helperButton("PLAYER", 0, 0, 34, 0.5, -3, C.box, function()
+	openMenu()
+	setTab("Player")
+end)
+helperButton("SETTINGS", 0.5, 3, 34, 0.5, -3, C.box, function()
+	openMenu()
+	setTab("Settings")
+end)
+helperButton("WALK", 0, 0, 68, 0.5, -3, C.on, function()
+	if type(applySafeMovementPreset) == "function" then applySafeMovementPreset("Walk") end
+end)
+helperButton("STOP", 0.5, 3, 68, 0.5, -3, C.danger, function()
+	if type(stopSafeMovement) == "function" then stopSafeMovement() end
+end)
+helperButton("SAVE", 0, 0, 102, 1, 0, C.accent, function()
+	pcall(saveCfg)
+end)
+
+do
+	local dragging, dragStart, startPos = false, nil, nil
+	helperHeader.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = HelperPanel.Position
+		end
+	end)
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - dragStart
+			HelperPanel.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+	UIS.InputEnded:Connect(function(input)
+		if not dragging then return end
+		if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+		dragging = false
+		St._helperPos = {HelperPanel.Position.X.Scale, HelperPanel.Position.X.Offset, HelperPanel.Position.Y.Scale, HelperPanel.Position.Y.Offset}
+		pcall(saveCfg)
+	end)
+end
+
+----------------------------------------------------------------
 -- MOBILE: 3 mode + Drop + Insta + TP
 ----------------------------------------------------------------
 local ModeGui = Instance.new("ScreenGui")
