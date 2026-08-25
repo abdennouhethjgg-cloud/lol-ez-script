@@ -5299,7 +5299,7 @@ HelperGui.Parent = PlayerGui
 
 local HelperPanel = Instance.new("Frame")
 HelperPanel.Name = "Panel"
-HelperPanel.Size = UDim2.new(0, 142, 0, 174)
+HelperPanel.Size = UDim2.new(0, 142, 0, 260)
 HelperPanel.Position = UDim2.new(1, -156, 0, 92)
 HelperPanel.BackgroundColor3 = C.bg
 HelperPanel.BorderSizePixel = 0
@@ -5360,7 +5360,7 @@ local function setHelperCollapsed(on)
 	helperCollapsed = on == true
 	helperBody.Visible = not helperCollapsed
 	helperCollapse.Text = helperCollapsed and "+" or "−"
-	HelperPanel.Size = helperCollapsed and UDim2.new(0, 142, 0, 30) or UDim2.new(0, 142, 0, 174)
+	HelperPanel.Size = helperCollapsed and UDim2.new(0, 142, 0, 30) or UDim2.new(0, 142, 0, 260)
 end
 helperCollapse.Activated:Connect(function()
 	setHelperCollapsed(not helperCollapsed)
@@ -5404,9 +5404,69 @@ end)
 helperButton("STOP", 0.5, 3, 68, 0.5, -3, C.danger, function()
 	if type(stopSafeMovement) == "function" then stopSafeMovement() end
 end)
-helperButton("SAVE", 0, 0, 102, 1, 0, C.accent, function()
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(0.48, 0, 0, 28)
+speedLabel.Position = UDim2.new(0, 0, 0, 102)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "Speed (16–24)"
+speedLabel.TextColor3 = C.textDim
+speedLabel.TextSize = 10
+speedLabel.Font = Enum.Font.GothamBold
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.Parent = helperBody
+
+local speedInput = Instance.new("TextBox")
+speedInput.Size = UDim2.new(0.48, 0, 0, 28)
+speedInput.Position = UDim2.new(0.52, 0, 0, 102)
+speedInput.BackgroundColor3 = C.box
+speedInput.BorderSizePixel = 0
+speedInput.Text = tostring(math.clamp(tonumber((St.modes and St.modes.Custom and St.modes.Custom.norm) or 16) or 16, 16, 24))
+speedInput.TextColor3 = C.text
+speedInput.TextSize = 11
+speedInput.Font = Enum.Font.GothamBold
+speedInput.ClearTextOnFocus = false
+speedInput.Parent = helperBody
+corner(speedInput, 6)
+speedInput.FocusLost:Connect(function()
+	local speed = math.clamp(math.floor(tonumber(speedInput.Text) or 16), 16, 24)
+	speedInput.Text = tostring(speed)
+	St.modes = type(St.modes) == "table" and St.modes or {}
+	St.modes.Custom = type(St.modes.Custom) == "table" and St.modes.Custom or { key = Enum.KeyCode.C }
+	St.modes.Custom.norm = speed
+	St.modes.Custom.steal = speed
+	St.speedMethod = "WalkSpeed"
+	St.activeMode = "Custom"
+	St.speedOn = true
+	if type(startSpeedBoost) == "function" then startSpeedBoost() end
 	pcall(saveCfg)
 end)
+
+local helperStatus = Instance.new("TextLabel")
+helperStatus.Size = UDim2.new(1, 0, 0, 14)
+helperStatus.Position = UDim2.new(0, 0, 0, 202)
+helperStatus.BackgroundTransparency = 1
+helperStatus.TextColor3 = C.textDim
+helperStatus.TextSize = 9
+helperStatus.Font = Enum.Font.Gotham
+helperStatus.TextXAlignment = Enum.TextXAlignment.Center
+helperStatus.Parent = helperBody
+local function refreshHelperStatus()
+	helperStatus.Text = string.format("ESP: %s · Tracer: %s", St.esp == true and "ON" or "OFF", St.tracer == true and "ON" or "OFF")
+end
+
+helperButton("ESP", 0, 0, 136, 0.5, -3, C.box, function()
+	if type(setESP) == "function" then setESP(not (St.esp == true)) end
+	refreshHelperStatus()
+end)
+helperButton("TRACER", 0.5, 3, 136, 0.5, -3, C.box, function()
+	if type(setTracer) == "function" then setTracer(not (St.tracer == true)) end
+	refreshHelperStatus()
+end)
+helperButton("SAVE", 0, 0, 170, 1, 0, C.accent, function()
+	pcall(saveCfg)
+	refreshHelperStatus()
+end)
+refreshHelperStatus()
 
 do
 	local dragging, dragStart, startPos = false, nil, nil
