@@ -5295,7 +5295,7 @@ local HelperGui = Instance.new("ScreenGui")
 HelperGui.Name = "EL2BHubHelper"
 HelperGui.ResetOnSpawn = false
 HelperGui.IgnoreGuiInset = true
-HelperGui.DisplayOrder = 122
+HelperGui.DisplayOrder = 2600 -- le Helper reste cliquable au-dessus des actions mobiles
 HelperGui.Parent = PlayerGui
 
 local HelperPanel = Instance.new("Frame")
@@ -5517,7 +5517,7 @@ local ActGui = Instance.new("ScreenGui")
 ActGui.Name = "EL2BHubActionButtons"
 ActGui.ResetOnSpawn = false
 ActGui.IgnoreGuiInset = true
-ActGui.DisplayOrder = 2500
+ActGui.DisplayOrder = 110
 ActGui.Enabled = false
 ActGui.Parent = PlayerGui
 
@@ -6143,7 +6143,26 @@ function savePos(holder, key)
 	saveCfg()
 end
 
+-- Disposition par défaut des boutons flottants : basse à gauche, hors du Helper.
+-- Les anciennes positions sont réinitialisées une seule fois après cette correction.
+local ACTION_LAYOUT_VERSION = 2
+local ACTION_DEFAULTS = {
+	drop = UDim2.new(0, 24, 1, -152),
+	insta = UDim2.new(0, 94, 1, -152),
+	tp = UDim2.new(0, 164, 1, -152),
+	sentry = UDim2.new(0, 24, 1, -82),
+	steal = UDim2.new(0, 94, 1, -82),
+}
+
 function rebuildMobile()
+	St._btnPos = type(St._btnPos) == "table" and St._btnPos or {}
+	if (tonumber(St._actionLayoutVersion) or 0) < ACTION_LAYOUT_VERSION then
+		for key in pairs(ACTION_DEFAULTS) do
+			St._btnPos["A_" .. key] = nil
+		end
+		St._actionLayoutVersion = ACTION_LAYOUT_VERSION
+		pcall(saveCfg)
+	end
 	for _, e in pairs(modeRefs) do if e.holder then e.holder:Destroy() end end
 	for _, e in pairs(actRefs) do if e.holder then e.holder:Destroy() end end
 	modeRefs, actRefs = {}, {}
@@ -6165,10 +6184,10 @@ function rebuildMobile()
 			pcall(startSpeedBoost)
 		end
 	end)
-	makeActBtn("drop", "DROP", UDim2.new(1, -150, 0.5, -40), function() runDrop() if _G.EL2BCounterOnDrop then pcall(_G.EL2BCounterOnDrop) end end)
-	makeActBtn("insta", "INSTA\nRESET", UDim2.new(1, -80, 0.5, -40), doInstaReset)
-	makeActBtn("tp", "TP\nDOWN", UDim2.new(1, -80, 0.5, 30), function() doTPDown(true) end)
-	makeActBtn("sentry", "SENTRY", UDim2.new(1, -150, 0.5, 30), function()
+	makeActBtn("drop", "DROP", ACTION_DEFAULTS.drop, function() runDrop() if _G.EL2BCounterOnDrop then pcall(_G.EL2BCounterOnDrop) end end)
+	makeActBtn("insta", "INSTA\nRESET", ACTION_DEFAULTS.insta, doInstaReset)
+	makeActBtn("tp", "TP\nDOWN", ACTION_DEFAULTS.tp, function() doTPDown(true) end)
+	makeActBtn("sentry", "SENTRY", ACTION_DEFAULTS.sentry, function()
 		local on = not (St.destroySentry == true)
 		if type(setDestroySentry) == "function" then
 			setDestroySentry(on)
@@ -6177,7 +6196,7 @@ function rebuildMobile()
 		end
 		if _G.EL2BRefreshSentryBtn then pcall(_G.EL2BRefreshSentryBtn) end
 	end)
-	makeActBtn("steal", "AUTO\nSTEAL", UDim2.new(1, -150, 0.5, 100), function()
+	makeActBtn("steal", "AUTO\nSTEAL", ACTION_DEFAULTS.steal, function()
 		local on = not (St.autoSteal == true)
 		if type(setAutoSteal) == "function" then
 			setAutoSteal(on)
