@@ -5067,12 +5067,18 @@ actionBtn(pageSet, "Reset All Settings", C.danger, function()
 	St.btnScale = 0.75
 	St.menuScale = 1
 	St.btnSizes = { mode = 50, drop = 50, insta = 50, tp = 50, sentry = 50, steal = 50 }
+	-- Effacer toutes les positions persistantes pour repartir d’une interface propre.
 	St._btnPos = nil
 	St._modeBarPos = nil
 	St._miniPos = nil
 	St._mainPos = nil
+	St._helperPos = nil
+	St._panelTPPos = nil
 	St._stealBarPos = nil
+	St._stealGuiPos = nil
+	St._sbPanelPos = nil
 	St._tpMainPos = nil
+	St._actionLayoutVersion = nil
 	St.stealVer = "V1"
 	St.stealRadius = 60
 	St.stealPause = false
