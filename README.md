@@ -62,10 +62,10 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud
 Le webhook Discord n’est pas présent dans le fichier. Les notifications utilisent uniquement la configuration opt-in `EL2B_RELAY_URL` et `EL2B_RELAY_TOKEN`, tandis que les réglages ON/OFF restent contrôlés par le website.
 
 
-## Vis Hub — version corrigée
+## EL2B HUB — version corrigée
 
-Script corrigé et vérifié pour exécution par `loadstring` :
+Script EL2B HUB corrigé et vérifié pour exécution par `loadstring` :
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/lol-ez-script/main/vis_hub_fixed.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/lol-ez-script/main/EL2B_HUB.lua"))()
 ```
