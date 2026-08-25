@@ -749,34 +749,24 @@ local function isNearPodiumWithPrompt()
     local plots=workspace:FindFirstChild("Plots")
     if not plots then return false end
     for _,plot in ipairs(plots:GetChildren()) do
-        if isMyPlotByName(plot.Name) then 
-            continue 
-        end
-        local podiums=plot:FindFirstChild("AnimalPodiums")
-        if not podiums then 
-            continue 
-        end
-        for _,podium in ipairs(podiums:GetChildren()) do
-            local base=podium:FindFirstChild("Base")
-            if not base then 
-                continue 
-            end
-            local sp=base:FindFirstChild("Spawn")
-            if not sp then 
-                continue 
-            end
-            local d=(hrpL.Position-sp.Position).Magnitude
-            if d>Steal.StealRadius then 
-                continue 
-            end
-            local att=sp:FindFirstChild("PromptAttachment")
-            if not att then 
-                continue 
-            end
-            for _,obj in ipairs(att:GetChildren()) do 
-                if obj:IsA("ProximityPrompt") and obj.Enabled then 
-                    return true,d 
-                end 
+        if not isMyPlotByName(plot.Name) then
+            local podiums=plot:FindFirstChild("AnimalPodiums")
+            if podiums then
+                for _,podium in ipairs(podiums:GetChildren()) do
+                    local base=podium:FindFirstChild("Base")
+                    local sp=base and base:FindFirstChild("Spawn")
+                    if sp then
+                        local d=(hrpL.Position-sp.Position).Magnitude
+                        local att=sp:FindFirstChild("PromptAttachment")
+                        if d<=Steal.StealRadius and att then
+                            for _,obj in ipairs(att:GetChildren()) do
+                                if obj:IsA("ProximityPrompt") and obj.Enabled then
+                                    return true,d
+                                end
+                            end
+                        end
+                    end
+                end
             end
         end
     end
@@ -792,26 +782,24 @@ local function findNearestPrompt()
     if not plots then return nil end
     local nearest,dist=nil,math.huge
     for _,plot in ipairs(plots:GetChildren()) do
-        if isMyPlotByName(plot.Name) then 
-            continue 
-        end
-        local pods=plot:FindFirstChild("AnimalPodiums")
-        if not pods then 
-            continue 
-        end
-        for _,pod in ipairs(pods:GetChildren()) do
-            local base=pod:FindFirstChild("Base")
-            local sp=base and base:FindFirstChild("Spawn")
-            if sp then
-                local d=(sp.Position-root.Position).Magnitude
-                if d<=Steal.StealRadius and dist>d then
-                    local att=sp:FindFirstChild("PromptAttachment")
-                    if att then 
-                        for _,prompt in ipairs(att:GetChildren()) do 
-                            if prompt:IsA("ProximityPrompt") and prompt.ActionText:find("Steal") then 
-                                nearest,dist=prompt,d 
-                            end 
-                        end 
+        if not isMyPlotByName(plot.Name) then
+            local pods=plot:FindFirstChild("AnimalPodiums")
+            if pods then
+                for _,pod in ipairs(pods:GetChildren()) do
+                    local base=pod:FindFirstChild("Base")
+                    local sp=base and base:FindFirstChild("Spawn")
+                    if sp then
+                        local d=(sp.Position-root.Position).Magnitude
+                        if d<=Steal.StealRadius and dist>d then
+                            local att=sp:FindFirstChild("PromptAttachment")
+                            if att then
+                                for _,prompt in ipairs(att:GetChildren()) do
+                                    if prompt:IsA("ProximityPrompt") and tostring(prompt.ActionText):find("Steal",1,true) then
+                                        nearest,dist=prompt,d
+                                    end
+                                end
+                            end
+                        end
                     end
                 end
             end
