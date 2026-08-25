@@ -2153,8 +2153,12 @@ loadCfg()
 task.spawn(function()
 	while true do
 		task.wait(3)
-		local ok, err = pcall(saveCfg)
-		if not ok then warn("[EL2BHub] autosave 3s fail:", err) end
+		-- Sans writefile, la configuration reste en mémoire : ne pas produire
+		-- un avertissement toutes les trois secondes.
+		if type(writefile) == "function" then
+			local ok, err = pcall(saveCfg)
+			if not ok then warn("[EL2BHub] autosave fail:", err) end
+		end
 	end
 end)
 
@@ -2336,6 +2340,37 @@ function setActiveMode(mode)
 	if _G.EL2BRefreshModeBar then pcall(_G.EL2BRefreshModeBar) end
 	if _G.EL2BRefreshV2ModeBar then pcall(_G.EL2BRefreshV2ModeBar) end
 	if _G.EL2BRefreshModeCards then pcall(_G.EL2BRefreshModeCards) end
+	pcall(saveCfg)
+end
+
+-- Préréglages de déplacement limités : ils utilisent uniquement WalkSpeed
+-- et peuvent être arrêtés immédiatement depuis le GUI.
+local SAFE_MOVEMENT_PRESETS = { Walk = 16, Jog = 20, Sprint = 24 }
+function applySafeMovementPreset(name)
+	local speed = SAFE_MOVEMENT_PRESETS[name]
+	if not speed then return end
+	St.modes = type(St.modes) == "table" and St.modes or {}
+	if type(St.modes.Custom) ~= "table" then
+		St.modes.Custom = { norm = 16, steal = 16, key = Enum.KeyCode.C }
+	end
+	St.modes.Custom.norm = speed
+	St.modes.Custom.steal = speed
+	St.modes.Custom.key = St.modes.Custom.key or Enum.KeyCode.C
+	St.speedMethod = "WalkSpeed"
+	St.activeMode = "Custom"
+	St.speedOn = true
+	currentSpeedValue = speed
+	startSpeedBoost()
+	if _G.EL2BRefreshModeCards then pcall(_G.EL2BRefreshModeCards) end
+	pcall(saveCfg)
+end
+
+function stopSafeMovement()
+	St.speedOn = false
+	stopSpeedBoost()
+	local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+	if hum then pcall(function() hum.WalkSpeed = 16 end) end
+	currentSpeedValue = 16
 	pcall(saveCfg)
 end
 
@@ -4341,6 +4376,38 @@ function _G.EL2BRefreshModeCards()
 end
 _G.EL2BRefreshModeCards()
 
+section(pagePlayer, "* — MOVEMENT (LIMITED)", 15)
+do
+	local moveRow = row(pagePlayer, 42, 16)
+	local presets = {
+		{ label = "Walk", name = "Walk" },
+		{ label = "Jog", name = "Jog" },
+		{ label = "Sprint", name = "Sprint" },
+		{ label = "Stop", name = "Stop" },
+	}
+	for index, preset in ipairs(presets) do
+		local button = Instance.new("TextButton")
+		button.Size = UDim2.new(0.25, -7, 0, 26)
+		button.Position = UDim2.new(0.25 * (index - 1), 5, 0.5, -13)
+		button.BackgroundColor3 = preset.name == "Stop" and C.danger or C.box
+		button.BorderSizePixel = 0
+		button.Text = preset.label
+		button.TextColor3 = preset.name == "Stop" and Color3.fromRGB(255, 255, 255) or C.text
+		button.TextSize = 11
+		button.Font = Enum.Font.GothamBold
+		button.AutoButtonColor = false
+		button.ZIndex = 25
+		button.Parent = moveRow
+		corner(button, 6)
+		button.Activated:Connect(function()
+			if preset.name == "Stop" then
+				stopSafeMovement()
+			else
+				applySafeMovementPreset(preset.name)
+			end
+		end)
+	end
+end
 
 -- ============================================================
 -- Ragdoll TP Left/Right removed
