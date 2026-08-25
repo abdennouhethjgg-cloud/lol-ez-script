@@ -1435,14 +1435,14 @@ task.spawn(function()
 				saved.expanded = d.expanded == true
 				saved.scale = math.clamp(tonumber(d.scale) or 1, 0.5, 2.5)
 				saved.bgIndex = math.clamp(tonumber(d.bgIndex) or 1, 1, #BackgroundIDs)
-				saved.radius = tonumber(d.radius) or 60
+				saved.radius = math.clamp(tonumber(d.radius) or 60, 1, 500)
 				saved.enabled = d.enabled == true
 				saved.mode = (d.mode == "V2" or d.mode == "V3") and d.mode or "V1"
 				if type(d.pos) == "table" then saved.pos = d.pos end
 			end
 		end
 	end)
-	autoStealRadius = tonumber(saved.radius) or 60
+	autoStealRadius = math.clamp(tonumber(saved.radius) or 60, 1, 500)
 
 	local main
 	local function saveVAS()
@@ -1463,7 +1463,7 @@ task.spawn(function()
 				scale = saved.scale,
 				pos = saved.pos,
 				bgIndex = saved.bgIndex,
-				radius = tonumber(autoStealRadius) or 60,
+				radius = math.clamp(tonumber(autoStealRadius) or 60, 1, 500),
 				enabled = autoStealEnabled == true,
 				mode = uiMode,
 			}))
@@ -7627,6 +7627,8 @@ task.spawn(function()
 	if not src then
 		-- Use already-defined setAutoSteal in this file; boost by calling Vis setups if present
 		warn("[Vis] AutoSteal embed not found via readfile — using internal + global hooks")
+	elseif type(loadstring) ~= "function" then
+		warn("[Vis] AutoSteal embed not loaded: loadstring is unavailable in this environment")
 	else
 		local fn, err = loadstring(src)
 		if fn then
