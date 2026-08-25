@@ -35,7 +35,7 @@ function Library:CreateWindow(title)
     MainFrame.Name = "MainFrame"
     MainFrame.Parent = ScreenGui
     MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
+    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -120)
     MainFrame.Size = UDim2.new(0, 500, 0, 320)
     MainFrame.Active = true
 
@@ -324,106 +324,6 @@ function Library:CreateWindow(title)
             -- Set initial handle position
             local initialPercentage = (defaultValue - min) / (max - min)
             SliderHandle.Position = UDim2.new(initialPercentage, 0, 0, 0)
-
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
-        end
-
-        return Tab
-    end
-            local ToggleButton = Instance.new("TextButton")
-            local UICorner_T = Instance.new("UICorner")
-            local Title_T = Instance.new("TextLabel")
-            local Status = Instance.new("Frame")
-            local UICorner_S = Instance.new("UICorner")
-
-            ToggleFrame.Name = text .. "Toggle"
-            ToggleFrame.Parent = Page
-            ToggleFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-            ToggleFrame.Size = UDim2.new(1, -5, 0, 35)
-
-            UICorner_T.CornerRadius = UDim.new(0, 6)
-            UICorner_T.Parent = ToggleFrame
-
-            Title_T.Parent = ToggleFrame
-            Title_T.BackgroundTransparency = 1.000
-            Title_T.Position = UDim2.new(0, 10, 0, 0)
-            Title_T.Size = UDim2.new(1, -60, 1, 0)
-            Title_T.Font = Enum.Font.Gotham
-            Title_T.Text = text
-            Title_T.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Title_T.TextSize = 13.000
-            Title_T.TextXAlignment = Enum.TextXAlignment.Left
-
-            Status.Name = "Status"
-            Status.Parent = ToggleFrame
-            Status.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-            Status.Position = UDim2.new(1, -30, 0.5, -8)
-            Status.Size = UDim2.new(0, 16, 0, 16)
-
-            UICorner_S.CornerRadius = UDim.new(1, 0)
-            UICorner_S.Parent = Status
-
-            ToggleButton.Parent = ToggleFrame
-            ToggleButton.BackgroundTransparency = 1.000
-            ToggleButton.Size = UDim2.new(1, 0, 1, 0)
-            ToggleButton.Text = ""
-
-            local enabled = false
-            ToggleButton.MouseButton1Click:Connect(function()
-                enabled = not enabled
-                Status.BackgroundColor3 = enabled and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
-                pcall(function() callback(enabled) end)
-            end)
-
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
-        end
-
-        return Tab
-    end
-            local ToggleButton = Instance.new("TextButton")
-            local UICorner_T = Instance.new("UICorner")
-            local Title_T = Instance.new("TextLabel")
-            local Status = Instance.new("Frame")
-            local UICorner_S = Instance.new("UICorner")
-
-            ToggleFrame.Name = text .. "Toggle"
-            ToggleFrame.Parent = Page
-            ToggleFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-            ToggleFrame.Size = UDim2.new(1, -5, 0, 35)
-
-            UICorner_T.CornerRadius = UDim.new(0, 6)
-            UICorner_T.Parent = ToggleFrame
-
-            Title_T.Parent = ToggleFrame
-            Title_T.BackgroundTransparency = 1.000
-            Title_T.Position = UDim2.new(0, 10, 0, 0)
-            Title_T.Size = UDim2.new(1, -60, 1, 0)
-            Title_T.Font = Enum.Font.Gotham
-            Title_T.Text = text
-            Title_T.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Title_T.TextSize = 13.000
-            Title_T.TextXAlignment = Enum.TextXAlignment.Left
-
-            Status.Name = "Status"
-            Status.Parent = ToggleFrame
-            Status.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-            Status.Position = UDim2.new(1, -30, 0.5, -8)
-            Status.Size = UDim2.new(0, 16, 0, 16)
-
-            UICorner_S.CornerRadius = UDim.new(1, 0)
-            UICorner_S.Parent = Status
-
-            ToggleButton.Parent = ToggleFrame
-            ToggleButton.BackgroundTransparency = 1.000
-            ToggleButton.Size = UDim2.new(1, 0, 1, 0)
-            ToggleButton.Text = ""
-
-            local enabled = false
-            ToggleButton.MouseButton1Click:Connect(function()
-                enabled = not enabled
-                Status.BackgroundColor3 = enabled and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
-                pcall(function() callback(enabled) end)
-            end)
 
             Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
         end
