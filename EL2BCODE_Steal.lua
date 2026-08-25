@@ -4007,6 +4007,7 @@ function section(parent, text, order)
 	t.Font = Enum.Font.GothamBold
 	t.TextXAlignment = Enum.TextXAlignment.Left
 	t.Parent = f
+	return f
 end
 function row(parent, h, order)
 	local f = Instance.new("Frame")
@@ -5386,10 +5387,19 @@ local function helperButton(text, xScale, xOffset, yOffset, widthScale, widthOff
 	return button
 end
 
-helperButton("MENU", 0, 0, 0, 1, 0, C.accent, function()
+local function openFarmMenu()
 	openMenu()
 	setTab("Player")
-end)
+	task.defer(function()
+		local farmSection = pagePlayer and pagePlayer:FindFirstChild("EL2BFarmSection")
+		if farmSection and pagePlayer then
+			local canvasY = math.max(0, farmSection.AbsolutePosition.Y - pagePlayer.AbsolutePosition.Y + pagePlayer.CanvasPosition.Y - 6)
+			pagePlayer.CanvasPosition = Vector2.new(0, canvasY)
+		end
+	end)
+end
+
+helperButton("FARM", 0, 0, 0, 1, 0, C.accent, openFarmMenu)
 helperButton("PLAYER", 0, 0, 34, 0.5, -3, C.box, function()
 	openMenu()
 	setTab("Player")
@@ -7387,7 +7397,8 @@ end
 task.defer(function()
 	-- Auto steal on Player page
 	if not pagePlayer then warn("[EL2BHub] pagePlayer nil") return end
-	section(pagePlayer, "* — AUTO STEAL", 20)
+	local farmSection = section(pagePlayer, "* — AUTO STEAL", 20)
+	farmSection.Name = "EL2BFarmSection"
 	local function safeSetAS(on)
 		if type(setAutoSteal) == "function" then
 			setAutoSteal(on)
@@ -7503,7 +7514,8 @@ task.defer(function()
 		end)
 	end
 
-	setTab("Panel")
+			setTab("Player")
+
 end)
 
 print("[EL2BHub Ext] Panel TP | AutoSteal V1/V2 + bar | InfJump hold/manual | ToolAim ON")
