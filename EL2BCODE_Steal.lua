@@ -5338,7 +5338,7 @@ local function buildGui()
             _hubRestored = true
         end
     end
-    if not _hubRestored then outer.Position = UDim2.new(0.5, 0, 0.5, 0) end
+    if not _hubRestored then outer.Position = UDim2.new(0.5, 0, 0.66, 0) end
 
     outer.BackgroundColor3 = Color3.fromRGB(10, 10, 18)
     outer.BackgroundTransparency = 0.15
