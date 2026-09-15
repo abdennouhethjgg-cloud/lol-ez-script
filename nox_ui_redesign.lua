@@ -1894,6 +1894,46 @@ local miniFullSize = nil
 local miniCollapsedSize = UDim2.new(0, 220, 0, 42)
 local miniPetsCache = {}
 local miniSortMode = "slot"
+local RARITY_ORDER = {
+    common = 1, uncommon = 2, rare = 3, epic = 4,
+    legendary = 5, mythic = 6, mythical = 6, secret = 7,
+}
+
+local function readMetadata(source, names)
+    if not source then return nil end
+    for _, attributeName in ipairs(names) do
+        local ok, value = pcall(function() return source:GetAttribute(attributeName) end)
+        if ok and value ~= nil and value ~= "" then return value end
+    end
+    return nil
+end
+
+local function getBrainrotMetadata(prompt, spawnPoint, fallbackName)
+    local sources = { prompt, spawnPoint, prompt and prompt.Parent, spawnPoint and spawnPoint.Parent }
+    local rarity, value
+    for _, source in ipairs(sources) do
+        rarity = rarity or readMetadata(source, { "Rarity", "rarity", "Tier", "tier" })
+        value = value or readMetadata(source, { "Value", "value", "Price", "price", "Worth", "worth" })
+    end
+    local rarityText = tostring(rarity or "Unknown")
+    local rarityRank = RARITY_ORDER[string.lower(rarityText)] or 0
+    local numericValue = tonumber(value) or 0
+    local cleanName = string.lower(tostring(fallbackName or ""))
+    if numericValue == 0 then
+        local numberText, suffix = string.match(cleanName, "%$([%d%.]+)([kmb]?)")
+        local multipliers = { k = 1000, m = 1000000, b = 1000000000 }
+        if numberText then numericValue = (tonumber(numberText) or 0) * (multipliers[suffix] or 1) end
+    end
+    if not rarity then
+        for rarityName, rank in pairs(RARITY_ORDER) do
+            if string.find(cleanName, rarityName, 1, true) then
+                rarityText, rarityRank = rarityName, rank
+                break
+            end
+        end
+    end
+    return rarityText, rarityRank, numericValue
+end
 
 local function refreshMiniBrainrotList(pets)
     if not miniBrainrotList then return end
@@ -1914,6 +1954,12 @@ local function refreshMiniBrainrotList(pets)
     table.sort(visiblePets, function(a, b)
         if miniSortMode == "name" then
             return string.lower(tostring(a.name)) < string.lower(tostring(b.name))
+        elseif miniSortMode == "rarity" then
+            if a.rarityRank == b.rarityRank then return (a.value or 0) > (b.value or 0) end
+            return (a.rarityRank or 0) > (b.rarityRank or 0)
+        elseif miniSortMode == "value" then
+            if (a.value or 0) == (b.value or 0) then return (a.rarityRank or 0) > (b.rarityRank or 0) end
+            return (a.value or 0) > (b.value or 0)
         end
         return (a.slot or 0) < (b.slot or 0)
     end)
@@ -1938,7 +1984,7 @@ local function refreshMiniBrainrotList(pets)
     for index, petData in ipairs(visiblePets) do
         local row = Instance.new("TextButton")
         row.Name = "Brainrot_" .. tostring(index)
-        row.Size = UDim2.new(1, -8, 0, 28)
+        row.Size = UDim2.new(1, -8, 0, 34)
         row.BackgroundColor3 = selectedPrompt == petData.prompt and Color3.fromRGB(65, 0, 0) or Color3.fromRGB(24, 24, 24)
         row.BorderSizePixel = 0
         row.AutoButtonColor = false
@@ -1962,6 +2008,17 @@ local function refreshMiniBrainrotList(pets)
         nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
         nameLabel.TextXAlignment = Enum.TextXAlignment.Left
         nameLabel.Parent = row
+
+        local metaLabel = Instance.new("TextLabel")
+        metaLabel.Size = UDim2.new(1, -60, 0, 11)
+        metaLabel.Position = UDim2.new(0, 8, 1, -12)
+        metaLabel.BackgroundTransparency = 1
+        metaLabel.Text = tostring(petData.rarity or "Unknown") .. "  $" .. tostring(petData.value or 0)
+        metaLabel.TextColor3 = Color3.fromRGB(155, 155, 155)
+        metaLabel.TextSize = 8
+        metaLabel.Font = Enum.Font.Gotham
+        metaLabel.TextXAlignment = Enum.TextXAlignment.Left
+        metaLabel.Parent = row
 
         local slotLabel = Instance.new("TextLabel")
         slotLabel.Size = UDim2.new(0, 38, 1, 0)
@@ -2007,7 +2064,12 @@ updatePetList = function()
                         for _, child in ipairs(attachment:GetChildren()) do
                             if child:IsA("ProximityPrompt") and isValidStealPrompt(child) then
                                 local petName = child.ObjectText or "Pet"
-                                table.insert(tempPets, { prompt = child, slot = slotNumber, name = petName, spawn = spawnPoint })
+                                local rarity, rarityRank, value = getBrainrotMetadata(child, spawnPoint, petName)
+                                table.insert(tempPets, {
+                                    prompt = child, slot = slotNumber, name = petName,
+                                    spawn = spawnPoint, rarity = rarity,
+                                    rarityRank = rarityRank, value = value,
+                                })
                             end
                         end
                     end
@@ -2459,8 +2521,9 @@ miniRefresh.MouseButton1Click:Connect(function()
     if updatePetList then updatePetList() end
 end)
 miniSort.MouseButton1Click:Connect(function()
-    miniSortMode = miniSortMode == "slot" and "name" or "slot"
-    miniSort.Text = miniSortMode == "slot" and "#" or "A"
+    local nextMode = { slot = "name", name = "rarity", rarity = "value", value = "slot" }
+    miniSortMode = nextMode[miniSortMode] or "slot"
+    miniSort.Text = ({ slot = "#", name = "A", rarity = "R", value = "$" })[miniSortMode]
     refreshMiniBrainrotList(miniPetsCache)
 end)
 miniCollapse.MouseButton1Click:Connect(function()
