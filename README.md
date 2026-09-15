@@ -49,6 +49,12 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud
 - `el2b_best.lua` : Code Sniper & Auto Redeemer.
 - `grf_panel.lua` : Bibliothèque UI utilisée pour nos hubs.
 - `brainrot_lag_panel.lua` : **ULTRA SIGMA V3** - Panel de destruction serveur massif. Inclut le **Data Spam**, **Physics Overload** et **Void Lagger V3** pour faire lagger TOUS les joueurs dans "Steal a Brainrot" (spécialement en serveur privé).
+- `nox_ui_redesign.lua` : Interface NOX corrigée, avec onglets Brainrots/Settings, boutons Flash/Block/Reset et raccourci F12.
+
+### Utilisation de NOX
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/abdennouhethjgg-cloud/lol-ez-script/main/nox_ui_redesign.lua"))()
+```
 
 ---
 *Créé avec passion par LOL Ez Team.*
