@@ -1,5 +1,5 @@
 --[[
-    NOX - UI REDESIGN
+    EL2B PVP - UI REDESIGN
     - Abas na esquerda (Brainrots / Settings)
     - Linha divisória vertical
     - Botões Flash, Block, Reset na parte inferior
@@ -7,7 +7,7 @@
     - Bordas com efeito vermelho/preto
     - Cores vermelho e preto
     - Sem emojis
-    - Nome: NOX
+    - Nome: EL2B PVP
     - F12 = gethui() + Dex Explorer
 ]]
 if not game:IsLoaded() then game.Loaded:Wait() end
@@ -29,12 +29,12 @@ local TeleportService   = game:GetService("TeleportService")
 
 local LocalPlayer = Players.LocalPlayer
 if not LocalPlayer then
-    warn("[NOX] LocalPlayer unavailable: run this as a client script")
+        warn("[EL2B PVP] LocalPlayer unavailable: run this as a client script")
     return
 end
 local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui", 15)
 if not PlayerGui then
-    warn("[NOX] PlayerGui unavailable: interface disabled")
+    warn("[EL2B PVP] PlayerGui unavailable: interface disabled")
     return
 end
 
@@ -43,10 +43,10 @@ local thisScriptStopped = false
 local structureWarningShown = false
 
 local function notifyCompatibility(message)
-    warn("[NOX] " .. message)
+    warn("[EL2B PVP] " .. message)
     pcall(function()
         StarterGui:SetCore("SendNotification", {
-            Title = "NOX - Compatibility",
+            Title = "EL2B PVP - Compatibility",
             Text = message,
             Duration = 5,
         })
@@ -133,7 +133,7 @@ local function openDex()
     -- Mensagem no chat
     pcall(function()
         StarterGui:SetCore("SendNotification", {
-            Title = "NOX",
+            Title = "EL2B PVP",
             Text = "Dex Explorer aberto!",
             Duration = 3,
         })
@@ -2373,10 +2373,16 @@ end
 -- ==========================================
 -- UI REDESIGN - Abas na esquerda + botões embaixo
 -- CORES: VERMELHO E PRETO
--- NOME: NOX
+-- NOME: EL2B PVP
 -- ==========================================
-local old = PlayerGui:FindFirstChild("NOX")
+local oldLegacy = PlayerGui:FindFirstChild("NOX")
+if oldLegacy then oldLegacy:Destroy() end
+local oldLegacyMini = PlayerGui:FindFirstChild("NOX_BrainrotMini")
+if oldLegacyMini then oldLegacyMini:Destroy() end
+local old = PlayerGui:FindFirstChild("EL2B_PVP")
 if old then old:Destroy() end
+local oldMini = PlayerGui:FindFirstChild("EL2B_PVP_BrainrotMini")
+if oldMini then oldMini:Destroy() end
 
 local C = {
     accent     = Color3.fromRGB(200, 0, 0),
@@ -2451,7 +2457,7 @@ local LAYOUT = {
 local L = LAYOUT[DEVICE]
 
 local NOX_GUI = Instance.new("ScreenGui")
-NOX_GUI.Name = "NOX"
+NOX_GUI.Name = "EL2B_PVP"
 NOX_GUI.ResetOnSpawn = false
 NOX_GUI.DisplayOrder = 999
 NOX_GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -2460,7 +2466,7 @@ NOX_GUI.Parent = PlayerGui
 
 -- Mini GUI indépendante : aperçu compact des Brainrots détectés
 local miniGui = Instance.new("ScreenGui")
-miniGui.Name = "NOX_BrainrotMini"
+miniGui.Name = "EL2B_PVP_BrainrotMini"
 miniGui.ResetOnSpawn = false
 miniGui.DisplayOrder = 1000
 miniGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -2481,13 +2487,14 @@ miniStroke.Thickness = 1
 miniStroke.Parent = miniFrame
 
 local miniHeader = Instance.new("TextLabel")
-miniHeader.Size = UDim2.new(1, -70, 0, 30)
+miniHeader.Size = UDim2.new(1, -100, 0, 30)
 miniHeader.Position = UDim2.new(0, 10, 0, 0)
 miniHeader.BackgroundTransparency = 1
-miniHeader.Text = "BRAINROTS"
+miniHeader.Text = "EL2B PVP  |  BRAINROTS"
 miniHeader.TextColor3 = Color3.fromRGB(255, 0, 0)
 miniHeader.TextSize = 11
 miniHeader.Font = Enum.Font.GothamBold
+miniHeader.TextTruncate = Enum.TextTruncate.AtEnd
 miniHeader.TextXAlignment = Enum.TextXAlignment.Left
 miniHeader.Parent = miniFrame
 
@@ -2669,7 +2676,7 @@ HeaderTitle.Size = UDim2.new(1, -80, 1, 0)
 HeaderTitle.Position = UDim2.new(0, 14, 0, 0)
 HeaderTitle.BackgroundTransparency = 1
 HeaderTitle.ZIndex = 5
-HeaderTitle.Text = "NOX"
+HeaderTitle.Text = "EL2B PVP"
 HeaderTitle.TextColor3 = C.accent
 HeaderTitle.TextSize = L.textSize.header
 HeaderTitle.Font = Enum.Font.GothamBold
@@ -3643,10 +3650,10 @@ pcall(function() clearSlotMarker() end)
 -- Notificação de carregamento
 pcall(function()
     StarterGui:SetCore("SendNotification", {
-        Title = "NOX",
+        Title = "EL2B PVP",
         Text = "F12 = Dex Explorer + gethui()",
         Duration = 3,
     })
 end)
 
-print("[NOX] Loaded - Red/Black theme | F12 = Dex Explorer + gethui()")
+print("[EL2B PVP] Loaded - Red/Black theme | F12 = Dex Explorer + gethui()")
