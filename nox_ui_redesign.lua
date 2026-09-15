@@ -28,15 +28,50 @@ local HttpService       = game:GetService("HttpService")
 local TeleportService   = game:GetService("TeleportService")
 
 local LocalPlayer = Players.LocalPlayer
-local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
+if not LocalPlayer then
+    warn("[NOX] LocalPlayer unavailable: run this as a client script")
+    return
+end
+local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui", 15)
+if not PlayerGui then
+    warn("[NOX] PlayerGui unavailable: interface disabled")
+    return
+end
 
 local ActiveConnections = {}
 local thisScriptStopped = false
+local structureWarningShown = false
+
+local function notifyCompatibility(message)
+    warn("[NOX] " .. message)
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = "NOX - Compatibility",
+            Text = message,
+            Duration = 5,
+        })
+    end)
+end
+
+local function getValidatedPlots()
+    local plots = Workspace:FindFirstChild("Plots")
+    if not plots then
+        return nil, "Workspace.Plots not found"
+    end
+    if not plots:IsA("Folder") and not plots:IsA("Model") then
+        return nil, "Workspace.Plots has an unexpected class"
+    end
+    return plots
+end
 
 -- ==========================================
 -- F12: gethui() + DEX EXPLORER
 -- ==========================================
 local function loadDexExplorer()
+    if type(gethui) ~= "function" or type(loadstring) ~= "function" then
+        notifyCompatibility("Dex indisponible dans cet exécuteur")
+        return false
+    end
     pcall(function()
         -- Fecha Dex se já estiver aberto
         for _, gui in ipairs(gethui():GetChildren()) do
@@ -57,7 +92,10 @@ local function loadDexExplorer()
     for _, url in ipairs(dexScripts) do
         if not dexLoaded then
             pcall(function()
-                local dex = loadstring(game:HttpGet(url))()
+                local response = game:HttpGet(url)
+                local compiled = loadstring(response)
+                if not compiled then return end
+                local dex = compiled()
                 if dex then
                     dexLoaded = true
                 end
@@ -68,13 +106,20 @@ local function loadDexExplorer()
     -- Se não carregou, tenta com o Infinite Yield Dex
     if not dexLoaded then
         pcall(function()
-            local dex = loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/Modules/Dex.lua"))()
+            local response = game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/Modules/Dex.lua")
+            local compiled = loadstring(response)
+            if compiled then compiled() end
         end)
     end
+    return dexLoaded
 end
 
 -- Mostra o gethui() no console e carrega Dex
 local function openDex()
+    if type(gethui) ~= "function" then
+        notifyCompatibility("F12 indisponible: gethui absent")
+        return
+    end
     print("=== GETHUI() ===")
     local guiList = gethui():GetChildren()
     for i, gui in ipairs(guiList) do
@@ -2055,14 +2100,21 @@ updatePetList = function()
     if isStealing or autoStealEnabled or thisScriptStopped then return end
     if not scrollListRef then return end
 
-    local plotsFolder = Workspace:FindFirstChild("Plots")
-    if not plotsFolder then return end
+    local plotsFolder, structureError = getValidatedPlots()
+    if not plotsFolder then
+        if not structureWarningShown then
+            structureWarningShown = true
+            notifyCompatibility(structureError .. "; liste Brainrots désactivée")
+        end
+        return
+    end
+    structureWarningShown = false
 
     local tempPets = {}
     for _, plot in ipairs(plotsFolder:GetChildren()) do
         if not isMyPlot(plot) then
             local podiums = plot:FindFirstChild("AnimalPodiums")
-            if podiums then
+            if podiums and (podiums:IsA("Folder") or podiums:IsA("Model")) then
                 for _, podium in ipairs(podiums:GetChildren()) do
                     local slotNumber = tonumber(podium.Name:match("%d+")) or 1
                     local base = podium:FindFirstChild("Base") or podium
