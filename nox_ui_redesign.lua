@@ -1882,6 +1882,84 @@ end))
 -- ==========================================
 local scrollListRef = nil
 local lastPetsSignature = ""
+local miniBrainrotList = nil
+local miniBrainrotCount = nil
+local miniBrainrotRows = {}
+
+local function refreshMiniBrainrotList(pets)
+    if not miniBrainrotList then return end
+    for _, row in ipairs(miniBrainrotRows) do
+        if row and row.Parent then row:Destroy() end
+    end
+    miniBrainrotRows = {}
+
+    if miniBrainrotCount then
+        miniBrainrotCount.Text = tostring(#pets) .. " FOUND"
+    end
+
+    if #pets == 0 then
+        local empty = Instance.new("TextLabel")
+        empty.Size = UDim2.new(1, -16, 0, 28)
+        empty.BackgroundTransparency = 1
+        empty.Text = "No brainrots detected"
+        empty.TextColor3 = Color3.fromRGB(150, 150, 150)
+        empty.TextSize = 11
+        empty.Font = Enum.Font.Gotham
+        empty.Parent = miniBrainrotList
+        table.insert(miniBrainrotRows, empty)
+        return
+    end
+
+    for index, petData in ipairs(pets) do
+        local row = Instance.new("TextButton")
+        row.Name = "Brainrot_" .. tostring(index)
+        row.Size = UDim2.new(1, -8, 0, 28)
+        row.BackgroundColor3 = selectedPrompt == petData.prompt and Color3.fromRGB(65, 0, 0) or Color3.fromRGB(24, 24, 24)
+        row.BorderSizePixel = 0
+        row.AutoButtonColor = false
+        row.Text = ""
+        row.Parent = miniBrainrotList
+        Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
+
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = selectedPrompt == petData.prompt and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(48, 48, 48)
+        stroke.Thickness = selectedPrompt == petData.prompt and 1.2 or 1
+        stroke.Parent = row
+
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Size = UDim2.new(1, -52, 1, 0)
+        nameLabel.Position = UDim2.new(0, 8, 0, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = tostring(petData.name or "Brainrot")
+        nameLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
+        nameLabel.TextSize = 11
+        nameLabel.Font = Enum.Font.GothamMedium
+        nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        nameLabel.Parent = row
+
+        local slotLabel = Instance.new("TextLabel")
+        slotLabel.Size = UDim2.new(0, 38, 1, 0)
+        slotLabel.Position = UDim2.new(1, -44, 0, 0)
+        slotLabel.BackgroundTransparency = 1
+        slotLabel.Text = "#" .. tostring(petData.slot)
+        slotLabel.TextColor3 = Color3.fromRGB(220, 0, 0)
+        slotLabel.TextSize = 10
+        slotLabel.Font = Enum.Font.GothamBold
+        slotLabel.TextXAlignment = Enum.TextXAlignment.Right
+        slotLabel.Parent = row
+
+        row.MouseButton1Click:Connect(function()
+            if isStealing or autoStealEnabled then return end
+            selectedPrompt = petData.prompt
+            selectedSlotNumber = petData.slot
+            createSlotMarker(petData.prompt)
+            showTpPathVisual(petData.prompt, petData.slot)
+            updatePetList()
+        end)
+        table.insert(miniBrainrotRows, row)
+    end
+end
 
 local function updatePetList()
     if isStealing or autoStealEnabled or thisScriptStopped then return end
@@ -1914,6 +1992,7 @@ local function updatePetList()
     end
 
     table.sort(tempPets, function(a, b) return a.slot < b.slot end)
+    refreshMiniBrainrotList(tempPets)
 
     if _G.AutoSelectBest and #tempPets > 0 and not selectedPrompt then
         selectedPrompt = tempPets[1].prompt
@@ -2231,6 +2310,83 @@ NOX_GUI.DisplayOrder = 999
 NOX_GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 NOX_GUI.IgnoreGuiInset = false
 NOX_GUI.Parent = PlayerGui
+
+-- Mini GUI indépendante : aperçu compact des Brainrots détectés
+local miniGui = Instance.new("ScreenGui")
+miniGui.Name = "NOX_BrainrotMini"
+miniGui.ResetOnSpawn = false
+miniGui.DisplayOrder = 1000
+miniGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+miniGui.Parent = PlayerGui
+
+local miniFrame = Instance.new("Frame")
+miniFrame.Name = "BrainrotList"
+miniFrame.Size = DEVICE == "mobile" and UDim2.new(0, 190, 0, 150) or UDim2.new(0, 220, 0, 180)
+miniFrame.Position = DEVICE == "mobile" and UDim2.new(1, -200, 0, 70) or UDim2.new(1, -230, 0.5, -90)
+miniFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+miniFrame.BorderSizePixel = 0
+miniFrame.Active = true
+miniFrame.Parent = miniGui
+Instance.new("UICorner", miniFrame).CornerRadius = UDim.new(0, 10)
+local miniStroke = Instance.new("UIStroke")
+miniStroke.Color = Color3.fromRGB(180, 0, 0)
+miniStroke.Thickness = 1
+miniStroke.Parent = miniFrame
+
+local miniHeader = Instance.new("TextLabel")
+miniHeader.Size = UDim2.new(1, -70, 0, 30)
+miniHeader.Position = UDim2.new(0, 10, 0, 0)
+miniHeader.BackgroundTransparency = 1
+miniHeader.Text = "BRAINROTS"
+miniHeader.TextColor3 = Color3.fromRGB(255, 0, 0)
+miniHeader.TextSize = 11
+miniHeader.Font = Enum.Font.GothamBold
+miniHeader.TextXAlignment = Enum.TextXAlignment.Left
+miniHeader.Parent = miniFrame
+
+miniBrainrotCount = Instance.new("TextLabel")
+miniBrainrotCount.Size = UDim2.new(0, 55, 0, 30)
+miniBrainrotCount.Position = UDim2.new(1, -62, 0, 0)
+miniBrainrotCount.BackgroundTransparency = 1
+miniBrainrotCount.Text = "0 FOUND"
+miniBrainrotCount.TextColor3 = Color3.fromRGB(170, 170, 170)
+miniBrainrotCount.TextSize = 9
+miniBrainrotCount.Font = Enum.Font.GothamMedium
+miniBrainrotCount.TextXAlignment = Enum.TextXAlignment.Right
+miniBrainrotCount.Parent = miniFrame
+
+miniBrainrotList = Instance.new("ScrollingFrame")
+miniBrainrotList.Size = UDim2.new(1, -10, 1, -36)
+miniBrainrotList.Position = UDim2.new(0, 5, 0, 32)
+miniBrainrotList.BackgroundTransparency = 1
+miniBrainrotList.BorderSizePixel = 0
+miniBrainrotList.ScrollBarThickness = 2
+miniBrainrotList.ScrollBarImageColor3 = Color3.fromRGB(190, 0, 0)
+miniBrainrotList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+miniBrainrotList.CanvasSize = UDim2.new(0, 0, 0, 0)
+miniBrainrotList.Parent = miniFrame
+local miniLayout = Instance.new("UIListLayout")
+miniLayout.Padding = UDim.new(0, 3)
+miniLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+miniLayout.Parent = miniBrainrotList
+
+local miniDragging, miniDragStart, miniStartPos = false, nil, nil
+miniFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        miniDragging = true
+        miniDragStart = input.Position
+        miniStartPos = miniFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then miniDragging = false end
+        end)
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if not miniDragging then return end
+    if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then return end
+    local delta = input.Position - miniDragStart
+    miniFrame.Position = UDim2.new(miniStartPos.X.Scale, miniStartPos.X.Offset + delta.X, miniStartPos.Y.Scale, miniStartPos.Y.Offset + delta.Y)
+end)
 
 -- Border (contorno animado vermelho/preto)
 local BorderFrame = Instance.new("Frame")
@@ -3159,7 +3315,10 @@ CloseBtn.MouseButton1Click:Connect(function()
     local t1 = TweenService:Create(Win, info, { Size = UDim2.new(0,0,0,0) })
     local t2 = TweenService:Create(BorderFrame, info, { Size = UDim2.new(0,0,0,0) })
     t1:Play(); t2:Play()
-    t1.Completed:Connect(function() NOX_GUI:Destroy() end)
+    t1.Completed:Connect(function()
+        NOX_GUI:Destroy()
+        if miniGui and miniGui.Parent then miniGui:Destroy() end
+    end)
 end)
 
 -- Hover effects
