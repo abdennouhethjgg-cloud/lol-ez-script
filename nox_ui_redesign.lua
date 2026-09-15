@@ -941,7 +941,8 @@ local function connectAntiRagdollToChar(c)
     end
 
     table.insert(AntiRagdollConns, humanoid.StateChanged:Connect(function(_, newState)
-        if not antiRagdollEnabled then return end        if IsRagdollState() then
+        if not antiRagdollEnabled then return end
+        if IsRagdollState() then
             isRag = true
             humanoid:ChangeState(Enum.HumanoidStateType.Running)
             CleanRagdollEffects()
@@ -1885,6 +1886,7 @@ local lastPetsSignature = ""
 local miniBrainrotList = nil
 local miniBrainrotCount = nil
 local miniBrainrotRows = {}
+local updatePetList
 
 local function refreshMiniBrainrotList(pets)
     if not miniBrainrotList then return end
@@ -1961,7 +1963,7 @@ local function refreshMiniBrainrotList(pets)
     end
 end
 
-local function updatePetList()
+updatePetList = function()
     if isStealing or autoStealEnabled or thisScriptStopped then return end
     if not scrollListRef then return end
 
