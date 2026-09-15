@@ -1908,6 +1908,16 @@ local function readMetadata(source, names)
     return nil
 end
 
+local function parseBrainrotValue(rawValue)
+    if type(rawValue) == "number" then return rawValue end
+    if type(rawValue) ~= "string" then return 0 end
+    local compact = string.lower(rawValue):gsub(",", ""):gsub("%s+", "")
+    local numberText, suffix = string.match(compact, "[%$]?([%d%.]+)([kmb]?)")
+    if not numberText then return tonumber(compact) or 0 end
+    local multipliers = { k = 1000, m = 1000000, b = 1000000000 }
+    return (tonumber(numberText) or 0) * (multipliers[suffix] or 1)
+end
+
 local function getBrainrotMetadata(prompt, spawnPoint, fallbackName)
     local sources = { prompt, spawnPoint, prompt and prompt.Parent, spawnPoint and spawnPoint.Parent }
     local rarity, value
@@ -1917,12 +1927,10 @@ local function getBrainrotMetadata(prompt, spawnPoint, fallbackName)
     end
     local rarityText = tostring(rarity or "Unknown")
     local rarityRank = RARITY_ORDER[string.lower(rarityText)] or 0
-    local numericValue = tonumber(value) or 0
+    local numericValue = parseBrainrotValue(value)
     local cleanName = string.lower(tostring(fallbackName or ""))
     if numericValue == 0 then
-        local numberText, suffix = string.match(cleanName, "%$([%d%.]+)([kmb]?)")
-        local multipliers = { k = 1000, m = 1000000, b = 1000000000 }
-        if numberText then numericValue = (tonumber(numberText) or 0) * (multipliers[suffix] or 1) end
+        numericValue = parseBrainrotValue(string.match(cleanName, "%$[%d%.,]+[kmb]?"))
     end
     if not rarity then
         for rarityName, rank in pairs(RARITY_ORDER) do
