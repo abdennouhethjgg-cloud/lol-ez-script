@@ -1887,19 +1887,42 @@ local miniBrainrotList = nil
 local miniBrainrotCount = nil
 local miniBrainrotRows = {}
 local updatePetList
+local miniSearchBox = nil
+local miniListBody = nil
+local miniCollapsed = false
+local miniFullSize = nil
+local miniCollapsedSize = UDim2.new(0, 220, 0, 42)
+local miniPetsCache = {}
+local miniSortMode = "slot"
 
 local function refreshMiniBrainrotList(pets)
     if not miniBrainrotList then return end
+    miniPetsCache = pets
     for _, row in ipairs(miniBrainrotRows) do
         if row and row.Parent then row:Destroy() end
     end
     miniBrainrotRows = {}
 
+    local visiblePets = {}
+    local query = miniSearchBox and string.lower(miniSearchBox.Text or "") or ""
+    for _, petData in ipairs(pets) do
+        local name = string.lower(tostring(petData.name or "Brainrot"))
+        if query == "" or string.find(name, query, 1, true) then
+            table.insert(visiblePets, petData)
+        end
+    end
+    table.sort(visiblePets, function(a, b)
+        if miniSortMode == "name" then
+            return string.lower(tostring(a.name)) < string.lower(tostring(b.name))
+        end
+        return (a.slot or 0) < (b.slot or 0)
+    end)
+
     if miniBrainrotCount then
-        miniBrainrotCount.Text = tostring(#pets) .. " FOUND"
+        miniBrainrotCount.Text = tostring(#visiblePets) .. "/" .. tostring(#pets)
     end
 
-    if #pets == 0 then
+    if #visiblePets == 0 then
         local empty = Instance.new("TextLabel")
         empty.Size = UDim2.new(1, -16, 0, 28)
         empty.BackgroundTransparency = 1
@@ -1912,7 +1935,7 @@ local function refreshMiniBrainrotList(pets)
         return
     end
 
-    for index, petData in ipairs(pets) do
+    for index, petData in ipairs(visiblePets) do
         local row = Instance.new("TextButton")
         row.Name = "Brainrot_" .. tostring(index)
         row.Size = UDim2.new(1, -8, 0, 28)
@@ -2357,9 +2380,65 @@ miniBrainrotCount.Font = Enum.Font.GothamMedium
 miniBrainrotCount.TextXAlignment = Enum.TextXAlignment.Right
 miniBrainrotCount.Parent = miniFrame
 
+miniFullSize = miniFrame.Size
+
+local miniRefresh = Instance.new("TextButton")
+miniRefresh.Size = UDim2.new(0, 24, 0, 22)
+miniRefresh.Position = UDim2.new(1, -86, 0, 4)
+miniRefresh.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+miniRefresh.BorderSizePixel = 0
+miniRefresh.Text = "R"
+miniRefresh.TextColor3 = Color3.fromRGB(230, 230, 230)
+miniRefresh.TextSize = 10
+miniRefresh.Font = Enum.Font.GothamBold
+miniRefresh.AutoButtonColor = false
+miniRefresh.Parent = miniFrame
+Instance.new("UICorner", miniRefresh).CornerRadius = UDim.new(0, 5)
+
+local miniSort = Instance.new("TextButton")
+miniSort.Size = UDim2.new(0, 24, 0, 22)
+miniSort.Position = UDim2.new(1, -58, 0, 4)
+miniSort.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+miniSort.BorderSizePixel = 0
+miniSort.Text = "#"
+miniSort.TextColor3 = Color3.fromRGB(230, 230, 230)
+miniSort.TextSize = 10
+miniSort.Font = Enum.Font.GothamBold
+miniSort.AutoButtonColor = false
+miniSort.Parent = miniFrame
+Instance.new("UICorner", miniSort).CornerRadius = UDim.new(0, 5)
+
+local miniCollapse = Instance.new("TextButton")
+miniCollapse.Size = UDim2.new(0, 24, 0, 22)
+miniCollapse.Position = UDim2.new(1, -30, 0, 4)
+miniCollapse.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+miniCollapse.BorderSizePixel = 0
+miniCollapse.Text = "–"
+miniCollapse.TextColor3 = Color3.fromRGB(230, 230, 230)
+miniCollapse.TextSize = 12
+miniCollapse.Font = Enum.Font.GothamBold
+miniCollapse.AutoButtonColor = false
+miniCollapse.Parent = miniFrame
+Instance.new("UICorner", miniCollapse).CornerRadius = UDim.new(0, 5)
+
+miniSearchBox = Instance.new("TextBox")
+miniSearchBox.Size = UDim2.new(1, -10, 0, 24)
+miniSearchBox.Position = UDim2.new(0, 5, 0, 32)
+miniSearchBox.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+miniSearchBox.BorderSizePixel = 0
+miniSearchBox.PlaceholderText = "Search brainrot..."
+miniSearchBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
+miniSearchBox.Text = ""
+miniSearchBox.TextColor3 = Color3.fromRGB(240, 240, 240)
+miniSearchBox.TextSize = 10
+miniSearchBox.Font = Enum.Font.Gotham
+miniSearchBox.ClearTextOnFocus = false
+miniSearchBox.Parent = miniFrame
+Instance.new("UICorner", miniSearchBox).CornerRadius = UDim.new(0, 6)
+
 miniBrainrotList = Instance.new("ScrollingFrame")
-miniBrainrotList.Size = UDim2.new(1, -10, 1, -36)
-miniBrainrotList.Position = UDim2.new(0, 5, 0, 32)
+miniBrainrotList.Size = UDim2.new(1, -10, 1, -64)
+miniBrainrotList.Position = UDim2.new(0, 5, 0, 60)
 miniBrainrotList.BackgroundTransparency = 1
 miniBrainrotList.BorderSizePixel = 0
 miniBrainrotList.ScrollBarThickness = 2
@@ -2367,10 +2446,30 @@ miniBrainrotList.ScrollBarImageColor3 = Color3.fromRGB(190, 0, 0)
 miniBrainrotList.AutomaticCanvasSize = Enum.AutomaticSize.Y
 miniBrainrotList.CanvasSize = UDim2.new(0, 0, 0, 0)
 miniBrainrotList.Parent = miniFrame
+miniListBody = miniBrainrotList
 local miniLayout = Instance.new("UIListLayout")
 miniLayout.Padding = UDim.new(0, 3)
 miniLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 miniLayout.Parent = miniBrainrotList
+
+miniSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    refreshMiniBrainrotList(miniPetsCache)
+end)
+miniRefresh.MouseButton1Click:Connect(function()
+    if updatePetList then updatePetList() end
+end)
+miniSort.MouseButton1Click:Connect(function()
+    miniSortMode = miniSortMode == "slot" and "name" or "slot"
+    miniSort.Text = miniSortMode == "slot" and "#" or "A"
+    refreshMiniBrainrotList(miniPetsCache)
+end)
+miniCollapse.MouseButton1Click:Connect(function()
+    miniCollapsed = not miniCollapsed
+    miniCollapse.Text = miniCollapsed and "+" or "–"
+    miniListBody.Visible = not miniCollapsed
+    miniSearchBox.Visible = not miniCollapsed
+    miniFrame.Size = miniCollapsed and UDim2.new(0, miniFullSize.X.Offset, 0, 42) or miniFullSize
+end)
 
 local miniDragging, miniDragStart, miniStartPos = false, nil, nil
 miniFrame.InputBegan:Connect(function(input)
