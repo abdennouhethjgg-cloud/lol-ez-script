@@ -1,12 +1,13 @@
 -- ============================================================
--- RARA HUB - VERSION FINALE COMPLETE
+-- EL2B HUB - VERSION FINALE COMPLETE
 -- Aimbot ON par défaut | Auto Destroy OFF | GUI optimisée
 -- Keybinds fonctionnels | Boutons mobiles draggables
 -- Boutons carrés avec bords arrondis
--- Flèche de rétrécissement/agrandissement améliorée
 -- + Sauvegarde complète des configurations (positions incluses)
 -- + INSTANT RESET (FunnyHub) intégré
 -- + AUTO SAVE CONFIG intégré
+-- + LOADING SCREEN Style Samurai Dark
+-- + ALL GEAR feature
 -- ============================================================
 
 do
@@ -19,11 +20,302 @@ do
     local player = Players.LocalPlayer
     local camera = workspace.CurrentCamera
 
-    if player:WaitForChild("PlayerGui"):FindFirstChild("RARAHUB") then
-        player.PlayerGui.RARAHUB:Destroy()
+    if player:WaitForChild("PlayerGui"):FindFirstChild("EL2BHUB") then
+        player.PlayerGui.EL2BHUB:Destroy()
     end
     if player:WaitForChild("PlayerGui"):FindFirstChild("FunnyHubInstantReset") then
         player.PlayerGui.FunnyHubInstantReset:Destroy()
+    end
+
+    -- ============================================================
+    --  🖤 LOADING SCREEN EL2B HUB — Style Samurai Dark / Encre
+    -- ============================================================
+    do
+        local plrGui = player:WaitForChild("PlayerGui")
+        if plrGui:FindFirstChild("EL2B_Loading") then
+            plrGui.EL2B_Loading:Destroy()
+        end
+
+        local loading = Instance.new("ScreenGui")
+        loading.Name = "EL2B_Loading"
+        loading.ResetOnSpawn = false
+        loading.IgnoreGuiInset = true
+        loading.DisplayOrder = 999
+        loading.Parent = plrGui
+
+        local bg = Instance.new("Frame", loading)
+        bg.Size = UDim2.new(1,0,1,0)
+        bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        bg.BorderSizePixel = 0
+
+        local vignette = Instance.new("ImageLabel", bg)
+        vignette.Size = UDim2.new(1,0,1,0)
+        vignette.BackgroundTransparency = 1
+        vignette.Image = "rbxassetid://5028857084"
+        vignette.ImageColor3 = Color3.fromRGB(0, 0, 0)
+        vignette.ImageTransparency = 0.3
+        vignette.ScaleType = Enum.ScaleType.Stretch
+
+        local grain = Instance.new("ImageLabel", bg)
+        grain.Size = UDim2.new(1,0,1,0)
+        grain.BackgroundTransparency = 1
+        grain.Image = "rbxassetid://5028857472"
+        grain.ImageColor3 = Color3.fromRGB(255, 255, 255)
+        grain.ImageTransparency = 0.92
+        grain.ScaleType = Enum.ScaleType.Tile
+        grain.TileSize = UDim2.new(0, 200, 0, 200)
+
+        task.spawn(function()
+            while grain.Parent do
+                grain.Position = UDim2.new(math.random(-5,5)/500, 0, math.random(-5,5)/500, 0)
+                task.wait(0.08)
+            end
+        end)
+
+        for i = 1, 35 do
+            local ash = Instance.new("Frame", bg)
+            local size = math.random(1, 3)
+            ash.Size = UDim2.new(0, size, 0, size)
+            ash.Position = UDim2.new(math.random(), 0, 1.1, 0)
+            ash.BackgroundColor3 = Color3.fromRGB(math.random(180, 255), math.random(180, 255), math.random(180, 255))
+            ash.BackgroundTransparency = math.random(40, 85) / 100
+            ash.BorderSizePixel = 0
+            Instance.new("UICorner", ash).CornerRadius = UDim.new(1, 0)
+
+            task.spawn(function()
+                while ash.Parent do
+                    local duration = math.random(600, 1400) / 100
+                    local drift = math.random(-40, 40) / 1000
+                    local tween = TweenService:Create(ash,
+                        TweenInfo.new(duration, Enum.EasingStyle.Linear),
+                        {
+                            Position = UDim2.new(ash.Position.X.Scale + drift, 0, -0.1, 0),
+                            BackgroundTransparency = 1
+                        }
+                    )
+                    tween:Play()
+                    tween.Completed:Wait()
+                    if ash.Parent then
+                        ash.Position = UDim2.new(math.random(), 0, 1.1, 0)
+                        ash.BackgroundTransparency = math.random(40, 85) / 100
+                    end
+                end
+            end)
+        end
+
+        local slash = Instance.new("Frame", bg)
+        slash.Size = UDim2.new(0, 0, 0, 1)
+        slash.Position = UDim2.new(0.5, 0, 0.5, 0)
+        slash.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        slash.BorderSizePixel = 0
+        slash.ZIndex = 5
+
+        task.spawn(function()
+            task.wait(0.3)
+            TweenService:Create(slash, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                Size = UDim2.new(1, 0, 0, 1)
+            }):Play()
+            task.wait(0.5)
+            TweenService:Create(slash, TweenInfo.new(0.6, Enum.EasingStyle.Quart), {
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 2)
+            }):Play()
+        end)
+
+        local container = Instance.new("Frame", bg)
+        container.Size = UDim2.new(0, 600, 0, 320)
+        container.Position = UDim2.new(0.5, -300, 0.5, -160)
+        container.BackgroundTransparency = 1
+
+        local titleShadow = Instance.new("TextLabel", container)
+        titleShadow.Size = UDim2.new(1,0,0,100)
+        titleShadow.Position = UDim2.new(0, 3, 0, 3)
+        titleShadow.BackgroundTransparency = 1
+        titleShadow.Text = "EL2B"
+        titleShadow.TextColor3 = Color3.fromRGB(40, 40, 40)
+        titleShadow.Font = Enum.Font.FredokaOne
+        titleShadow.TextScaled = true
+        titleShadow.TextTransparency = 0.3
+
+        local title = Instance.new("TextLabel", container)
+        title.Size = UDim2.new(1,0,0,100)
+        title.Position = UDim2.new(0, 0, 0, 0)
+        title.BackgroundTransparency = 1
+        title.Text = "EL2B"
+        title.Font = Enum.Font.FredokaOne
+        title.TextScaled = true
+        title.TextColor3 = Color3.fromRGB(240, 240, 240)
+
+        local kanji = Instance.new("TextLabel", container)
+        kanji.Size = UDim2.new(0, 80, 1, 0)
+        kanji.Position = UDim2.new(0.92, 0, 0, 0)
+        kanji.BackgroundTransparency = 1
+        kanji.Text = "影\n武\n士\n道"
+        kanji.TextColor3 = Color3.fromRGB(120, 120, 120)
+        kanji.Font = Enum.Font.GothamBold
+        kanji.TextSize = 22
+        kanji.TextYAlignment = Enum.TextYAlignment.Center
+        kanji.TextTransparency = 0.3
+
+        title.TextTransparency = 1
+        titleShadow.TextTransparency = 1
+        kanji.TextTransparency = 1
+
+        task.spawn(function()
+            task.wait(0.2)
+            TweenService:Create(title, TweenInfo.new(1.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                TextTransparency = 0
+            }):Play()
+            TweenService:Create(titleShadow, TweenInfo.new(1.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                TextTransparency = 0.3
+            }):Play()
+            TweenService:Create(kanji, TweenInfo.new(2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                TextTransparency = 0.3
+            }):Play()
+        end)
+
+        local subtitle = Instance.new("TextLabel", container)
+        subtitle.Size = UDim2.new(1,0,0,30)
+        subtitle.Position = UDim2.new(0, 0, 0, 105)
+        subtitle.BackgroundTransparency = 1
+        subtitle.Text = "— H U B —"
+        subtitle.TextColor3 = Color3.fromRGB(180, 180, 180)
+        subtitle.Font = Enum.Font.GothamBold
+        subtitle.TextSize = 14
+        subtitle.TextTransparency = 1
+
+        task.spawn(function()
+            task.wait(1)
+            TweenService:Create(subtitle, TweenInfo.new(1, Enum.EasingStyle.Quart), {
+                TextTransparency = 0.2
+            }):Play()
+        end)
+
+        local barBg = Instance.new("Frame", container)
+        barBg.Size = UDim2.new(0, 500, 0, 2)
+        barBg.Position = UDim2.new(0.5, -250, 0, 180)
+        barBg.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        barBg.BorderSizePixel = 0
+
+        local barFill = Instance.new("Frame", barBg)
+        barFill.Size = UDim2.new(0, 0, 1, 0)
+        barFill.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+        barFill.BorderSizePixel = 0
+
+        local barGlow = Instance.new("Frame", barFill)
+        barGlow.Size = UDim2.new(0, 30, 1, 0)
+        barGlow.Position = UDim2.new(1, -30, 0, 0)
+        barGlow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        barGlow.BorderSizePixel = 0
+        barGlow.BackgroundTransparency = 0.5
+
+        local statusText = Instance.new("TextLabel", container)
+        statusText.Size = UDim2.new(1,0,0,20)
+        statusText.Position = UDim2.new(0, 0, 0, 200)
+        statusText.BackgroundTransparency = 1
+        statusText.Text = "起動中..."
+        statusText.TextColor3 = Color3.fromRGB(140, 140, 140)
+        statusText.Font = Enum.Font.GothamBold
+        statusText.TextSize = 12
+        statusText.TextTransparency = 0.3
+
+        local percent = Instance.new("TextLabel", container)
+        percent.Size = UDim2.new(0, 100, 0, 30)
+        percent.Position = UDim2.new(1, -110, 1, -10)
+        percent.BackgroundTransparency = 1
+        percent.Text = "0%"
+        percent.TextColor3 = Color3.fromRGB(220, 220, 220)
+        percent.Font = Enum.Font.GothamBold
+        percent.TextSize = 24
+        percent.TextXAlignment = Enum.TextXAlignment.Right
+        percent.TextTransparency = 0.1
+
+        local vline = Instance.new("Frame", container)
+        vline.Size = UDim2.new(0, 1, 0, 0)
+        vline.Position = UDim2.new(0, -20, 0, 0)
+        vline.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        vline.BorderSizePixel = 0
+        vline.BackgroundTransparency = 0.5
+
+        task.spawn(function()
+            task.wait(0.5)
+            TweenService:Create(vline, TweenInfo.new(1, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 1, 0, 320)
+            }):Play()
+        end)
+
+        local signature = Instance.new("TextLabel", bg)
+        signature.Size = UDim2.new(0, 200, 0, 40)
+        signature.Position = UDim2.new(0, 30, 1, -60)
+        signature.BackgroundTransparency = 1
+        signature.Text = "EL2B HUB — 影の道"
+        signature.TextColor3 = Color3.fromRGB(100, 100, 100)
+        signature.Font = Enum.Font.Gotham
+        signature.TextSize = 11
+        signature.TextXAlignment = Enum.TextXAlignment.Left
+        signature.TextTransparency = 0.4
+
+        local steps = {
+            "起動中...  Initialisation",
+            "刀...  Chargement des modules",
+            "影...  Anti-Ragdoll",
+            "武...  Aimbot",
+            "士...  ESP",
+            "道...  All Gear",
+            "心...  Interface",
+            "完...  EL2B HUB prêt"
+        }
+
+        task.spawn(function()
+            for i = 1, 100 do
+                local progress = i / 100
+                TweenService:Create(barFill, TweenInfo.new(0.04, Enum.EasingStyle.Linear), {
+                    Size = UDim2.new(progress, 0, 1, 0)
+                }):Play()
+                percent.Text = math.floor(progress * 100) .. "%"
+
+                local idx = math.min(#steps, math.floor(progress * #steps) + 1)
+                statusText.Text = steps[idx]
+
+                task.wait(0.025)
+            end
+
+            task.wait(0.5)
+
+            local finalSlash = Instance.new("Frame", bg)
+            finalSlash.Size = UDim2.new(0, 1, 1.5, 0)
+            finalSlash.Position = UDim2.new(0.5, 0, 0, 0)
+            finalSlash.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            finalSlash.BorderSizePixel = 0
+            finalSlash.Rotation = 15
+            finalSlash.ZIndex = 10
+
+            TweenService:Create(finalSlash, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {
+                Size = UDim2.new(0, 4, 1.5, 0),
+                BackgroundTransparency = 0.8
+            }):Play()
+
+            for _, obj in ipairs(container:GetDescendants()) do
+                if obj:IsA("TextLabel") then
+                    TweenService:Create(obj, TweenInfo.new(0.5, Enum.EasingStyle.Quart), {
+                        TextTransparency = 1
+                    }):Play()
+                elseif obj:IsA("Frame") then
+                    TweenService:Create(obj, TweenInfo.new(0.5, Enum.EasingStyle.Quart), {
+                        BackgroundTransparency = 1
+                    }):Play()
+                end
+            end
+
+            TweenService:Create(signature, TweenInfo.new(0.5), { TextTransparency = 1 }):Play()
+
+            task.wait(0.4)
+            TweenService:Create(bg, TweenInfo.new(0.6, Enum.EasingStyle.Quart), {
+                BackgroundTransparency = 1
+            }):Play()
+            task.wait(0.7)
+            loading:Destroy()
+        end)
     end
 
     -- ============================================================
@@ -36,7 +328,7 @@ do
         end
         local success, err = pcall(function()
             local json = game:GetService("HttpService"):JSONEncode(data)
-            writefile("RARA_HUB_Config.json", json)
+            writefile("EL2B_HUB_Config.json", json)
         end)
         if not success then
             warn("Erreur lors de la sauvegarde du fichier :", err)
@@ -50,7 +342,7 @@ do
             return _G.AllGearSettings
         end
         local success, content = pcall(function()
-            return readfile("RARA_HUB_Config.json")
+            return readfile("EL2B_HUB_Config.json")
         end)
         if not success or not content then return nil end
         local ok, data = pcall(function()
@@ -174,6 +466,10 @@ do
     -- Carpet Boost
     local carpetBoostConn = nil
     local isCarpetEquipped = false
+
+    -- All Gear
+    local allGearEnabled = getSetting("allGearEnabled", false)
+    local allGearConn = nil
 
     -- Variables pour les boutons mobiles
     local mobileButtons = {}
@@ -317,10 +613,21 @@ do
         end)
     end
 
-    -- Alias pour compatibilité
     local function doReset()
         if not UI.resetEnabled then return end
         insta_reset()
+    end
+
+    -- ============================================================
+    --  HELPERS DE CHARGEMENT (fix bug "a and b or c")
+    -- ============================================================
+    local function getBool(data, key, default)
+        if data[key] ~= nil then return data[key] end
+        return default
+    end
+    local function getNum(data, key, default)
+        if type(data[key]) == "number" then return data[key] end
+        return default
     end
 
     -- ============================================================
@@ -330,66 +637,67 @@ do
         local data = loadConfigsFromFile()
         if not data then return false end
 
-        UI.aimbotState = data.aimbotState ~= nil and data.aimbotState or true
-        UI.InfJumpEnabled = data.InfJumpEnabled ~= nil and data.InfJumpEnabled or true
-        UI.AntiRagdollEnabled = data.AntiRagdollEnabled ~= nil and data.AntiRagdollEnabled or true
-        UI.antiGummyEnabled = data.antiGummyEnabled ~= nil and data.antiGummyEnabled or true
-        UI.antiBoogieEnabled = data.antiBoogieEnabled ~= nil and data.antiBoogieEnabled or true
-        UI.antiBeeEnabled = data.antiBeeEnabled ~= nil and data.antiBeeEnabled or true
-        UI.carpetBoostEnabled = data.carpetBoostEnabled ~= nil and data.carpetBoostEnabled or false
-        UI.carpetSpeed = data.carpetSpeed ~= nil and data.carpetSpeed or 50
-        UI.antiDeathEnabled = data.antiDeathEnabled ~= nil and data.antiDeathEnabled or true
-        UI.resetEnabled = data.resetEnabled ~= nil and data.resetEnabled or true
-        UI.tpDownEnabled = data.tpDownEnabled ~= nil and data.tpDownEnabled or true
-        UI.dropBrainrotEnabled = data.dropBrainrotEnabled ~= nil and data.dropBrainrotEnabled or false
-        UI.showMobileButtons = data.showMobileButtons ~= nil and data.showMobileButtons or true
+        UI.aimbotState         = getBool(data, "aimbotState", true)
+        UI.InfJumpEnabled      = getBool(data, "InfJumpEnabled", true)
+        UI.AntiRagdollEnabled  = getBool(data, "AntiRagdollEnabled", true)
+        UI.antiGummyEnabled    = getBool(data, "antiGummyEnabled", true)
+        UI.antiBoogieEnabled   = getBool(data, "antiBoogieEnabled", true)
+        UI.antiBeeEnabled      = getBool(data, "antiBeeEnabled", true)
+        UI.carpetBoostEnabled  = getBool(data, "carpetBoostEnabled", false)
+        UI.carpetSpeed         = getNum(data, "carpetSpeed", 50)
+        UI.antiDeathEnabled    = getBool(data, "antiDeathEnabled", true)
+        UI.resetEnabled        = getBool(data, "resetEnabled", true)
+        UI.tpDownEnabled       = getBool(data, "tpDownEnabled", true)
+        UI.dropBrainrotEnabled = getBool(data, "dropBrainrotEnabled", false)
+        UI.showMobileButtons   = getBool(data, "showMobileButtons", true)
 
-        tp2Enabled = data.tp2Enabled ~= nil and data.tp2Enabled or false
+        tp2Enabled             = getBool(data, "tp2Enabled", false)
 
         if data.mobileBtnStates then
             for k, v in pairs(data.mobileBtnStates) do
                 mobileBtnStates[k] = v
             end
         end
-        mobileButtonsLocked = data.mobileButtonsLocked ~= nil and data.mobileButtonsLocked or false
+        mobileButtonsLocked = getBool(data, "mobileButtonsLocked", false)
 
-        espEnabled = data.espEnabled ~= nil and data.espEnabled or true
-        espTransparency = data.espTransparency ~= nil and data.espTransparency or 0.3
+        espEnabled         = getBool(data, "espEnabled", true)
+        espTransparency    = getNum(data, "espTransparency", 0.3)
 
-        autoSentryEnabled = data.autoSentryEnabled ~= nil and data.autoSentryEnabled or false
-        autoDestroyV2Enabled = data.autoDestroyV2Enabled ~= nil and data.autoDestroyV2Enabled or false
+        autoSentryEnabled  = getBool(data, "autoSentryEnabled", false)
+        autoDestroyV2Enabled = getBool(data, "autoDestroyV2Enabled", false)
 
-        -- AUTO SAVE CONFIG
-        autoSaveEnabled = data.autoSaveEnabled ~= nil and data.autoSaveEnabled or true
-        autoSaveInterval = data.autoSaveInterval ~= nil and data.autoSaveInterval or 30
+        autoSaveEnabled    = getBool(data, "autoSaveEnabled", true)
+        autoSaveInterval   = getNum(data, "autoSaveInterval", 30)
 
-        Config.AutoSteal = data.AutoSteal ~= nil and data.AutoSteal or true
-        Config.STEAL_RADIUS = data.STEAL_RADIUS ~= nil and data.STEAL_RADIUS or 200
-        Config.STEAL_DURATION = data.STEAL_DURATION ~= nil and data.STEAL_DURATION or 1.3
+        allGearEnabled     = getBool(data, "allGearEnabled", false)
+
+        Config.AutoSteal      = getBool(data, "AutoSteal", true)
+        Config.STEAL_RADIUS   = getNum(data, "STEAL_RADIUS", 200)
+        Config.STEAL_DURATION = getNum(data, "STEAL_DURATION", 1.3)
 
         if data.tpKeybind then
-            local success, k = pcall(function() return Enum.KeyCode[data.tpKeybind] end)
-            if success and k then tpKeybind = k end
+            local ok, k = pcall(function() return Enum.KeyCode[data.tpKeybind] end)
+            if ok and k then tpKeybind = k end
         end
         if data.resetKeybind then
-            local success, k = pcall(function() return Enum.KeyCode[data.resetKeybind] end)
-            if success and k then resetKeybind = k end
+            local ok, k = pcall(function() return Enum.KeyCode[data.resetKeybind] end)
+            if ok and k then resetKeybind = k end
         end
         if data.tpDownKeybind then
-            local success, k = pcall(function() return Enum.KeyCode[data.tpDownKeybind] end)
-            if success and k then tpDownKeybind = k end
+            local ok, k = pcall(function() return Enum.KeyCode[data.tpDownKeybind] end)
+            if ok and k then tpDownKeybind = k end
         end
         if data.carpetKeybind then
-            local success, k = pcall(function() return Enum.KeyCode[data.carpetKeybind] end)
-            if success and k then carpetKeybind = k end
+            local ok, k = pcall(function() return Enum.KeyCode[data.carpetKeybind] end)
+            if ok and k then carpetKeybind = k end
         end
         if data.dropBrainrotKeybind then
-            local success, k = pcall(function() return Enum.KeyCode[data.dropBrainrotKeybind] end)
-            if success and k then dropBrainrotKeybind = k end
+            local ok, k = pcall(function() return Enum.KeyCode[data.dropBrainrotKeybind] end)
+            if ok and k then dropBrainrotKeybind = k end
         end
         if data.tp2Keybind then
-            local success, k = pcall(function() return Enum.KeyCode[data.tp2Keybind] end)
-            if success and k then tp2Keybind = k end
+            local ok, k = pcall(function() return Enum.KeyCode[data.tp2Keybind] end)
+            if ok and k then tp2Keybind = k end
         end
 
         if data.mobileBtnPositions then
@@ -429,6 +737,7 @@ do
             autoDestroyV2Enabled = autoDestroyV2Enabled,
             autoSaveEnabled = autoSaveEnabled,
             autoSaveInterval = autoSaveInterval,
+            allGearEnabled = allGearEnabled,
             AutoSteal = Config.AutoSteal,
             STEAL_RADIUS = Config.STEAL_RADIUS,
             STEAL_DURATION = Config.STEAL_DURATION,
@@ -502,7 +811,6 @@ do
         if UI.DropKeybindBtn then UI.DropKeybindBtn.Text = dropBrainrotKeybind.Name end
         if UI.Tp2KeybindBtn then UI.Tp2KeybindBtn.Text = tp2Keybind.Name end
 
-        -- AUTO SAVE UI
         if UI.autoSaveStatus then
             UI.autoSaveStatus.Text = autoSaveEnabled and "ON" or "OFF"
             UI.autoSaveStatus.TextColor3 = autoSaveEnabled and Color3.fromRGB(80,255,80) or UI.Colors.textDim
@@ -990,7 +1298,7 @@ do
     end
 
     -- ============================================================
-    --  TP BEST
+    --  TP BEST (FIX: updateTPButtonText déclaré avant usage)
     -- ============================================================
     local character = player.Character
     local hrp = character and character:FindFirstChild("HumanoidRootPart")
@@ -1008,6 +1316,14 @@ do
         if not character or not hum then return end
         local tool = character:FindFirstChild("Flying Carpet") or player.Backpack:FindFirstChild("Flying Carpet")
         if tool then hum:EquipTool(tool) end
+    end
+
+    -- ⬇️ DÉCLARÉ AVANT savePosition (fix forward reference)
+    local function updateTPButtonText()
+        if TPButton then
+            TPButton.Text = "Save Position"
+            TPButton.BackgroundColor3 = Color3.fromRGB(100,30,200)
+        end
     end
 
     local function savePosition()
@@ -1034,11 +1350,15 @@ do
         local startTime = tick()
         local connection
         connection = RunService.Heartbeat:Connect(function()
-            if not hrp or not hrp.Parent then connection:Disconnect(); moving=false; updateTPButtonText(); return end
+            if not hrp or not hrp.Parent then
+                connection:Disconnect(); moving=false; updateTPButtonText(); return
+            end
             if tick() - startTime >= duration then
                 local currentY = hrp.Position.Y
                 local savedY = savedPosition.Y
-                if currentY >= savedY + MIN_HEIGHT_REQUIRED then hrp.CFrame = CFrame.new(savedPosition) end
+                if currentY >= savedY + MIN_HEIGHT_REQUIRED then
+                    hrp.CFrame = CFrame.new(savedPosition)
+                end
                 hrp.AssemblyLinearVelocity = Vector3.zero
                 hrp.AssemblyAngularVelocity = Vector3.zero
                 connection:Disconnect()
@@ -1048,10 +1368,6 @@ do
             end
             hrp.AssemblyLinearVelocity = Vector3.new(0, upwardSpeed, 0)
         end)
-    end
-
-    local function updateTPButtonText()
-        if TPButton then TPButton.Text = "Save Position"; TPButton.BackgroundColor3 = Color3.fromRGB(100,30,200) end
     end
 
     -- ============================================================
@@ -1128,6 +1444,72 @@ do
     end
     player.CharacterAdded:Connect(setupCarpetCharacter)
     if player.Character then setupCarpetCharacter(player.Character) end
+
+    -- ============================================================
+    --  ALL GEAR
+    -- ============================================================
+    local function unequipAllGear()
+        local char = player.Character
+        if not char then return end
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        local backpack = player:FindFirstChild("Backpack")
+        if not hum or not backpack then return end
+        for _, tool in ipairs(char:GetChildren()) do
+            if tool:IsA("Tool") then
+                pcall(function() tool.Parent = backpack end)
+            end
+        end
+    end
+
+    local function toggleAllGear(state)
+        allGearEnabled = state
+        setSetting("allGearEnabled", state)
+
+        if allGearConn then
+            allGearConn:Disconnect()
+            allGearConn = nil
+        end
+
+        if state then
+            allGearConn = RunService.Heartbeat:Connect(function()
+                if not allGearEnabled then return end
+                local char = player.Character
+                if not char then return end
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if not hum then return end
+                local backpack = player:FindFirstChild("Backpack")
+                if backpack then
+                    for _, tool in ipairs(backpack:GetChildren()) do
+                        if tool:IsA("Tool") then
+                            pcall(function() hum:EquipTool(tool) end)
+                        end
+                    end
+                end
+            end)
+        else
+            unequipAllGear()
+        end
+
+        if UI.AllGearStatus then
+            UI.AllGearStatus.Text = state and "ON" or "OFF"
+            UI.AllGearStatus.TextColor3 = state and Color3.fromRGB(80,255,80) or UI.Colors.textDim
+        end
+        if UI.AllGearPillBg then
+            TweenService:Create(UI.AllGearPillBg, TweenInfo.new(0.25), {
+                BackgroundColor3 = state and UI.Colors.accent or UI.Colors.inactive
+            }):Play()
+        end
+        if UI.AllGearPillCircle then
+            TweenService:Create(UI.AllGearPillCircle, TweenInfo.new(0.25, Enum.EasingStyle.Back), {
+                Position = state and UDim2.new(1,-21,0.5,-9) or UDim2.new(0,3,0.5,-9)
+            }):Play()
+        end
+        if UI.AllGearCardAccent then
+            TweenService:Create(UI.AllGearCardAccent, TweenInfo.new(0.15), {
+                BackgroundColor3 = state and UI.Colors.accent or UI.Colors.dim
+            }):Play()
+        end
+    end
 
     -- ============================================================
     --  TOGGLES
@@ -1233,7 +1615,7 @@ do
         end
         if UI.CarpetStatus then
             UI.CarpetStatus.Text = on and "ON" or "OFF"
-            UI.CarpetStatus.TextColor3 = on and Color3.fromRGB(80,255,80) or UI.Colors.textDim
+            UI.CarpetStatus.TextColor3 = on and Color3.fromRGB(0,0,0) or UI.Colors.textDim
         end
         if UI.CarpetPillBg then
             TweenService:Create(UI.CarpetPillBg, TweenInfo.new(0.25), {BackgroundColor3 = on and UI.Colors.accent or UI.Colors.inactive}):Play()
@@ -1494,14 +1876,16 @@ do
             if _0xAUTOPOT then
                 local bp = player:FindFirstChild("Backpack")
                 task.wait(0.15)
-                for _,tool in pairs(bp:GetChildren()) do
-                    if tool:IsA("Tool") then
-                        local n = tool.Name:lower()
-                        if n:find("giant") or n:find("huge") or n:find("gigant") then
-                            tool.Parent = player.Character
-                            task.wait(0.1)
-                            tool:Activate()
-                            break
+                if bp then
+                    for _,tool in pairs(bp:GetChildren()) do
+                        if tool:IsA("Tool") then
+                            local n = tool.Name:lower()
+                            if n:find("giant") or n:find("huge") or n:find("gigant") then
+                                tool.Parent = player.Character
+                                task.wait(0.1)
+                                tool:Activate()
+                                break
+                            end
                         end
                     end
                 end
@@ -1530,6 +1914,7 @@ do
             if gameProcessed then return end
             if isSettingKeybind and input.UserInputType == Enum.UserInputType.Keyboard then
                 currentKeybind = input.KeyCode
+                tp2Keybind = input.KeyCode -- FIX: persist
                 isSettingKeybind = false
                 _0xBTN4.Text = "⚡ TP [" .. currentKeybind.Name .. "]"
                 _0xBTN4.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
@@ -2031,13 +2416,16 @@ do
     local function findBatV2()
         local char = player.Character
         if not char then return nil end
-        local bat = char:FindFirstChild("Bat") or player.Backpack:FindFirstChild("Bat")
+        local bp = player:FindFirstChild("Backpack")
+        local bat = char:FindFirstChild("Bat") or (bp and bp:FindFirstChild("Bat"))
         if bat then return bat end
         for _, t in ipairs(char:GetChildren()) do
             if t:IsA("Tool") and t.Name:lower():find("bat") then return t end
         end
-        for _, t in ipairs(player.Backpack:GetChildren()) do
-            if t:IsA("Tool") and t.Name:lower():find("bat") then return t end
+        if bp then
+            for _, t in ipairs(bp:GetChildren()) do
+                if t:IsA("Tool") and t.Name:lower():find("bat") then return t end
+            end
         end
         return nil
     end
@@ -2328,23 +2716,23 @@ do
     -- ============================================================
     local function buildUI()
         local screenGui = Instance.new("ScreenGui")
-        screenGui.Name = "RARAHUB"
+        screenGui.Name = "EL2BHUB"
         screenGui.ResetOnSpawn = false
         screenGui.Parent = player:WaitForChild("PlayerGui")
         screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
         UI.Colors = {
-            bg = Color3.fromRGB(18,18,30),
-            accent = Color3.fromRGB(100,50,200),
-            accentLight = Color3.fromRGB(130,80,220),
-            text = Color3.fromRGB(255,255,255),
-            textDim = Color3.fromRGB(150,150,180),
-            card = Color3.fromRGB(26,26,46),
-            border = Color3.fromRGB(52,52,72),
-            borderHi = Color3.fromRGB(120,120,120),
-            active = Color3.fromRGB(200,200,220),
-            inactive = Color3.fromRGB(42,42,62),
-            dim = Color3.fromRGB(80,80,100)
+            bg = Color3.fromRGB(12, 10, 28),
+            accent = Color3.fromRGB(150, 80, 255),
+            accentLight = Color3.fromRGB(200, 150, 255),
+            text = Color3.fromRGB(255, 255, 255),
+            textDim = Color3.fromRGB(160, 155, 190),
+            card = Color3.fromRGB(22, 18, 42),
+            border = Color3.fromRGB(60, 50, 100),
+            borderHi = Color3.fromRGB(150, 120, 255),
+            active = Color3.fromRGB(200, 200, 230),
+            inactive = Color3.fromRGB(40, 35, 65),
+            dim = Color3.fromRGB(80, 75, 110)
         }
 
         local barSize = UDim2.new(0, 380, 0, 55)
@@ -2613,7 +3001,7 @@ do
 
         local title = Instance.new("TextLabel", mainFrame)
         title.Size = UDim2.new(1,0,0,40); title.Position = UDim2.new(0,0,0,0)
-        title.BackgroundTransparency = 1; title.Text = "RARA HUB"
+        title.BackgroundTransparency = 1; title.Text = "EL2B HUB"
         title.TextColor3 = UI.Colors.text; title.Font = Enum.Font.GothamBold; title.TextSize = 22
         title.TextScaled = true
 
@@ -2688,7 +3076,6 @@ do
         stealLayout.SortOrder = Enum.SortOrder.LayoutOrder
         stealLayout.Padding = UDim.new(0,6)
 
-        -- Auto Steal
         local controls = Instance.new("Frame", scrollContentSteal)
         controls.Size = UDim2.new(1,-10,0,80); controls.Position = UDim2.new(0,5,0,0)
         controls.BackgroundTransparency = 1
@@ -2752,7 +3139,6 @@ do
         sep1.Size = UDim2.new(1,-20,0,1)
         sep1.BackgroundColor3 = UI.Colors.accent; sep1.BackgroundTransparency = 0.5; sep1.BorderSizePixel = 0
 
-        -- TP BEST
         local tpBestCard = Instance.new("Frame", scrollContentSteal)
         tpBestCard.Size = UDim2.new(1,-10,0,120)
         tpBestCard.BackgroundTransparency = 1
@@ -2807,7 +3193,6 @@ do
         sep2.Size = UDim2.new(1,-20,0,1)
         sep2.BackgroundColor3 = UI.Colors.accent; sep2.BackgroundTransparency = 0.5; sep2.BorderSizePixel = 0
 
-        -- TP 2
         local tp2Card = Instance.new("Frame", scrollContentSteal)
         tp2Card.Size = UDim2.new(1,-10,0,65)
         tp2Card.BackgroundTransparency = 1
@@ -2925,8 +3310,11 @@ do
                     tp2Gui:Destroy()
                     tp2Gui = nil
                 end
-                if _G.Tp2Pos1 then _G.Tp2Marker1:Destroy(); _G.Tp2Pos1 = nil end
-                if _G.Tp2Pos2 then _G.Tp2Marker2:Destroy(); _G.Tp2Pos2 = nil end
+                -- FIX: guard marker destroy
+                if _G.Tp2Marker1 then pcall(function() _G.Tp2Marker1:Destroy() end); _G.Tp2Marker1 = nil end
+                if _G.Tp2Pos1 then _G.Tp2Pos1 = nil end
+                if _G.Tp2Marker2 then pcall(function() _G.Tp2Marker2:Destroy() end); _G.Tp2Marker2 = nil end
+                if _G.Tp2Pos2 then _G.Tp2Pos2 = nil end
                 if UI.tp2StatusLabel then
                     UI.tp2StatusLabel.Text = "OFF"
                     UI.tp2StatusLabel.TextColor3 = UI.Colors.textDim
@@ -3118,11 +3506,11 @@ do
         scrollFramePlayer.Size = UDim2.new(1,0,1,0); scrollFramePlayer.BackgroundTransparency = 1
         scrollFramePlayer.BorderSizePixel = 0; scrollFramePlayer.ScrollBarThickness = 6
         scrollFramePlayer.ScrollBarImageColor3 = UI.Colors.accent
-        scrollFramePlayer.CanvasSize = UDim2.new(0,0,0,500)
+        scrollFramePlayer.CanvasSize = UDim2.new(0,0,0,600)
         scrollFramePlayer.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Right
 
         local scrollContentPlayer = Instance.new("Frame", scrollFramePlayer)
-        scrollContentPlayer.Size = UDim2.new(1,0,0,500); scrollContentPlayer.BackgroundTransparency = 1
+        scrollContentPlayer.Size = UDim2.new(1,0,0,600); scrollContentPlayer.BackgroundTransparency = 1
 
         local function createPlayerCard(parent, yPos, title, toggleFunc, initialState)
             local card = Instance.new("TextButton")
@@ -3200,8 +3588,16 @@ do
         UI.AntiBeePillBg = antiBeeCard.pillBg
         UI.AntiBeePillCircle = antiBeeCard.pillCircle
 
+        local allGearCard = createPlayerCard(scrollContentPlayer, 460, "🎁 ALL GEAR (Équipe tous les gears)", function()
+            toggleAllGear(not allGearEnabled)
+        end, allGearEnabled)
+        UI.AllGearStatus = allGearCard.statusLabel
+        UI.AllGearPillBg = allGearCard.pillBg
+        UI.AllGearPillCircle = allGearCard.pillCircle
+        UI.AllGearCardAccent = allGearCard.cardAccent
+
         local spacer = Instance.new("Frame", scrollContentPlayer)
-        spacer.Size = UDim2.new(1,0,0,10); spacer.Position = UDim2.new(0,0,0,460)
+        spacer.Size = UDim2.new(1,0,0,10); spacer.Position = UDim2.new(0,0,0,535)
         spacer.BackgroundTransparency = 1
 
         -- ESP
@@ -3302,7 +3698,6 @@ do
         scrollContentMisc.Size = UDim2.new(1,0,0,0)
         scrollContentMisc.BackgroundTransparency = 1
 
-        -- Aimbot
         local aimbotCard = Instance.new("TextButton")
         aimbotCard.Text = ""
         aimbotCard.Size = UDim2.new(0.92,0,0,65); aimbotCard.Position = UDim2.new(0.04,0,0,5)
@@ -3344,7 +3739,6 @@ do
 
         aimbotCard.MouseButton1Click:Connect(toggleAimbot)
 
-        -- Auto Destroy Sentry
         UI.sentryToggleBtn = Instance.new("TextButton", scrollContentMisc)
         UI.sentryToggleBtn.Text = ""
         UI.sentryToggleBtn.Size = UDim2.new(0.92,0,0,65); UI.sentryToggleBtn.Position = UDim2.new(0.04,0,0,80)
@@ -3389,7 +3783,6 @@ do
             toggleAutoSentry(not autoSentryEnabled)
         end)
 
-        -- Auto Destroy V2
         UI.destroyV2ToggleBtn = Instance.new("TextButton", scrollContentMisc)
         UI.destroyV2ToggleBtn.Text = ""
         UI.destroyV2ToggleBtn.Size = UDim2.new(0.92,0,0,65); UI.destroyV2ToggleBtn.Position = UDim2.new(0.04,0,0,155)
@@ -3432,7 +3825,6 @@ do
 
         UI.destroyV2ToggleBtn.MouseButton1Click:Connect(toggleAutoDestroyV2)
 
-        -- Carpet Speed Boost
         local carpetCard = Instance.new("TextButton")
         carpetCard.Text = ""
         carpetCard.Size = UDim2.new(0.92,0,0,100)
@@ -3564,7 +3956,6 @@ do
             toggleCarpetBoost()
         end)
 
-        -- RESET
         local resetCard = Instance.new("TextButton")
         resetCard.Text = ""
         resetCard.Size = UDim2.new(0.92,0,0,65)
@@ -3653,7 +4044,6 @@ do
 
         resetCard.MouseButton1Click:Connect(toggleReset)
 
-        -- TP DOWN
         local tpDownCard = Instance.new("TextButton")
         tpDownCard.Text = ""
         tpDownCard.Size = UDim2.new(0.92,0,0,65)
@@ -3742,7 +4132,6 @@ do
 
         tpDownCard.MouseButton1Click:Connect(toggleTpDown)
 
-        -- ANTI-LAG
         local antiLagCard = Instance.new("TextButton")
         antiLagCard.Text = ""
         antiLagCard.Size = UDim2.new(0.92,0,0,65)
@@ -3820,7 +4209,6 @@ do
         visualLayout.SortOrder = Enum.SortOrder.LayoutOrder
         visualLayout.Padding = UDim.new(0,6)
 
-        -- FOV
         local fovRow = Instance.new("Frame", scrollContentVisual)
         fovRow.Size = UDim2.new(0.92,0,0,50)
         fovRow.BackgroundColor3 = UI.Colors.card
@@ -3868,7 +4256,6 @@ do
         plusBtn.MouseButton1Click:Connect(function() updateFOV(currentFOV + 5) end)
         fovResetBtn.MouseButton1Click:Connect(function() updateFOV(70) end)
 
-        -- SHOW BUTTONS
         local showButtonsCard = Instance.new("TextButton", scrollContentVisual)
         showButtonsCard.Text = ""
         showButtonsCard.Size = UDim2.new(0.92,0,0,65)
@@ -3947,7 +4334,6 @@ do
 
         showButtonsCard.MouseButton1Click:Connect(toggleShowButtons)
 
-        -- BOUTONS DE SÉLECTION DES BOUTONS MOBILES
         local mobileSelectTitle = Instance.new("TextLabel", scrollContentVisual)
         mobileSelectTitle.Size = UDim2.new(0.92,0,0,20)
         mobileSelectTitle.BackgroundTransparency = 1
@@ -4028,7 +4414,6 @@ do
             createMobileToggle(scrollContentVisual, t.label, t.key, mobileBtnStates[t.key])
         end
 
-        -- BOUTON LOCK/UNLOCK
         local lockCard = Instance.new("TextButton", scrollContentVisual)
         lockCard.Text = ""
         lockCard.Size = UDim2.new(0.92,0,0,45)
@@ -4102,7 +4487,6 @@ do
 
         lockCard.MouseButton1Click:Connect(toggleLock)
 
-        -- SAVE CONFIGS
         local saveConfigsCard = Instance.new("TextButton", scrollContentVisual)
         saveConfigsCard.Text = ""
         saveConfigsCard.Size = UDim2.new(0.92,0,0,45)
@@ -4158,7 +4542,6 @@ do
 
         saveConfigsCard.MouseButton1Click:Connect(onSaveConfigs)
 
-        -- AUTO SAVE CONFIG CARD
         local autoSaveCard = Instance.new("TextButton", scrollContentVisual)
         autoSaveCard.Text = ""
         autoSaveCard.Size = UDim2.new(0.92,0,0,65)
@@ -4234,7 +4617,6 @@ do
 
         autoSaveCard.MouseButton1Click:Connect(toggleAutoSaveFunc)
 
-        -- AUTO SAVE INTERVAL ROW
         local autoSaveIntervalRow = Instance.new("Frame", scrollContentVisual)
         autoSaveIntervalRow.Size = UDim2.new(0.92,0,0,40)
         autoSaveIntervalRow.BackgroundColor3 = UI.Colors.card
@@ -4302,7 +4684,7 @@ do
                 contentFrame.Visible = true; tabContainer.Visible = true
                 collapseBtn.Text = "◀"
                 mainResizeBtn.Visible = true
-                title.Text = "RARA HUB"
+                title.Text = "EL2B HUB"
             else
                 savedMainSize = mainFrame.Size
                 savedMainPos = mainFrame.Position
@@ -4318,7 +4700,7 @@ do
             end
         end)
 
-        -- BOUTONS MOBILES
+        -- BOUTONS MOBILES — Style amélioré
         local function createMobileButtons()
             local mobileGui = Instance.new("ScreenGui")
             mobileGui.Name = "MobileShortcuts"
@@ -4329,40 +4711,50 @@ do
             local function createFloatingButton(text, color, callback, defaultPos, btnName, key)
                 local btn = Instance.new("TextButton", mobileGui)
                 btn.Name = btnName or "MobileBtn"
-                btn.Size = UDim2.new(0, 60, 0, 60)
+                btn.Size = UDim2.new(0, 62, 0, 62)
                 btn.Position = defaultPos or UDim2.new(0, 10, 0, 10)
-                btn.BackgroundColor3 = color
+                btn.BackgroundColor3 = Color3.fromRGB(15, 12, 30)
                 btn.Text = text
                 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
                 btn.Font = Enum.Font.GothamBold
-                btn.TextSize = 10
+                btn.TextSize = 11
                 btn.TextWrapped = true
-                btn.ClipsDescendants = true
+                btn.ClipsDescendants = false
                 btn.ZIndex = 10
                 btn.AutoButtonColor = false
+
                 local state = mobileBtnStates[key or btnName:gsub("Btn$", ""):lower()]
                 if state == nil then state = true end
                 btn.Visible = UI.showMobileButtons and state
                 btn.Active = not mobileButtonsLocked
                 btn.Draggable = not mobileButtonsLocked
-                Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
 
-                local shadow = Instance.new("ImageLabel", btn)
-                shadow.Size = UDim2.new(1.2, 0, 1.2, 0)
-                shadow.Position = UDim2.new(-0.1, 0, -0.1, 0)
-                shadow.BackgroundTransparency = 1
-                shadow.Image = "rbxassetid://13160460753"
-                shadow.ImageTransparency = 0.5
-                shadow.ZIndex = 0
+                Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 14)
+
+                local grad = Instance.new("UIGradient", btn)
+                grad.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, color),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(
+                        math.max(0, color.R * 255 - 60) / 255,
+                        math.max(0, color.G * 255 - 60) / 255,
+                        math.max(0, color.B * 255 - 60) / 255
+                    ))
+                })
+                grad.Rotation = 135
 
                 local stroke = Instance.new("UIStroke", btn)
-                stroke.Color = Color3.fromRGB(255, 255, 255)
-                stroke.Thickness = 1.5
-                stroke.Transparency = 0.5
+                stroke.Color = color
+                stroke.Thickness = 2
+                stroke.Transparency = 0.3
 
                 if savedMobileBtnPositions and savedMobileBtnPositions[btnName or "MobileBtn"] then
                     local pos = savedMobileBtnPositions[btnName or "MobileBtn"]
-                    btn.Position = UDim2.new(pos.X.Scale or 0, pos.X.Offset or 0, pos.Y.Scale or 0, pos.Y.Offset or 0)
+                    if pos and pos.X and pos.Y then
+                        btn.Position = UDim2.new(
+                            pos.X.Scale or 0, pos.X.Offset or 0,
+                            pos.Y.Scale or 0, pos.Y.Offset or 0
+                        )
+                    end
                 end
 
                 local dragging = false
@@ -4371,11 +4763,11 @@ do
                 btn.InputBegan:Connect(function(input)
                     if mobileButtonsLocked then return end
                     if mainGuiFrame and mainGuiFrame.AbsoluteSize then
-                        local mousePos = input.Position
-                        local guiPos = mainGuiFrame.AbsolutePosition
-                        local guiSize = mainGuiFrame.AbsoluteSize
-                        if mousePos.X >= guiPos.X and mousePos.X <= guiPos.X + guiSize.X and
-                           mousePos.Y >= guiPos.Y and mousePos.Y <= guiPos.Y + guiSize.Y then
+                        local mp = input.Position
+                        local gp = mainGuiFrame.AbsolutePosition
+                        local gs = mainGuiFrame.AbsoluteSize
+                        if mp.X >= gp.X and mp.X <= gp.X + gs.X and
+                           mp.Y >= gp.Y and mp.Y <= gp.Y + gs.Y then
                             return
                         end
                     end
@@ -4384,6 +4776,9 @@ do
                         dragStart = input.Position
                         dragStartPos = btn.Position
                         btn.ZIndex = 20
+                        TweenService:Create(btn, TweenInfo.new(0.15), {
+                            Size = UDim2.new(0, 70, 0, 70)
+                        }):Play()
                     end
                 end)
 
@@ -4391,11 +4786,11 @@ do
                     if mobileButtonsLocked then return end
                     if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
                         if mainGuiFrame and mainGuiFrame.AbsoluteSize then
-                            local mousePos = input.Position
-                            local guiPos = mainGuiFrame.AbsolutePosition
-                            local guiSize = mainGuiFrame.AbsoluteSize
-                            if mousePos.X >= guiPos.X and mousePos.X <= guiPos.X + guiSize.X and
-                               mousePos.Y >= guiPos.Y and mousePos.Y <= guiPos.Y + guiSize.Y then
+                            local mp = input.Position
+                            local gp = mainGuiFrame.AbsolutePosition
+                            local gs = mainGuiFrame.AbsoluteSize
+                            if mp.X >= gp.X and mp.X <= gp.X + gs.X and
+                               mp.Y >= gp.Y and mp.Y <= gp.Y + gs.Y then
                                 return
                             end
                         end
@@ -4411,18 +4806,14 @@ do
                     if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
                         dragging = false
                         btn.ZIndex = 10
+                        TweenService:Create(btn, TweenInfo.new(0.15), {
+                            Size = UDim2.new(0, 62, 0, 62)
+                        }):Play()
                     end
                 end)
 
                 btn.MouseButton1Click:Connect(callback)
                 btn.TouchTap:Connect(callback)
-
-                btn.MouseEnter:Connect(function()
-                    TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(0, 65, 0, 65)}):Play()
-                end)
-                btn.MouseLeave:Connect(function()
-                    TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(0, 60, 0, 60)}):Play()
-                end)
 
                 table.insert(mobileButtons, btn)
                 return btn
@@ -4539,6 +4930,9 @@ do
     if autoDestroyV2Enabled then
         startDestroyV2Loop()
     end
+    if allGearEnabled then
+        toggleAllGear(true)
+    end
 
     if tp2Enabled then
         if not tp2Gui or not tp2Gui.Parent then
@@ -4550,7 +4944,6 @@ do
 
     refreshAllUI()
 
-    -- Démarrer l'auto-save si activé
     if autoSaveEnabled then
         startAutoSave()
     end
@@ -4649,14 +5042,13 @@ do
         end
     end)
 
-    -- Sauvegarde automatique quand le joueur quitte
     game:BindToClose(function()
         if autoSaveEnabled then
             pcall(saveAllConfigs)
         end
     end)
 
-    print("RARA HUB chargé - Instant Reset + Auto Save intégrés.")
+    print("EL2B HUB chargé - Instant Reset + Auto Save + All Gear intégrés.")
     print("Keybinds: R=Reset | E=TP Down | M=Carpet Boost | X=TP Best")
     print("Cliquez sur un bouton Key: dans le GUI pour changer le keybind")
     print("✅ Bouton 'Save Configs' sauvegarde manuellement.")
