@@ -1,9 +1,8 @@
 --// ═══════════════════════════════════════════════════════════
---// ⚡ DELTA HUB - Remote Spy + IA Auto-Generator V3
+--// ⚡ DELTA HUB - IA V4 (Génère une GUI Menu Adaptée)
 --// Compatible: Delta / Wave / Solara / Krnl
 --// ═══════════════════════════════════════════════════════════
 
---// ==== SERVICES ====
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
@@ -30,10 +29,7 @@ end)
 
 local function copyClipboard(txt)
     local ok = safeCall(function()
-        if setclipboard then
-            setclipboard(txt)
-            return true
-        end
+        if setclipboard then setclipboard(txt); return true end
         return false
     end)
     return ok == true
@@ -65,9 +61,8 @@ if not parented then
     end)
 end
 
---// ==== MAIN FRAME ====
+--// ==== MAIN ====
 local Main = Instance.new("Frame")
-Main.Name = "Main"
 Main.Size = UDim2.new(0, 640, 0, 460)
 Main.Position = UDim2.new(0.5, -320, 0.5, -230)
 Main.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
@@ -75,15 +70,13 @@ Main.BorderSizePixel = 0
 Main.Active = true
 Main.Draggable = true
 Main.Parent = ScreenGui
-
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 local mainStroke = Instance.new("UIStroke", Main)
 mainStroke.Color = Color3.fromRGB(80, 80, 100)
 mainStroke.Thickness = 1.5
 
---// ==== TOP BAR ====
+--// TOP BAR
 local TopBar = Instance.new("Frame")
-TopBar.Name = "TopBar"
 TopBar.Size = UDim2.new(1, 0, 0, 35)
 TopBar.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 TopBar.BorderSizePixel = 0
@@ -94,10 +87,10 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -90, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "⚡ Delta Hub  •  IA Auto V3"
+Title.Text = "⚡ Delta Hub  •  IA V4 (GUI Menu Generator)"
 Title.TextColor3 = Color3.fromRGB(230, 230, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 14
+Title.TextSize = 13
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
 
@@ -128,9 +121,8 @@ MinBtn.BorderSizePixel = 0
 MinBtn.Parent = TopBar
 Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 5)
 
---// ==== TAB BAR ====
+--// TAB BAR
 local TabBar = Instance.new("Frame")
-TabBar.Name = "TabBar"
 TabBar.Size = UDim2.new(0, 130, 1, -45)
 TabBar.Position = UDim2.new(0, 10, 0, 40)
 TabBar.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
@@ -142,13 +134,11 @@ local TabLayout = Instance.new("UIListLayout", TabBar)
 TabLayout.Padding = UDim.new(0, 5)
 TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
 local TabPad = Instance.new("UIPadding", TabBar)
 TabPad.PaddingTop = UDim.new(0, 8)
 
---// ==== CONTENT ====
+--// CONTENT
 local Content = Instance.new("Frame")
-Content.Name = "Content"
 Content.Size = UDim2.new(1, -155, 1, -45)
 Content.Position = UDim2.new(0, 145, 0, 40)
 Content.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
@@ -156,9 +146,8 @@ Content.BorderSizePixel = 0
 Content.Parent = Main
 Instance.new("UICorner", Content).CornerRadius = UDim.new(0, 8)
 
---// ==== TABS ====
+--// TABS
 local tabs = {}
-
 local function createTab(name)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -10, 0, 32)
@@ -187,7 +176,6 @@ local function createTab(name)
     list.SortOrder = Enum.SortOrder.LayoutOrder
 
     tabs[name] = { button = btn, frame = frame, list = list }
-
     btn.MouseButton1Click:Connect(function()
         for _, t in pairs(tabs) do
             t.frame.Visible = false
@@ -196,7 +184,6 @@ local function createTab(name)
         frame.Visible = true
         btn.BackgroundColor3 = Color3.fromRGB(80, 120, 220)
     end)
-
     return frame
 end
 
@@ -204,12 +191,12 @@ createTab("🏠 Home")
 createTab("📡 Remotes")
 createTab("🔧 Functions")
 createTab("🎯 Bindables")
-createTab("🤖 IA Auto")
+createTab("🤖 IA GUI")
 
 tabs["🏠 Home"].button.BackgroundColor3 = Color3.fromRGB(80, 120, 220)
 tabs["🏠 Home"].frame.Visible = true
 
---// ==== HELPERS UI ====
+--// HELPERS UI
 local function addLabel(parent, text, color, size)
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(1, -10, 0, size or 22)
@@ -224,7 +211,7 @@ local function addLabel(parent, text, color, size)
     return lbl
 end
 
---// ==== HOME ====
+--// HOME
 local homeFrame = tabs["🏠 Home"].frame
 addLabel(homeFrame, "✅ GUI chargée !", Color3.fromRGB(120, 255, 120), 22)
 addLabel(homeFrame, "📌 Jeu ID: " .. tostring(game.PlaceId), Color3.fromRGB(180, 180, 255), 20)
@@ -242,7 +229,7 @@ scanBtn.BorderSizePixel = 0
 scanBtn.Parent = homeFrame
 Instance.new("UICorner", scanBtn).CornerRadius = UDim.new(0, 6)
 
---// ==== SCAN ====
+--// SCAN
 local foundRemotes = {
     RemoteEvent = {},
     RemoteFunction = {},
@@ -251,9 +238,7 @@ local foundRemotes = {
 
 local function clearFrame(frame)
     for _, c in ipairs(frame:GetChildren()) do
-        if c:IsA("GuiObject") then
-            safeCall(function() c:Destroy() end)
-        end
+        if c:IsA("GuiObject") then safeCall(function() c:Destroy() end) end
     end
 end
 
@@ -284,7 +269,6 @@ local function createRemoteEntry(parent, obj)
         btn.Text = ok and ("  ✅ Copié: " .. obj.Name) or ("  ⚠ " .. obj.Name)
         task.wait(1.2)
         btn.Text = "  " .. obj.Name
-        print("🔎", path)
     end)
 end
 
@@ -335,26 +319,28 @@ scanBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
---// ==== ANALYSE JEU ====
+--// ================================================
+--// ANALYSE JEU
+--// ================================================
 local gameAnalysis = {
     name = "Unknown",
     type = "unknown",
     playerCount = 0,
     remoteCategories = {},
     hasLeaderstats = false,
-    hasTools = false
+    hasTools = false,
+    currencyNames = {}
 }
 
 local function analyzeGame()
     gameAnalysis.name = "Unknown"
     gameAnalysis.type = "unknown"
     gameAnalysis.remoteCategories = {}
+    gameAnalysis.currencyNames = {}
 
     safeCall(function()
         local info = MarketplaceService:GetProductInfo(game.PlaceId)
-        if info and info.Name then
-            gameAnalysis.name = info.Name
-        end
+        if info and info.Name then gameAnalysis.name = info.Name end
     end)
 
     gameAnalysis.playerCount = #Players:GetPlayers()
@@ -362,8 +348,17 @@ local function analyzeGame()
     gameAnalysis.hasTools = LocalPlayer:FindFirstChild("Backpack") and
         #LocalPlayer.Backpack:GetChildren() > 0
 
+    -- Récupérer les monnaies depuis leaderstats
+    if gameAnalysis.hasLeaderstats then
+        for _, stat in ipairs(LocalPlayer.leaderstats:GetChildren()) do
+            table.insert(gameAnalysis.currencyNames, stat.Name)
+        end
+    end
+
+    -- Détection type
     local n = string.lower(gameAnalysis.name)
     local patterns = {
+        {type = "Steal",         kws = {"steal", "steal a", "thief"}},
         {type = "Simulator",     kws = {"simulator", "sim", "clicker", "hatch", "pet sim"}},
         {type = "Tower Defense", kws = {"tower", "defense", " td"}},
         {type = "Obby",          kws = {"obby", "parkour", "escape", "tower of"}},
@@ -375,6 +370,7 @@ local function analyzeGame()
         {type = "Anime",         kws = {"anime", "naruto", "dragon ball", "one piece", "demon slayer"}},
         {type = "Racing",        kws = {"racing", "drift", "speed run"}},
         {type = "Survival",      kws = {"survival", "island", "raft", "stranded"}},
+        {type = "Egg",           kws = {"egg", "pet", "hatch", "adopt"}},
     }
 
     for _, p in ipairs(patterns) do
@@ -387,15 +383,18 @@ local function analyzeGame()
         if gameAnalysis.type ~= "unknown" then break end
     end
 
+    -- Catégorisation des remotes
     local categories = {
+        steal     = {"steal", "pickpocket", "grab"},
         farm      = {"farm", "collect", "gather", "harvest", "auto"},
-        combat    = {"damage", "hit", "attack", "kill", "punch", "sword", "shoot", "fire", "deal"},
+        combat    = {"damage", "hit", "attack", "kill", "punch", "sword", "shoot", "fire"},
         shop      = {"buy", "purchase", "shop", "sell", "trade"},
         reward    = {"claim", "reward", "daily", "bonus", "gift", "redeem", "spin"},
         movement  = {"teleport", "warp", "dash"},
         currency  = {"coin", "cash", "money", "gem", "gold", "diamond", "ticket"},
-        pet       = {"pet", "hatch", "egg", "evolve", "fuse"},
+        pet       = {"pet", "hatch", "egg", "evolve", "fuse", "adopt"},
         inventory = {"inventory", "equip", "unequip"},
+        placement = {"place", "spawn", "deploy"},
     }
 
     for _, remote in ipairs(foundRemotes.RemoteEvent) do
@@ -436,143 +435,151 @@ end)()
 ]], path)
 end
 
---// ==== BUILD SCRIPT ADAPTÉ ====
-local function buildGameScript()
+--// ================================================
+--// GÉNÉRATEUR DE GUI MENU (le gros morceau)
+--// ================================================
+local function buildGUIMenuScript()
     local A = gameAnalysis
     local safeName = tostring(A.name):gsub("%%", "%%%%")
 
-    local header = string.format([[
---// ═══════════════════════════════════════════════════
---// 🤖 Script AUTO-GÉNÉRÉ par Delta Hub IA V3
---// Jeu   : %s
---// ID    : %d
---// Type  : %s
---// Joueurs: %d
---// ═══════════════════════════════════════════════════
+    -- Build feature buttons selon catégories détectées
+    local featureButtons = {}
 
-local Players = game:GetService("Players")
-local RS = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
-local LP = Players.LocalPlayer
-local cam = workspace.CurrentCamera
-
-local function notify(msg)
-    print("🤖 " .. msg)
-    pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "IA Script", Text = msg, Duration = 3
+    -- 🥚 STEAL (jeux type Steal an Egg / Steal a Brainrot)
+    local stealRemote = getRemoteFromCategory("steal")
+    if stealRemote or A.type == "Steal" then
+        table.insert(featureButtons, {
+            name = "🥚 Auto Steal Egg",
+            color = "Color3.fromRGB(255, 140, 0)",
+            code = buildRemoteLoader(stealRemote or "") .. [[
+-- Auto Steal: fire le remote en boucle sur les joueurs proches
+task.spawn(function()
+    while _G.AutoSteal do
+        pcall(function()
+            if remote then
+                for _, plr in ipairs(Players:GetPlayers()) do
+                    if plr ~= LP then
+                        pcall(function() remote:FireServer(plr) end)
+                    end
+                end
+            end
+        end)
+        task.wait(0.3)
+    end
+end)
+notify("🥚 Auto Steal activé")
+]]
         })
-    end)
-end
+    end
 
-notify("Script chargé: %s")
-
-]], safeName, game.PlaceId, A.type, A.playerCount, safeName)
-
-    local body = "\n"
-
-    -- Anti-AFK
-    body = body .. [[
---// 🛡️ Anti-AFK
-local vu = game:GetService("VirtualUser")
-LP.Idled:Connect(function()
-    pcall(function()
-        vu:CaptureController()
-        vu:ClickButton2(Vector2.new())
-    end)
-end)
-
-]]
-
-    -- Fly
-    body = body .. [[
---// 🕊️ Fly (F = toggle)
-local flyOn, bv, bg = false, nil, nil
-local function initFly()
-    if not LP.Character then return end
-    local hrp = LP.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    bv = Instance.new("BodyVelocity", hrp)
-    bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-    bg = Instance.new("BodyGyro", hrp)
-    bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-    bg.P = 9e4
-end
-UIS.InputBegan:Connect(function(i, g)
-    if g then return end
-    if i.KeyCode == Enum.KeyCode.F then
-        flyOn = not flyOn
-        if flyOn then initFly() else
-            if bv and bv.Parent then bv:Destroy() end
-            if bg and bg.Parent then bg:Destroy() end
-            bv, bg = nil, nil
-        end
-        notify("Fly: " .. tostring(flyOn))
+    -- 🌾 AUTO FARM
+    local farmRemote = getRemoteFromCategory("farm") or getRemoteFromCategory("currency")
+    if farmRemote then
+        table.insert(featureButtons, {
+            name = "🌾 Auto Farm",
+            color = "Color3.fromRGB(80, 200, 120)",
+            code = buildRemoteLoader(farmRemote) .. [[
+task.spawn(function()
+    while _G.AutoFarm do
+        pcall(function()
+            if remote then remote:FireServer() end
+        end)
+        task.wait(0.5)
     end
 end)
-RunService.RenderStepped:Connect(function()
-    if not flyOn or not bv or not bv.Parent then return end
-    local d = Vector3.zero
-    if UIS:IsKeyDown(Enum.KeyCode.W) then d = d + cam.CFrame.LookVector end
-    if UIS:IsKeyDown(Enum.KeyCode.S) then d = d - cam.CFrame.LookVector end
-    if UIS:IsKeyDown(Enum.KeyCode.A) then d = d - cam.CFrame.RightVector end
-    if UIS:IsKeyDown(Enum.KeyCode.D) then d = d + cam.CFrame.RightVector end
-    if UIS:IsKeyDown(Enum.KeyCode.Space) then d = d + Vector3.new(0, 1, 0) end
-    if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then d = d - Vector3.new(0, 1, 0) end
-    bv.Velocity = d.Magnitude > 0 and d.Unit * 60 or Vector3.zero
-    bg.CFrame = cam.CFrame
-end)
-
+notify("🌾 Auto Farm activé")
 ]]
-
-    -- Speed
-    body = body .. [[
---// 🏃 Speed + Jump
-local function applySpeed(c)
-    local h = c:WaitForChild("Humanoid", 5)
-    if h then
-        h.WalkSpeed = 100
-        h.JumpPower = 100
-        h.UseJumpPower = true
+        })
     end
-end
-if LP.Character then applySpeed(LP.Character) end
-LP.CharacterAdded:Connect(applySpeed)
 
+    -- 🎁 AUTO CLAIM
+    local rewardRemote = getRemoteFromCategory("reward")
+    if rewardRemote then
+        table.insert(featureButtons, {
+            name = "🎁 Auto Claim Reward",
+            color = "Color3.fromRGB(255, 200, 80)",
+            code = buildRemoteLoader(rewardRemote) .. [[
+task.spawn(function()
+    while _G.AutoClaim do
+        pcall(function()
+            if remote then remote:FireServer() end
+        end)
+        task.wait(5)
+    end
+end)
+notify("🎁 Auto Claim activé")
 ]]
+        })
+    end
 
-    -- Noclip
-    body = body .. [[
---// 👻 Noclip (N = toggle)
-local ncOn = false
-UIS.InputBegan:Connect(function(i, g)
-    if g then return end
-    if i.KeyCode == Enum.KeyCode.N then
-        ncOn = not ncOn
-        if LP.Character then
-            for _, d in ipairs(LP.Character:GetDescendants()) do
-                if d:IsA("BasePart") then d.CanCollide = not ncOn end
+    -- 🥚 AUTO HATCH
+    local petRemote = getRemoteFromCategory("pet")
+    if petRemote or A.type == "Simulator" or A.type == "Egg" then
+        local loader = petRemote and buildRemoteLoader(petRemote) or "local remote = nil\n"
+        table.insert(featureButtons, {
+            name = "🥚 Auto Hatch Egg",
+            color = "Color3.fromRGB(220, 150, 220)",
+            code = loader .. [[
+task.spawn(function()
+    while _G.AutoHatch do
+        pcall(function()
+            if remote then remote:FireServer() end
+        end)
+        task.wait(1)
+    end
+end)
+notify("🥚 Auto Hatch activé")
+]]
+        })
+    end
+
+    -- 🔫 KILL AURA
+    local combatRemote = getRemoteFromCategory("combat")
+    if combatRemote then
+        table.insert(featureButtons, {
+            name = "🔫 Kill Aura",
+            color = "Color3.fromRGB(220, 70, 70)",
+            code = buildRemoteLoader(combatRemote) .. [[
+local KA_radius = 25
+task.spawn(function()
+    while _G.KillAura do
+        if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+            local myPos = LP.Character.HumanoidRootPart.Position
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= LP and plr.Character then
+                    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                    local hum = plr.Character:FindFirstChild("Humanoid")
+                    if hrp and hum and hum.Health > 0
+                        and (hrp.Position - myPos).Magnitude <= KA_radius then
+                        pcall(function() if remote then remote:FireServer(plr.Character) end end)
+                    end
+                end
             end
         end
-        notify("Noclip: " .. tostring(ncOn))
+        task.wait(0.3)
     end
 end)
-
+notify("🔫 Kill Aura activé")
 ]]
+        })
+    end
 
-    -- ESP pour jeux combat
+    -- 👁️ ESP
     local isCombat = (A.type == "FPS" or A.type == "RPG" or A.type == "Anime")
         or (A.remoteCategories.combat and #A.remoteCategories.combat > 0)
+        or (A.remoteCategories.steal and #A.remoteCategories.steal > 0)
     if isCombat then
-        body = body .. [[
---// 👁️ ESP Joueurs
+        table.insert(featureButtons, {
+            name = "👁️ ESP Joueurs",
+            color = "Color3.fromRGB(180, 80, 220)",
+            code = [[
+_G.ESP = true
 local espFolder = Instance.new("Folder", game.CoreGui)
-espFolder.Name = "IA_ESP_V3"
-local function mkESP(plr)
-    if plr == LP then return end
+espFolder.Name = "IA_ESP_Menu"
+for _, plr in ipairs(Players:GetPlayers()) do
     task.spawn(function()
-        while plr.Parent and plr.Character do
+        if plr == LP then return end
+        while plr.Parent and plr.Character and _G.ESP do
             local head = plr.Character:FindFirstChild("Head")
             if head then
                 local bb = espFolder:FindFirstChild(plr.Name)
@@ -596,174 +603,317 @@ local function mkESP(plr)
                         math.floor((head.Position - cam.CFrame.Position).Magnitude) .. "]"
                 end
             end
-            task.wait(0.15)
+            task.wait(0.2)
         end
         local old = espFolder:FindFirstChild(plr.Name)
         if old then old:Destroy() end
     end)
 end
-for _, p in ipairs(Players:GetPlayers()) do mkESP(p) end
-Players.PlayerAdded:Connect(mkESP)
-
+notify("👁️ ESP activé")
 ]]
+        })
     end
 
-    -- Auto Farm
-    local farmRemote = getRemoteFromCategory("farm") or getRemoteFromCategory("currency")
-    if farmRemote then
-        body = body .. "--// 🌾 Auto Farm\n"
-        body = body .. buildRemoteLoader(farmRemote)
-        body = body .. [[
-local farmRemote = remote
+    -- 🕊️ FLY (toujours dispo)
+    table.insert(featureButtons, {
+        name = "🕊️ Fly (F)",
+        color = "Color3.fromRGB(120, 200, 255)",
+        code = [[
+_G.Fly = not _G.Fly
+if _G.Fly then
+    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        local bv = Instance.new("BodyVelocity", hrp)
+        bv.Name = "IA_Fly_BV"
+        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        local bg = Instance.new("BodyGyro", hrp)
+        bg.Name = "IA_Fly_BG"
+        bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.P = 9e4
+    end
+    notify("🕊️ Fly ON")
+else
+    for _, n in ipairs({"IA_Fly_BV", "IA_Fly_BG"}) do
+        local o = LP.Character and LP.Character:FindFirstChild(n)
+        if o then o:Destroy() end
+    end
+    notify("🕊️ Fly OFF")
+end
+]]
+    })
+
+    -- 🏃 SPEED
+    table.insert(featureButtons, {
+        name = "🏃 Speed Boost",
+        color = "Color3.fromRGB(80, 180, 200)",
+        code = [[
+if LP.Character then
+    local h = LP.Character:FindFirstChild("Humanoid")
+    if h then
+        h.WalkSpeed = h.WalkSpeed == 16 and 100 or 16
+        notify("🏃 Speed: " .. h.WalkSpeed)
+    end
+end
+]]
+    })
+
+    -- 👻 NOCLIP
+    table.insert(featureButtons, {
+        name = "👻 Noclip",
+        color = "Color3.fromRGB(150, 150, 200)",
+        code = [[
+_G.Noclip = not _G.Noclip
+if LP.Character then
+    for _, d in ipairs(LP.Character:GetDescendants()) do
+        if d:IsA("BasePart") then d.CanCollide = not _G.Noclip end
+    end
+end
+notify("👻 Noclip: " .. tostring(_G.Noclip))
+]]
+    })
+
+    -- 🖱️ AUTO CLICK
+    table.insert(featureButtons, {
+        name = "🖱️ Auto Click",
+        color = "Color3.fromRGB(200, 200, 80)",
+        code = [[
+_G.AutoClick = not _G.AutoClick
+notify("🖱️ Auto Click: " .. tostring(_G.AutoClick))
 task.spawn(function()
-    while task.wait(0.5) do
+    local vu = game:GetService("VirtualUser")
+    while _G.AutoClick do
         pcall(function()
-            if farmRemote then farmRemote:FireServer() end
+            vu:CaptureController()
+            vu:ClickButton1(Vector2.new(0, 0))
         end)
+        task.wait(0.1)
     end
 end)
-notify("Auto Farm activé")
-
 ]]
-    end
+    })
 
-    -- Kill Aura
-    local combatRemote = getRemoteFromCategory("combat")
-    if combatRemote then
-        body = body .. "--// 🔫 Kill Aura\n"
-        body = body .. buildRemoteLoader(combatRemote)
-        body = body .. [[
-local combatRemote = remote
-local KA_radius = 25
-task.spawn(function()
-    while task.wait(0.3) do
-        if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-            local myPos = LP.Character.HumanoidRootPart.Position
-            for _, plr in ipairs(Players:GetPlayers()) do
-                if plr ~= LP and plr.Character then
-                    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-                    local hum = plr.Character:FindFirstChild("Humanoid")
-                    if hrp and hum and hum.Health > 0
-                        and (hrp.Position - myPos).Magnitude <= KA_radius then
-                        pcall(function()
-                            combatRemote:FireServer(plr.Character)
-                        end)
-                    end
-                end
-            end
-        end
+    -- 🌀 TP MOUSE
+    table.insert(featureButtons, {
+        name = "🌀 TP Mouse (clic)",
+        color = "Color3.fromRGB(200, 100, 180)",
+        code = [[
+local m = LP:GetMouse()
+m.Button1Down:Connect(function()
+    local t = m.Target
+    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    if t and hrp then
+        hrp.CFrame = CFrame.new(t.Position + Vector3.new(0, 3, 0))
+        notify("🌀 TP: " .. t.Name)
     end
 end)
-notify("Kill Aura activé")
-
+notify("🌀 TP Mouse armé - clique sur une surface")
 ]]
-    end
+    })
 
-    -- Auto Claim
-    local rewardRemote = getRemoteFromCategory("reward")
-    if rewardRemote then
-        body = body .. "--// 🎁 Auto Claim\n"
-        body = body .. buildRemoteLoader(rewardRemote)
-        body = body .. [[
-local rewardRemote = remote
-task.spawn(function()
-    while task.wait(5) do
-        pcall(function()
-            if rewardRemote then rewardRemote:FireServer() end
-        end)
-    end
-end)
-notify("Auto Claim activé")
-
-]]
-    end
-
-    -- Auto Hatch
-    local petRemote = getRemoteFromCategory("pet")
-    if petRemote or A.type == "Simulator" then
-        body = body .. "--// 🥚 Auto Hatch\n"
-        if petRemote then
-            body = body .. buildRemoteLoader(petRemote)
-            body = body .. [[
-local petRemote = remote
-task.spawn(function()
-    while task.wait(1) do
-        pcall(function()
-            if petRemote then petRemote:FireServer() end
-        end)
-    end
-end)
-notify("Auto Hatch activé")
-]]
-        else
-            body = body .. "-- Aucun remote de pet détecté\n"
-        end
-        body = body .. "\n\n"
-    end
-
-    -- Auto Click (toujours utile)
-    body = body .. [[
---// 🖱️ Auto Click (touche G)
-local clicking = false
-local vu2 = game:GetService("VirtualUser")
-UIS.InputBegan:Connect(function(i, g)
-    if g then return end
-    if i.KeyCode == Enum.KeyCode.G then
-        clicking = not clicking
-        notify("AutoClick: " .. tostring(clicking))
-    end
-end)
-task.spawn(function()
-    while task.wait(0.1) do
-        if clicking then
-            pcall(function()
-                vu2:CaptureController()
-                vu2:ClickButton1(Vector2.new(0, 0))
-            end)
-        end
-    end
+    -- Build boutons code générés
+    local buttonsCode = ""
+    for i, b in ipairs(featureButtons) do
+        buttonsCode = buttonsCode .. string.format([[
+--// Bouton: %s
+makeFeatureButton(%q, %s, function()
+%s
 end)
 
-]]
+]], b.name, b.name, b.color, b.code)
+    end
 
-    -- Footer
-    body = body .. [[
---// ═══════════════════════════════════════════════════
---// 🎮 TOUCHES:
---//   F = Fly toggle
---//   N = Noclip toggle
---//   G = Auto Click toggle
---// ═══════════════════════════════════════════════════
-notify("✅ Tous les modules chargés !")
-]]
+    -- Script complet de la NOUVELLE GUI
+    local script = string.format([[
+--// ═══════════════════════════════════════════════════════════
+--// 🎮 GUI MENU AUTO-GÉNÉRÉE par IA V4
+--// Jeu   : %s
+--// ID    : %d
+--// Type  : %s
+--// Joueurs: %d
+--// ═══════════════════════════════════════════════════════════
 
-    return header .. body
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local LP = Players.LocalPlayer
+local cam = workspace.CurrentCamera
+
+--// Cleanup ancienne GUI
+pcall(function()
+    local old = CoreGui:FindFirstChild("IA_GeneratedGUI")
+    if old then old:Destroy() end
+end)
+
+--// Notification
+local function notify(msg)
+    print("🤖 " .. msg)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "%s", Text = msg, Duration = 3
+        })
+    end)
 end
 
---// ==== ONGLET IA ====
-local iaFrame = tabs["🤖 IA Auto"].frame
+--// ==== SCREEN GUI ====
+local gui = Instance.new("ScreenGui")
+gui.Name = "IA_GeneratedGUI"
+gui.ResetOnSpawn = false
+pcall(function() gui.Parent = CoreGui end)
+if not gui.Parent then
+    gui.Parent = LP:WaitForChild("PlayerGui")
+end
 
-addLabel(iaFrame, "🤖 IA Auto-Generator V3", Color3.fromRGB(120, 200, 255), 22)
-addLabel(iaFrame, "L'IA analyse le jeu et génère automatiquement un script adapté.", Color3.fromRGB(180, 180, 200), 18)
-addLabel(iaFrame, "Aucun réglage nécessaire — clique juste sur le bouton.", Color3.fromRGB(180, 180, 200), 18)
+--// Bouton toggle
+local toggle = Instance.new("TextButton")
+toggle.Size = UDim2.new(0, 60, 0, 60)
+toggle.Position = UDim2.new(0, 20, 0.5, -30)
+toggle.BackgroundColor3 = Color3.fromRGB(180, 90, 220)
+toggle.Text = "🤖"
+toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggle.Font = Enum.Font.GothamBold
+toggle.TextSize = 28
+toggle.BorderSizePixel = 0
+toggle.Parent = gui
+Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 30)
 
--- Bouton Générer
-local autoBtn = Instance.new("TextButton")
-autoBtn.Size = UDim2.new(1, -10, 0, 40)
-autoBtn.BackgroundColor3 = Color3.fromRGB(180, 90, 220)
-autoBtn.Text = "🎯 GÉNÉRER LE SCRIPT ADAPTÉ"
-autoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-autoBtn.Font = Enum.Font.GothamBold
-autoBtn.TextSize = 14
-autoBtn.BorderSizePixel = 0
-autoBtn.Parent = iaFrame
-Instance.new("UICorner", autoBtn).CornerRadius = UDim.new(0, 8)
+--// Menu frame
+local menu = Instance.new("Frame")
+menu.Size = UDim2.new(0, 380, 0, 420)
+menu.Position = UDim2.new(0.5, -190, 0.5, -210)
+menu.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+menu.BorderSizePixel = 0
+menu.Active = true
+menu.Draggable = true
+menu.Visible = true
+menu.Parent = gui
+Instance.new("UICorner", menu).CornerRadius = UDim.new(0, 12)
+local ms = Instance.new("UIStroke", menu)
+ms.Color = Color3.fromRGB(180, 90, 220)
+ms.Thickness = 2
 
--- Bouton Copy
+--// Header
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 45)
+header.BackgroundColor3 = Color3.fromRGB(180, 90, 220)
+header.BorderSizePixel = 0
+header.Parent = menu
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 12)
+
+local hTitle = Instance.new("TextLabel")
+hTitle.Size = UDim2.new(1, -50, 1, 0)
+hTitle.Position = UDim2.new(0, 15, 0, 0)
+hTitle.BackgroundTransparency = 1
+hTitle.Text = "🤖 %s"
+hTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+hTitle.Font = Enum.Font.GothamBold
+hTitle.TextSize = 14
+hTitle.TextXAlignment = Enum.TextXAlignment.Left
+hTitle.TextTruncate = Enum.TextTruncate.AtEnd
+hTitle.Parent = header
+
+--// Info
+local info = Instance.new("TextLabel")
+info.Size = UDim2.new(1, -20, 0, 24)
+info.Position = UDim2.new(0, 10, 0, 52)
+info.BackgroundTransparency = 1
+info.Text = "🎮 Type: %s  •  👥 %d joueurs"
+info.TextColor3 = Color3.fromRGB(180, 180, 200)
+info.Font = Enum.Font.Gotham
+info.TextSize = 11
+info.TextXAlignment = Enum.TextXAlignment.Left
+info.Parent = menu
+
+--// Scroll Frame pour boutons
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.new(1, -20, 1, -100)
+scroll.Position = UDim2.new(0, 10, 0, 82)
+scroll.BackgroundTransparency = 1
+scroll.BorderSizePixel = 0
+scroll.ScrollBarThickness = 4
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scroll.Parent = menu
+
+local list = Instance.new("UIListLayout", scroll)
+list.Padding = UDim.new(0, 6)
+list.SortOrder = Enum.SortOrder.LayoutOrder
+
+--// Fonction créer bouton
+local function makeFeatureButton(name, color, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -10, 0, 36)
+    btn.BackgroundColor3 = color
+    btn.Text = name
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 13
+    btn.BorderSizePixel = 0
+    btn.Parent = scroll
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+
+    local active = false
+    btn.MouseButton1Click:Connect(function()
+        active = not active
+        if active then
+            btn.BackgroundColor3 = Color3.fromRGB(60, 200, 100)
+            _G[name] = true
+        else
+            btn.BackgroundColor3 = color
+            _G[name] = false
+        end
+        pcall(callback)
+    end)
+
+    btn.MouseEnter:Connect(function()
+        if not active then btn.BackgroundColor3 = color:Lerp(Color3.new(1,1,1), 0.2) end
+    end)
+    btn.MouseLeave:Connect(function()
+        if not active then btn.BackgroundColor3 = color end
+    end)
+end
+
+--// Toggle menu via le bouton
+local menuOpen = true
+toggle.MouseButton1Click:Connect(function()
+    menuOpen = not menuOpen
+    menu.Visible = menuOpen
+end)
+
+--// Boutons générés
+%s
+
+notify("✅ GUI chargée pour " .. %q)
+]], safeName, game.PlaceId, A.type, A.playerCount, safeName, A.type, A.playerCount, buttonsCode, safeName)
+
+    return script
+end
+
+--// ================================================
+--// ONGLET IA
+--// ================================================
+local iaFrame = tabs["🤖 IA GUI"].frame
+
+addLabel(iaFrame, "🤖 IA V4 - GUI Menu Generator", Color3.fromRGB(220, 120, 255), 22)
+addLabel(iaFrame, "L'IA analyse le jeu et CRÉE une GUI MENU complète adaptée.", Color3.fromRGB(180, 180, 200), 18)
+addLabel(iaFrame, "Ex: Steal an Egg → GUI avec Auto Steal, Hatch, ESP...", Color3.fromRGB(180, 180, 200), 18)
+
+local genBtn = Instance.new("TextButton")
+genBtn.Size = UDim2.new(1, -10, 0, 45)
+genBtn.BackgroundColor3 = Color3.fromRGB(180, 90, 220)
+genBtn.Text = "🎯 GÉNÉRER LA GUI MENU ADAPTÉE"
+genBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+genBtn.Font = Enum.Font.GothamBold
+genBtn.TextSize = 14
+genBtn.BorderSizePixel = 0
+genBtn.Parent = iaFrame
+Instance.new("UICorner", genBtn).CornerRadius = UDim.new(0, 8)
+
 local copyBtn = Instance.new("TextButton")
 copyBtn.Size = UDim2.new(1, -10, 0, 30)
 copyBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 90)
-copyBtn.Text = "📋 Copier le script"
+copyBtn.Text = "📋 Copier la GUI générée"
 copyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 copyBtn.Font = Enum.Font.GothamBold
 copyBtn.TextSize = 12
@@ -771,11 +921,10 @@ copyBtn.BorderSizePixel = 0
 copyBtn.Parent = iaFrame
 Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 6)
 
--- Bouton Exécuter
 local execBtn = Instance.new("TextButton")
 execBtn.Size = UDim2.new(1, -10, 0, 30)
 execBtn.BackgroundColor3 = Color3.fromRGB(150, 80, 200)
-execBtn.Text = "▶ Exécuter le script"
+execBtn.Text = "▶ Lancer la GUI générée"
 execBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 execBtn.Font = Enum.Font.GothamBold
 execBtn.TextSize = 12
@@ -783,14 +932,13 @@ execBtn.BorderSizePixel = 0
 execBtn.Parent = iaFrame
 Instance.new("UICorner", execBtn).CornerRadius = UDim.new(0, 6)
 
--- Output
 local outputBox = Instance.new("TextBox")
-outputBox.Size = UDim2.new(1, -10, 0, 320)
+outputBox.Size = UDim2.new(1, -10, 0, 300)
 outputBox.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-outputBox.Text = "-- Clique sur 🎯 GÉNÉRER LE SCRIPT ADAPTÉ\n-- L'IA va créer automatiquement le script pour ce jeu."
+outputBox.Text = "-- Clique sur 🎯 GÉNÉRER LA GUI MENU ADAPTÉE\n-- L'IA va créer une GUI complète pour ce jeu."
 outputBox.TextColor3 = Color3.fromRGB(150, 255, 150)
 outputBox.Font = Enum.Font.Code
-outputBox.TextSize = 11
+outputBox.TextSize = 10
 outputBox.TextXAlignment = Enum.TextXAlignment.Left
 outputBox.TextYAlignment = Enum.TextYAlignment.Top
 outputBox.MultiLine = true
@@ -803,39 +951,39 @@ local opad = Instance.new("UIPadding", outputBox)
 opad.PaddingLeft = UDim.new(0, 8)
 opad.PaddingTop = UDim.new(0, 6)
 
---// ==== HANDLERS IA ====
-autoBtn.MouseButton1Click:Connect(function()
-    autoBtn.Text = "🧠 Analyse du jeu en cours..."
+--// Handlers
+genBtn.MouseButton1Click:Connect(function()
+    genBtn.Text = "🧠 Analyse + Génération..."
     task.spawn(function()
         scanAll()
         analyzeGame()
         task.wait(0.3)
-        local ok, result = pcall(buildGameScript)
+        local ok, result = pcall(buildGUIMenuScript)
         if ok and result then
             outputBox.Text = result
-            autoBtn.Text = "✅ Script généré !"
+            genBtn.Text = "✅ GUI créée !"
         else
             outputBox.Text = "-- ❌ Erreur: " .. tostring(result)
-            autoBtn.Text = "❌ Erreur"
+            genBtn.Text = "❌ Erreur"
         end
         task.wait(2)
-        autoBtn.Text = "🎯 GÉNÉRER LE SCRIPT ADAPTÉ"
+        genBtn.Text = "🎯 GÉNÉRER LA GUI MENU ADAPTÉE"
     end)
 end)
 
 copyBtn.MouseButton1Click:Connect(function()
     local ok = copyClipboard(outputBox.Text)
-    copyBtn.Text = ok and "✅ Copié !" or "❌ Échec copie"
+    copyBtn.Text = ok and "✅ Copié !" or "❌ Échec"
     task.wait(1)
-    copyBtn.Text = "📋 Copier le script"
+    copyBtn.Text = "📋 Copier la GUI générée"
 end)
 
 execBtn.MouseButton1Click:Connect(function()
     local txt = outputBox.Text
     if txt == "" or string.sub(txt, 1, 5) == "-- Cl" then
-        execBtn.Text = "⚠️ Rien à exécuter"
+        execBtn.Text = "⚠️ Rien à lancer"
         task.wait(1)
-        execBtn.Text = "▶ Exécuter le script"
+        execBtn.Text = "▶ Lancer la GUI générée"
         return
     end
     local fn, err = loadstring(txt)
@@ -843,17 +991,17 @@ execBtn.MouseButton1Click:Connect(function()
         execBtn.Text = "❌ Erreur syntaxe"
         warn("[IA] Syntaxe:", err)
         task.wait(1.5)
-        execBtn.Text = "▶ Exécuter le script"
+        execBtn.Text = "▶ Lancer la GUI générée"
         return
     end
     local ok, err2 = pcall(fn)
-    execBtn.Text = ok and "✅ Exécuté !" or "❌ Erreur runtime"
+    execBtn.Text = ok and "✅ Lancée !" or "❌ Erreur runtime"
     if not ok then warn("[IA] Runtime:", err2) end
     task.wait(1.5)
-    execBtn.Text = "▶ Exécuter le script"
+    execBtn.Text = "▶ Lancer la GUI générée"
 end)
 
---// ==== MINIMIZE ====
+--// MINIMIZE
 local minimized = false
 MinBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
@@ -865,14 +1013,14 @@ MinBtn.MouseButton1Click:Connect(function()
     Main.Size = minimized and UDim2.new(0, 640, 0, 35) or UDim2.new(0, 640, 0, 460)
 end)
 
---// ==== NOTIFICATION ====
+--// NOTIFICATION
 safeCall(function()
     local notif = Instance.new("TextLabel")
-    notif.Size = UDim2.new(0, 280, 0, 40)
-    notif.Position = UDim2.new(0.5, -140, 0, 20)
+    notif.Size = UDim2.new(0, 300, 0, 40)
+    notif.Position = UDim2.new(0.5, -150, 0, 20)
     notif.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-    notif.Text = "⚡ Delta Hub IA V3 chargée !"
-    notif.TextColor3 = Color3.fromRGB(120, 255, 120)
+    notif.Text = "⚡ Delta Hub IA V4 chargée !"
+    notif.TextColor3 = Color3.fromRGB(220, 120, 255)
     notif.Font = Enum.Font.GothamBold
     notif.TextSize = 13
     notif.BorderSizePixel = 0
@@ -891,11 +1039,11 @@ safeCall(function()
     end)
 end)
 
---// Auto-init
+--// AUTO INIT
 task.spawn(function()
     task.wait(0.5)
     safeCall(scanAll)
     safeCall(analyzeGame)
 end)
 
-print("✅ Delta Hub IA V3 chargée ! Executor: " .. tostring(executorName))
+print("✅ Delta Hub IA V4 chargée ! Executor: " .. tostring(executorName))
