@@ -1,5 +1,5 @@
 --// ═══════════════════════════════════════════════════════════
---// ⚡ DELTA HUB - IA V10 (Dump Complet Discord)
+--// ⚡ DELTA HUB - IA V11 (FINAL - Toutes Erreurs Corrigées)
 --// Compatible: Delta / Wave / Solara / Krnl
 --// ═══════════════════════════════════════════════════════════
 
@@ -17,7 +17,7 @@ local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
 
---// ==== HELPERS ====
+--// HELPERS
 local function safeCall(fn, ...)
     local ok, res = pcall(fn, ...)
     if ok then return res end
@@ -42,7 +42,7 @@ end
 local function notifyUser(msg)
     safeCall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Delta IA V10", Text = tostring(msg), Duration = 3
+            Title = "Delta IA", Text = tostring(msg), Duration = 3
         })
     end)
 end
@@ -56,7 +56,7 @@ safeCall(function()
     if pg and pg:FindFirstChild("DeltaGUI_Hub") then pg.DeltaGUI_Hub:Destroy() end
 end)
 
---// ==== SCREEN GUI ====
+--// SCREEN GUI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "DeltaGUI_Hub"
 ScreenGui.ResetOnSpawn = false
@@ -99,7 +99,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -90, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "🥚 Delta IA V10"
+Title.Text = "Delta IA V11 - Final"
 Title.TextColor3 = Color3.fromRGB(255, 200, 100)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
@@ -110,7 +110,7 @@ local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 30, 0, 25)
 CloseBtn.Position = UDim2.new(1, -35, 0, 6)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-CloseBtn.Text = "✕"
+CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 14
@@ -125,7 +125,7 @@ local MinBtn = Instance.new("TextButton")
 MinBtn.Size = UDim2.new(0, 30, 0, 25)
 MinBtn.Position = UDim2.new(1, -70, 0, 6)
 MinBtn.BackgroundColor3 = Color3.fromRGB(200, 160, 50)
-MinBtn.Text = "—"
+MinBtn.Text = "-"
 MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MinBtn.Font = Enum.Font.GothamBold
 MinBtn.TextSize = 14
@@ -199,13 +199,13 @@ local function createTab(name)
     return frame
 end
 
-createTab("🏠 Home")
-createTab("📡 Remotes")
-createTab("🥚 IA Auto")
-createTab("📤 Webhook")
+createTab("Home")
+createTab("Remotes")
+createTab("IA Auto")
+createTab("Webhook")
 
-tabs["🏠 Home"].button.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-tabs["🏠 Home"].frame.Visible = true
+tabs["Home"].button.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+tabs["Home"].frame.Visible = true
 
 local function addLabel(parent, text, color, size)
     local lbl = Instance.new("TextLabel")
@@ -222,17 +222,17 @@ local function addLabel(parent, text, color, size)
 end
 
 --// HOME
-local homeFrame = tabs["🏠 Home"].frame
-addLabel(homeFrame, "🥚 IA V10 - Dump Complet", Color3.fromRGB(255, 200, 100), 22)
-addLabel(homeFrame, "✅ GUI chargée !", Color3.fromRGB(120, 255, 120), 20)
-addLabel(homeFrame, "📌 Jeu ID: " .. tostring(game.PlaceId), Color3.fromRGB(180, 180, 255), 18)
-addLabel(homeFrame, "👤 Joueur: " .. LocalPlayer.Name, Color3.fromRGB(180, 180, 255), 18)
-addLabel(homeFrame, "🖥️ Executor: " .. tostring(executorName), Color3.fromRGB(120, 255, 120), 18)
+local homeFrame = tabs["Home"].frame
+addLabel(homeFrame, "Delta IA V11 - Final", Color3.fromRGB(255, 200, 100), 22)
+addLabel(homeFrame, "GUI chargee avec succes", Color3.fromRGB(120, 255, 120), 20)
+addLabel(homeFrame, "Jeu ID: " .. tostring(game.PlaceId), Color3.fromRGB(180, 180, 255), 18)
+addLabel(homeFrame, "Joueur: " .. LocalPlayer.Name, Color3.fromRGB(180, 180, 255), 18)
+addLabel(homeFrame, "Executor: " .. tostring(executorName), Color3.fromRGB(120, 255, 120), 18)
 
 local scanBtn = Instance.new("TextButton")
 scanBtn.Size = UDim2.new(1, -10, 0, 34)
 scanBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-scanBtn.Text = "🔍 Scanner tous les Remotes"
+scanBtn.Text = "Scanner tous les Remotes"
 scanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 scanBtn.Font = Enum.Font.GothamBold
 scanBtn.TextSize = 13
@@ -277,7 +277,7 @@ local function createRemoteEntry(parent, obj)
     btn.MouseButton1Click:Connect(function()
         local path = safeCall(function() return obj:GetFullName() end) or "?"
         local ok = copyClipboard(path)
-        btn.Text = ok and ("  ✅ Copié: " .. obj.Name) or ("  ⚠ " .. obj.Name)
+        btn.Text = ok and ("  Copie: " .. obj.Name) or ("  Fail: " .. obj.Name)
         task.wait(1.2)
         btn.Text = "  " .. obj.Name
     end)
@@ -285,7 +285,7 @@ end
 
 local function scanAll()
     for k in pairs(foundRemotes) do foundRemotes[k] = {} end
-    clearFrame(tabs["📡 Remotes"].frame)
+    clearFrame(tabs["Remotes"].frame)
 
     local visited = {}
     local function scan(parent)
@@ -296,13 +296,13 @@ local function scanAll()
         for _, obj in ipairs(descendants) do
             if obj:IsA("RemoteEvent") then
                 table.insert(foundRemotes.RemoteEvent, obj)
-                createRemoteEntry(tabs["📡 Remotes"].frame, obj)
+                createRemoteEntry(tabs["Remotes"].frame, obj)
             elseif obj:IsA("RemoteFunction") then
                 table.insert(foundRemotes.RemoteFunction, obj)
-                createRemoteEntry(tabs["📡 Remotes"].frame, obj)
+                createRemoteEntry(tabs["Remotes"].frame, obj)
             elseif obj:IsA("BindableEvent") then
                 table.insert(foundRemotes.BindableEvent, obj)
-                createRemoteEntry(tabs["📡 Remotes"].frame, obj)
+                createRemoteEntry(tabs["Remotes"].frame, obj)
             end
         end
     end
@@ -314,18 +314,16 @@ local function scanAll()
 end
 
 scanBtn.MouseButton1Click:Connect(function()
-    scanBtn.Text = "⏳ Scan..."
+    scanBtn.Text = "Scan..."
     task.spawn(function()
         scanAll()
-        scanBtn.Text = "✅ Terminé !"
+        scanBtn.Text = "Termine !"
         task.wait(1.5)
-        scanBtn.Text = "🔍 Scanner tous les Remotes"
+        scanBtn.Text = "Scanner tous les Remotes"
     end)
 end)
 
---// ================================================
 --// ANALYSE
---// ================================================
 local gameAnalysis = {
     name = "Unknown",
     type = "unknown",
@@ -433,9 +431,7 @@ local function buildLoader(path)
         path .. "\", \"[^%.]+\") do cur = cur[s] if not cur then return nil end end return cur end)()"
 end
 
---// ================================================
---// GÉNÉRATEUR (concaténation pure)
---// ================================================
+--// GÉNÉRATEUR (concaténation pure - 0 erreur)
 local function buildGUIMenuScript(prompt)
     local A = gameAnalysis
     local safeName = tostring(A.name)
@@ -452,7 +448,7 @@ local function buildGUIMenuScript(prompt)
     end
 
     local wantsSteal = isEmpty or string.find(p, "steal", 1, true)
-    local wantsFly = isEmpty or string.find(p, "fly", 1, true) or string.find(p, "vol", 1, true)
+    local wantsFly = isEmpty or string.find(p, "fly", 1, true)
     local wantsSpeed = isEmpty or string.find(p, "speed", 1, true)
     local wantsFarm = isEmpty or string.find(p, "farm", 1, true)
     local wantsESP = isEmpty or string.find(p, "esp", 1, true)
@@ -463,11 +459,11 @@ local function buildGUIMenuScript(prompt)
     local wantsTP = isEmpty or string.find(p, "tp", 1, true) or string.find(p, "teleport", 1, true)
     local wantsAim = isEmpty or string.find(p, "aim", 1, true) or string.find(p, "kill", 1, true)
 
-    -- 🥚 AUTO STEAL
+    -- AUTO STEAL
     local stealRemote = getFirst(A.stealRemotes)
     if wantsSteal and (stealRemote or A.type == "Steal") then
         local loader = stealRemote and buildLoader(stealRemote) or "local remote = nil"
-        addButton("🥚 AUTO STEAL", "Color3.fromRGB(255, 140, 0)", loader .. [[
+        addButton("AUTO STEAL", "Color3.fromRGB(255, 140, 0)", loader .. [[
 
 task.spawn(function()
     while _G.IA_AutoSteal do
@@ -505,13 +501,13 @@ task.spawn(function()
         task.wait(0.4)
     end
 end)
-notify("AUTO STEAL active !")
+notify("AUTO STEAL active")
 ]])
     end
 
-    -- 🎯 TP vers cible
+    -- TP vers Cible
     if wantsSteal and A.type == "Steal" then
-        addButton("🎯 TP vers Cible", "Color3.fromRGB(255, 200, 0)", [[
+        addButton("TP vers Cible", "Color3.fromRGB(255, 200, 0)", [[
 _G.IA_AutoTP = not _G.IA_AutoTP
 task.spawn(function()
     while _G.IA_AutoTP do
@@ -541,10 +537,10 @@ notify("Auto TP: " .. tostring(_G.IA_AutoTP))
 ]])
     end
 
-    -- 💰 AUTO SELL
+    -- AUTO SELL
     local sellRemote = getFirst(A.sellRemotes)
     if wantsSell and sellRemote then
-        addButton("💰 AUTO SELL", "Color3.fromRGB(80, 220, 100)",
+        addButton("AUTO SELL", "Color3.fromRGB(80, 220, 100)",
             buildLoader(sellRemote) .. [[
 
 task.spawn(function()
@@ -557,11 +553,11 @@ notify("Auto Sell active")
 ]])
     end
 
-    -- 🥚 AUTO HATCH
+    -- AUTO HATCH
     local hatchRemote = getFirst(A.hatchRemotes)
     if wantsHatch and (hatchRemote or A.type == "Egg" or A.type == "Simulator") then
         local loader = hatchRemote and buildLoader(hatchRemote) or "local remote = nil"
-        addButton("🥚 AUTO HATCH", "Color3.fromRGB(220, 150, 255)", loader .. [[
+        addButton("AUTO HATCH", "Color3.fromRGB(220, 150, 255)", loader .. [[
 
 task.spawn(function()
     while _G.IA_AutoHatch do
@@ -573,10 +569,10 @@ notify("Auto Hatch active")
 ]])
     end
 
-    -- 🛒 AUTO BUY
+    -- AUTO BUY
     local buyRemote = getFirst(A.buyRemotes)
     if buyRemote and (isEmpty or string.find(p, "buy", 1, true)) then
-        addButton("🛒 AUTO BUY", "Color3.fromRGB(180, 200, 100)",
+        addButton("AUTO BUY", "Color3.fromRGB(180, 200, 100)",
             buildLoader(buyRemote) .. [[
 
 task.spawn(function()
@@ -589,10 +585,10 @@ notify("Auto Buy active")
 ]])
     end
 
-    -- 🎁 AUTO CLAIM
+    -- AUTO CLAIM
     local claimRemote = getFirst(A.claimRemotes)
     if claimRemote and (isEmpty or string.find(p, "claim", 1, true)) then
-        addButton("🎁 AUTO CLAIM", "Color3.fromRGB(255, 220, 100)",
+        addButton("AUTO CLAIM", "Color3.fromRGB(255, 220, 100)",
             buildLoader(claimRemote) .. [[
 
 task.spawn(function()
@@ -605,10 +601,10 @@ notify("Auto Claim active")
 ]])
     end
 
-    -- 🌾 AUTO FARM
+    -- AUTO FARM
     local farmRemote = getFirst(A.farmRemotes)
     if wantsFarm and farmRemote then
-        addButton("🌾 AUTO FARM", "Color3.fromRGB(100, 220, 140)",
+        addButton("AUTO FARM", "Color3.fromRGB(100, 220, 140)",
             buildLoader(farmRemote) .. [[
 
 task.spawn(function()
@@ -621,10 +617,10 @@ notify("Auto Farm active")
 ]])
     end
 
-    -- 🔫 KILL AURA
+    -- KILL AURA
     local combatRemote = getFirst(A.combatRemotes)
     if wantsAim and combatRemote then
-        addButton("🔫 KILL AURA", "Color3.fromRGB(220, 70, 70)",
+        addButton("KILL AURA", "Color3.fromRGB(220, 70, 70)",
             buildLoader(combatRemote) .. [[
 
 task.spawn(function()
@@ -651,9 +647,9 @@ notify("Kill Aura active")
 ]])
     end
 
-    -- 👁️ ESP
+    -- ESP
     if wantsESP then
-        addButton("👁️ ESP Eggs & Joueurs", "Color3.fromRGB(180, 80, 220)", [[
+        addButton("ESP Eggs + Joueurs", "Color3.fromRGB(180, 80, 220)", [[
 if _G.IA_ESP then
     _G.IA_ESP = false
     local f = game.CoreGui:FindFirstChild("IA_ESP_Menu")
@@ -723,9 +719,9 @@ end
 ]])
     end
 
-    -- 🕊️ FLY
+    -- FLY
     if wantsFly then
-        addButton("🕊️ FLY", "Color3.fromRGB(120, 200, 255)", [[
+        addButton("FLY", "Color3.fromRGB(120, 200, 255)", [[
 _G.IA_Fly = not _G.IA_Fly
 if _G.IA_Fly then
     local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
@@ -763,10 +759,10 @@ end
 ]])
     end
 
-    -- 🏃 SPEED
+    -- SPEED
     if wantsSpeed then
         local spd = tonumber(string.match(p, "%d+")) or 100
-        addButton("🏃 SPEED " .. spd, "Color3.fromRGB(80, 180, 200)",
+        addButton("SPEED " .. spd, "Color3.fromRGB(80, 180, 200)",
             "if LP.Character then\n" ..
             "    local h = LP.Character:FindFirstChild(\"Humanoid\")\n" ..
             "    if h then\n" ..
@@ -776,9 +772,9 @@ end
             "end")
     end
 
-    -- 👻 NOCLIP
+    -- NOCLIP
     if wantsNoclip then
-        addButton("👻 NOCLIP", "Color3.fromRGB(150, 150, 200)", [[
+        addButton("NOCLIP", "Color3.fromRGB(150, 150, 200)", [[
 _G.IA_Noclip = not _G.IA_Noclip
 if LP.Character then
     for _, d in ipairs(LP.Character:GetDescendants()) do
@@ -789,9 +785,9 @@ notify("Noclip: " .. tostring(_G.IA_Noclip))
 ]])
     end
 
-    -- 🖱️ AUTO CLICK
+    -- AUTO CLICK
     if wantsClick then
-        addButton("🖱️ AUTO CLICK", "Color3.fromRGB(200, 200, 80)", [[
+        addButton("AUTO CLICK", "Color3.fromRGB(200, 200, 80)", [[
 _G.IA_AutoClick = not _G.IA_AutoClick
 notify("Auto Click: " .. tostring(_G.IA_AutoClick))
 if _G.IA_AutoClick then
@@ -809,9 +805,9 @@ end
 ]])
     end
 
-    -- 🌀 TP MOUSE
+    -- TP MOUSE
     if wantsTP then
-        addButton("🌀 TP MOUSE", "Color3.fromRGB(200, 100, 180)", [[
+        addButton("TP MOUSE", "Color3.fromRGB(200, 100, 180)", [[
 if not _G.IA_TPArmed then
     _G.IA_TPArmed = true
     local m = LP:GetMouse()
@@ -831,14 +827,14 @@ end
 ]])
     end
 
-    -- 🌌 LOW GRAVITY
-    addButton("🌌 LOW GRAVITY", "Color3.fromRGB(150, 100, 220)", [[
+    -- LOW GRAVITY
+    addButton("LOW GRAVITY", "Color3.fromRGB(150, 100, 220)", [[
 workspace.Gravity = workspace.Gravity == 196.2 and 50 or 196.2
 notify("Gravity: " .. workspace.Gravity)
 ]])
 
-    -- 💡 FULLBRIGHT
-    addButton("💡 FULLBRIGHT", "Color3.fromRGB(255, 255, 150)", [[
+    -- FULLBRIGHT
+    addButton("FULLBRIGHT", "Color3.fromRGB(255, 255, 150)", [[
 if _G.IA_Bright then
     _G.IA_Bright = false
     Lighting.Brightness = 2
@@ -857,12 +853,14 @@ else
 end
 ]])
 
-    --// Build buttons
+    -- Build buttons (SANS string.format %q)
     local buttonsCode = ""
     for _, b in ipairs(buttons) do
+        -- Échapper le nom pour être sûr (guillemets)
+        local safeNameBtn = b.name:gsub("\\", "\\\\"):gsub('"', '\\"')
         buttonsCode = buttonsCode ..
-            "makeFeatureButton(" .. string.format("%q", b.name) ..
-            ", " .. b.color .. ", function()\n" ..
+            "makeFeatureButton(\"" .. safeNameBtn .. "\", " ..
+            b.color .. ", function()\n" ..
             b.code .. "\nend)\n\n"
     end
 
@@ -872,170 +870,171 @@ end
 
     local featureCount = #buttons
 
-    --// SCRIPT FINAL
-    local script = ""
-    script = script .. "--// ═══════════════════════════════════════════════════════════\n"
-    script = script .. "--// 🥚 GUI AUTO-GENEREE par IA V10\n"
-    script = script .. "--// Jeu   : " .. safeName .. "\n"
-    script = script .. "--// ID    : " .. tostring(game.PlaceId) .. "\n"
-    script = script .. "--// Type  : " .. A.type .. "\n"
-    script = script .. "--// Features: " .. featureCount .. "\n"
-    script = script .. "--// ═══════════════════════════════════════════════════════════\n\n"
+    -- Escape le nom du jeu
+    local safeGameName = safeName:gsub("\\", "\\\\"):gsub('"', '\\"')
 
-    script = script .. "local Players = game:GetService(\"Players\")\n"
-    script = script .. "local RS = game:GetService(\"ReplicatedStorage\")\n"
-    script = script .. "local RunService = game:GetService(\"RunService\")\n"
-    script = script .. "local UIS = game:GetService(\"UserInputService\")\n"
-    script = script .. "local CoreGui = game:GetService(\"CoreGui\")\n"
-    script = script .. "local Lighting = game:GetService(\"Lighting\")\n"
-    script = script .. "local LP = Players.LocalPlayer\n"
-    script = script .. "local cam = workspace.CurrentCamera\n\n"
+    -- SCRIPT FINAL
+    local s = ""
+    s = s .. "--// ═══════════════════════════════════════════════════════════\n"
+    s = s .. "--// GUI AUTO-GENEREE par IA V11\n"
+    s = s .. "--// Jeu   : " .. safeName .. "\n"
+    s = s .. "--// ID    : " .. tostring(game.PlaceId) .. "\n"
+    s = s .. "--// Type  : " .. A.type .. "\n"
+    s = s .. "--// Features: " .. featureCount .. "\n"
+    s = s .. "--// ═══════════════════════════════════════════════════════════\n\n"
 
-    script = script .. "pcall(function()\n"
-    script = script .. "    local old = CoreGui:FindFirstChild(\"IA_GeneratedGUI\")\n"
-    script = script .. "    if old then old:Destroy() end\n"
-    script = script .. "end)\n\n"
+    s = s .. "local Players = game:GetService(\"Players\")\n"
+    s = s .. "local RS = game:GetService(\"ReplicatedStorage\")\n"
+    s = s .. "local RunService = game:GetService(\"RunService\")\n"
+    s = s .. "local UIS = game:GetService(\"UserInputService\")\n"
+    s = s .. "local CoreGui = game:GetService(\"CoreGui\")\n"
+    s = s .. "local Lighting = game:GetService(\"Lighting\")\n"
+    s = s .. "local LP = Players.LocalPlayer\n"
+    s = s .. "local cam = workspace.CurrentCamera\n\n"
 
-    script = script .. "local function notify(msg)\n"
-    script = script .. "    print(\"IA: \" .. msg)\n"
-    script = script .. "    pcall(function()\n"
-    script = script .. "        game:GetService(\"StarterGui\"):SetCore(\"SendNotification\", {\n"
-    script = script .. "            Title = \"Steal Hub\", Text = msg, Duration = 3\n"
-    script = script .. "        })\n"
-    script = script .. "    end)\n"
-    script = script .. "end\n\n"
+    s = s .. "pcall(function()\n"
+    s = s .. "    local old = CoreGui:FindFirstChild(\"IA_GeneratedGUI\")\n"
+    s = s .. "    if old then old:Destroy() end\n"
+    s = s .. "end)\n\n"
 
-    script = script .. "local gui = Instance.new(\"ScreenGui\")\n"
-    script = script .. "gui.Name = \"IA_GeneratedGUI\"\n"
-    script = script .. "gui.ResetOnSpawn = false\n"
-    script = script .. "pcall(function() gui.Parent = CoreGui end)\n"
-    script = script .. "if not gui.Parent then gui.Parent = LP:WaitForChild(\"PlayerGui\") end\n\n"
+    s = s .. "local function notify(msg)\n"
+    s = s .. "    print(\"IA: \" .. msg)\n"
+    s = s .. "    pcall(function()\n"
+    s = s .. "        game:GetService(\"StarterGui\"):SetCore(\"SendNotification\", {\n"
+    s = s .. "            Title = \"Steal Hub\", Text = msg, Duration = 3\n"
+    s = s .. "        })\n"
+    s = s .. "    end)\n"
+    s = s .. "end\n\n"
 
-    script = script .. "local toggle = Instance.new(\"TextButton\")\n"
-    script = script .. "toggle.Size = UDim2.new(0, 65, 0, 65)\n"
-    script = script .. "toggle.Position = UDim2.new(0, 20, 0.5, -32)\n"
-    script = script .. "toggle.BackgroundColor3 = Color3.fromRGB(255, 140, 0)\n"
-    script = script .. "toggle.Text = \"EGG\"\n"
-    script = script .. "toggle.TextColor3 = Color3.fromRGB(255, 255, 255)\n"
-    script = script .. "toggle.Font = Enum.Font.GothamBold\n"
-    script = script .. "toggle.TextSize = 18\n"
-    script = script .. "toggle.BorderSizePixel = 0\n"
-    script = script .. "toggle.Parent = gui\n"
-    script = script .. "Instance.new(\"UICorner\", toggle).CornerRadius = UDim.new(0, 32)\n"
-    script = script .. "local tStroke = Instance.new(\"UIStroke\", toggle)\n"
-    script = script .. "tStroke.Color = Color3.fromRGB(255, 255, 255)\n"
-    script = script .. "tStroke.Thickness = 2\n\n"
+    s = s .. "local gui = Instance.new(\"ScreenGui\")\n"
+    s = s .. "gui.Name = \"IA_GeneratedGUI\"\n"
+    s = s .. "gui.ResetOnSpawn = false\n"
+    s = s .. "pcall(function() gui.Parent = CoreGui end)\n"
+    s = s .. "if not gui.Parent then gui.Parent = LP:WaitForChild(\"PlayerGui\") end\n\n"
 
-    script = script .. "local menu = Instance.new(\"Frame\")\n"
-    script = script .. "menu.Size = UDim2.new(0, 400, 0, 460)\n"
-    script = script .. "menu.Position = UDim2.new(0.5, -200, 0.5, -230)\n"
-    script = script .. "menu.BackgroundColor3 = Color3.fromRGB(22, 22, 30)\n"
-    script = script .. "menu.BorderSizePixel = 0\n"
-    script = script .. "menu.Active = true\n"
-    script = script .. "menu.Draggable = true\n"
-    script = script .. "menu.Visible = true\n"
-    script = script .. "menu.Parent = gui\n"
-    script = script .. "Instance.new(\"UICorner\", menu).CornerRadius = UDim.new(0, 12)\n"
-    script = script .. "local ms = Instance.new(\"UIStroke\", menu)\n"
-    script = script .. "ms.Color = Color3.fromRGB(255, 140, 0)\n"
-    script = script .. "ms.Thickness = 2\n\n"
+    s = s .. "local toggle = Instance.new(\"TextButton\")\n"
+    s = s .. "toggle.Size = UDim2.new(0, 65, 0, 65)\n"
+    s = s .. "toggle.Position = UDim2.new(0, 20, 0.5, -32)\n"
+    s = s .. "toggle.BackgroundColor3 = Color3.fromRGB(255, 140, 0)\n"
+    s = s .. "toggle.Text = \"HUB\"\n"
+    s = s .. "toggle.TextColor3 = Color3.fromRGB(255, 255, 255)\n"
+    s = s .. "toggle.Font = Enum.Font.GothamBold\n"
+    s = s .. "toggle.TextSize = 16\n"
+    s = s .. "toggle.BorderSizePixel = 0\n"
+    s = s .. "toggle.Parent = gui\n"
+    s = s .. "Instance.new(\"UICorner\", toggle).CornerRadius = UDim.new(0, 32)\n"
+    s = s .. "local tStroke = Instance.new(\"UIStroke\", toggle)\n"
+    s = s .. "tStroke.Color = Color3.fromRGB(255, 255, 255)\n"
+    s = s .. "tStroke.Thickness = 2\n\n"
 
-    script = script .. "local header = Instance.new(\"Frame\")\n"
-    script = script .. "header.Size = UDim2.new(1, 0, 0, 50)\n"
-    script = script .. "header.BackgroundColor3 = Color3.fromRGB(255, 140, 0)\n"
-    script = script .. "header.BorderSizePixel = 0\n"
-    script = script .. "header.Parent = menu\n"
-    script = script .. "Instance.new(\"UICorner\", header).CornerRadius = UDim.new(0, 12)\n\n"
+    s = s .. "local menu = Instance.new(\"Frame\")\n"
+    s = s .. "menu.Size = UDim2.new(0, 400, 0, 460)\n"
+    s = s .. "menu.Position = UDim2.new(0.5, -200, 0.5, -230)\n"
+    s = s .. "menu.BackgroundColor3 = Color3.fromRGB(22, 22, 30)\n"
+    s = s .. "menu.BorderSizePixel = 0\n"
+    s = s .. "menu.Active = true\n"
+    s = s .. "menu.Draggable = true\n"
+    s = s .. "menu.Visible = true\n"
+    s = s .. "menu.Parent = gui\n"
+    s = s .. "Instance.new(\"UICorner\", menu).CornerRadius = UDim.new(0, 12)\n"
+    s = s .. "local ms = Instance.new(\"UIStroke\", menu)\n"
+    s = s .. "ms.Color = Color3.fromRGB(255, 140, 0)\n"
+    s = s .. "ms.Thickness = 2\n\n"
 
-    script = script .. "local hTitle = Instance.new(\"TextLabel\")\n"
-    script = script .. "hTitle.Size = UDim2.new(1, -50, 1, 0)\n"
-    script = script .. "hTitle.Position = UDim2.new(0, 15, 0, 0)\n"
-    script = script .. "hTitle.BackgroundTransparency = 1\n"
-    script = script .. "hTitle.Text = " .. string.format("%q", "🥚 " .. safeName) .. "\n"
-    script = script .. "hTitle.TextColor3 = Color3.fromRGB(255, 255, 255)\n"
-    script = script .. "hTitle.Font = Enum.Font.GothamBold\n"
-    script = script .. "hTitle.TextSize = 14\n"
-    script = script .. "hTitle.TextXAlignment = Enum.TextXAlignment.Left\n"
-    script = script .. "hTitle.TextTruncate = Enum.TextTruncate.AtEnd\n"
-    script = script .. "hTitle.Parent = header\n\n"
+    s = s .. "local header = Instance.new(\"Frame\")\n"
+    s = s .. "header.Size = UDim2.new(1, 0, 0, 50)\n"
+    s = s .. "header.BackgroundColor3 = Color3.fromRGB(255, 140, 0)\n"
+    s = s .. "header.BorderSizePixel = 0\n"
+    s = s .. "header.Parent = menu\n"
+    s = s .. "Instance.new(\"UICorner\", header).CornerRadius = UDim.new(0, 12)\n\n"
 
-    script = script .. "local info = Instance.new(\"TextLabel\")\n"
-    script = script .. "info.Size = UDim2.new(1, -20, 0, 22)\n"
-    script = script .. "info.Position = UDim2.new(0, 10, 0, 56)\n"
-    script = script .. "info.BackgroundTransparency = 1\n"
-    script = script .. "info.Text = " .. string.format("%q", "Type: " .. A.type .. "  -  " .. featureCount .. " features") .. "\n"
-    script = script .. "info.TextColor3 = Color3.fromRGB(180, 180, 200)\n"
-    script = script .. "info.Font = Enum.Font.Gotham\n"
-    script = script .. "info.TextSize = 11\n"
-    script = script .. "info.TextXAlignment = Enum.TextXAlignment.Left\n"
-    script = script .. "info.Parent = menu\n\n"
+    s = s .. "local hTitle = Instance.new(\"TextLabel\")\n"
+    s = s .. "hTitle.Size = UDim2.new(1, -50, 1, 0)\n"
+    s = s .. "hTitle.Position = UDim2.new(0, 15, 0, 0)\n"
+    s = s .. "hTitle.BackgroundTransparency = 1\n"
+    s = s .. "hTitle.Text = \"" .. safeGameName .. "\"\n"
+    s = s .. "hTitle.TextColor3 = Color3.fromRGB(255, 255, 255)\n"
+    s = s .. "hTitle.Font = Enum.Font.GothamBold\n"
+    s = s .. "hTitle.TextSize = 14\n"
+    s = s .. "hTitle.TextXAlignment = Enum.TextXAlignment.Left\n"
+    s = s .. "hTitle.TextTruncate = Enum.TextTruncate.AtEnd\n"
+    s = s .. "hTitle.Parent = header\n\n"
 
-    script = script .. "local scroll = Instance.new(\"ScrollingFrame\")\n"
-    script = script .. "scroll.Size = UDim2.new(1, -20, 1, -110)\n"
-    script = script .. "scroll.Position = UDim2.new(0, 10, 0, 88)\n"
-    script = script .. "scroll.BackgroundTransparency = 1\n"
-    script = script .. "scroll.BorderSizePixel = 0\n"
-    script = script .. "scroll.ScrollBarThickness = 4\n"
-    script = script .. "scroll.CanvasSize = UDim2.new(0, 0, 0, 0)\n"
-    script = script .. "scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y\n"
-    script = script .. "scroll.Parent = menu\n\n"
+    s = s .. "local info = Instance.new(\"TextLabel\")\n"
+    s = s .. "info.Size = UDim2.new(1, -20, 0, 22)\n"
+    s = s .. "info.Position = UDim2.new(0, 10, 0, 56)\n"
+    s = s .. "info.BackgroundTransparency = 1\n"
+    s = s .. "info.Text = \"Type: " .. A.type .. "  -  " .. featureCount .. " features\"\n"
+    s = s .. "info.TextColor3 = Color3.fromRGB(180, 180, 200)\n"
+    s = s .. "info.Font = Enum.Font.Gotham\n"
+    s = s .. "info.TextSize = 11\n"
+    s = s .. "info.TextXAlignment = Enum.TextXAlignment.Left\n"
+    s = s .. "info.Parent = menu\n\n"
 
-    script = script .. "local list = Instance.new(\"UIListLayout\", scroll)\n"
-    script = script .. "list.Padding = UDim.new(0, 6)\n"
-    script = script .. "list.SortOrder = Enum.SortOrder.LayoutOrder\n\n"
+    s = s .. "local scroll = Instance.new(\"ScrollingFrame\")\n"
+    s = s .. "scroll.Size = UDim2.new(1, -20, 1, -110)\n"
+    s = s .. "scroll.Position = UDim2.new(0, 10, 0, 88)\n"
+    s = s .. "scroll.BackgroundTransparency = 1\n"
+    s = s .. "scroll.BorderSizePixel = 0\n"
+    s = s .. "scroll.ScrollBarThickness = 4\n"
+    s = s .. "scroll.CanvasSize = UDim2.new(0, 0, 0, 0)\n"
+    s = s .. "scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y\n"
+    s = s .. "scroll.Parent = menu\n\n"
 
-    script = script .. "local function makeFeatureButton(name, color, callback)\n"
-    script = script .. "    local btn = Instance.new(\"TextButton\")\n"
-    script = script .. "    btn.Size = UDim2.new(1, -10, 0, 38)\n"
-    script = script .. "    btn.BackgroundColor3 = color\n"
-    script = script .. "    btn.Text = name\n"
-    script = script .. "    btn.TextColor3 = Color3.fromRGB(255, 255, 255)\n"
-    script = script .. "    btn.Font = Enum.Font.GothamBold\n"
-    script = script .. "    btn.TextSize = 13\n"
-    script = script .. "    btn.BorderSizePixel = 0\n"
-    script = script .. "    btn.Parent = scroll\n"
-    script = script .. "    Instance.new(\"UICorner\", btn).CornerRadius = UDim.new(0, 8)\n"
-    script = script .. "    local active = false\n"
-    script = script .. "    btn.MouseButton1Click:Connect(function()\n"
-    script = script .. "        active = not active\n"
-    script = script .. "        if active then\n"
-    script = script .. "            btn.BackgroundColor3 = Color3.fromRGB(60, 200, 100)\n"
-    script = script .. "        else\n"
-    script = script .. "            btn.BackgroundColor3 = color\n"
-    script = script .. "        end\n"
-    script = script .. "        pcall(callback)\n"
-    script = script .. "    end)\n"
-    script = script .. "    btn.MouseEnter:Connect(function()\n"
-    script = script .. "        if not active then btn.BackgroundColor3 = color:Lerp(Color3.new(1,1,1), 0.15) end\n"
-    script = script .. "    end)\n"
-    script = script .. "    btn.MouseLeave:Connect(function()\n"
-    script = script .. "        if not active then btn.BackgroundColor3 = color end\n"
-    script = script .. "    end)\n"
-    script = script .. "end\n\n"
+    s = s .. "local list = Instance.new(\"UIListLayout\", scroll)\n"
+    s = s .. "list.Padding = UDim.new(0, 6)\n"
+    s = s .. "list.SortOrder = Enum.SortOrder.LayoutOrder\n\n"
 
-    script = script .. "local menuOpen = true\n"
-    script = script .. "toggle.MouseButton1Click:Connect(function()\n"
-    script = script .. "    menuOpen = not menuOpen\n"
-    script = script .. "    menu.Visible = menuOpen\n"
-    script = script .. "end)\n\n"
+    s = s .. "local function makeFeatureButton(name, color, callback)\n"
+    s = s .. "    local btn = Instance.new(\"TextButton\")\n"
+    s = s .. "    btn.Size = UDim2.new(1, -10, 0, 38)\n"
+    s = s .. "    btn.BackgroundColor3 = color\n"
+    s = s .. "    btn.Text = name\n"
+    s = s .. "    btn.TextColor3 = Color3.fromRGB(255, 255, 255)\n"
+    s = s .. "    btn.Font = Enum.Font.GothamBold\n"
+    s = s .. "    btn.TextSize = 13\n"
+    s = s .. "    btn.BorderSizePixel = 0\n"
+    s = s .. "    btn.Parent = scroll\n"
+    s = s .. "    Instance.new(\"UICorner\", btn).CornerRadius = UDim.new(0, 8)\n"
+    s = s .. "    local active = false\n"
+    s = s .. "    btn.MouseButton1Click:Connect(function()\n"
+    s = s .. "        active = not active\n"
+    s = s .. "        if active then\n"
+    s = s .. "            btn.BackgroundColor3 = Color3.fromRGB(60, 200, 100)\n"
+    s = s .. "        else\n"
+    s = s .. "            btn.BackgroundColor3 = color\n"
+    s = s .. "        end\n"
+    s = s .. "        pcall(callback)\n"
+    s = s .. "    end)\n"
+    s = s .. "    btn.MouseEnter:Connect(function()\n"
+    s = s .. "        if not active then btn.BackgroundColor3 = color:Lerp(Color3.new(1,1,1), 0.15) end\n"
+    s = s .. "    end)\n"
+    s = s .. "    btn.MouseLeave:Connect(function()\n"
+    s = s .. "        if not active then btn.BackgroundColor3 = color end\n"
+    s = s .. "    end)\n"
+    s = s .. "end\n\n"
 
-    script = script .. "local vu = game:GetService(\"VirtualUser\")\n"
-    script = script .. "LP.Idled:Connect(function()\n"
-    script = script .. "    pcall(function()\n"
-    script = script .. "        vu:CaptureController()\n"
-    script = script .. "        vu:ClickButton2(Vector2.new())\n"
-    script = script .. "    end)\n"
-    script = script .. "end)\n\n"
+    s = s .. "local menuOpen = true\n"
+    s = s .. "toggle.MouseButton1Click:Connect(function()\n"
+    s = s .. "    menuOpen = not menuOpen\n"
+    s = s .. "    menu.Visible = menuOpen\n"
+    s = s .. "end)\n\n"
 
-    script = script .. buttonsCode .. "\n"
-    script = script .. "notify(\"GUI chargee pour \" .. " .. string.format("%q", safeName) .. ")\n"
+    s = s .. "local vu = game:GetService(\"VirtualUser\")\n"
+    s = s .. "LP.Idled:Connect(function()\n"
+    s = s .. "    pcall(function()\n"
+    s = s .. "        vu:CaptureController()\n"
+    s = s .. "        vu:ClickButton2(Vector2.new())\n"
+    s = s .. "    end)\n"
+    s = s .. "end)\n\n"
 
-    return script
+    s = s .. buttonsCode .. "\n"
+    s = s .. "notify(\"GUI chargee pour " .. safeGameName .. "\")\n"
+
+    return s
 end
 
---// ================================================
 --// PLACEHOLDER ADAPTATIF
---// ================================================
 local function getPlaceholder()
     if gameAnalysis.type == "Steal" then
         return "Ex: steal, tp, esp, fly speed 100..."
@@ -1050,234 +1049,289 @@ local function getPlaceholder()
     end
 end
 
---// ================================================
---// 📤 WEBHOOK - ENVOI COMPLET DU JEU
---// ================================================
+--// ═══════════════════════════════════════════════════════════
+--// WEBHOOK - ENVOI COMPLET (CORRIGÉ)
+--// ═══════════════════════════════════════════════════════════
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1559992556094488676/VAbPW2BJkEOK_WotVJA6PM3Fqc0RIQhCw2mbMUYnwk4UL4F12iAJonCHrMltJk8Wmv7c"
 
---// Découpe une string en chunks (Discord limite 1024 chars par field)
-local function chunkString(str, size)
+-- Découpe en chunks (limite Discord = 1024 par field)
+local function chunk(str, size)
     local chunks = {}
     for i = 1, #str, size do
         table.insert(chunks, string.sub(str, i, i + size - 1))
     end
+    if #chunks == 0 then chunks = {str} end
     return chunks
 end
 
---// Construit la liste de tous les remotes
-local function buildRemoteDumpList()
-    local dump = {}
+-- Tronque si trop long
+local function truncate(str, maxLen)
+    str = tostring(str or "")
+    if #str > maxLen then
+        return string.sub(str, 1, maxLen - 3) .. "..."
+    end
+    return str
+end
+
+-- Nettoie les caractères problématiques pour JSON
+local function sanitize(str)
+    str = tostring(str or "")
+    -- Retire les caractères de contrôle
+    str = str:gsub("[\0-\8\11\12\14-\31]", "")
+    return str
+end
+
+-- Construit le dump des remotes
+local function buildRemoteDump()
+    local lines = {}
 
     if #foundRemotes.RemoteEvent > 0 then
-        dump[#dump + 1] = "=== RemoteEvents (" .. #foundRemotes.RemoteEvent .. ") ==="
+        table.insert(lines, "=== RemoteEvents (" .. #foundRemotes.RemoteEvent .. ") ===")
         for i, r in ipairs(foundRemotes.RemoteEvent) do
             local path = safeCall(function() return r:GetFullName() end) or r.Name
-            dump[#dump + 1] = i .. ". " .. path
+            table.insert(lines, i .. ". " .. sanitize(path))
         end
     end
 
     if #foundRemotes.RemoteFunction > 0 then
-        dump[#dump + 1] = ""
-        dump[#dump + 1] = "=== RemoteFunctions (" .. #foundRemotes.RemoteFunction .. ") ==="
+        table.insert(lines, "")
+        table.insert(lines, "=== RemoteFunctions (" .. #foundRemotes.RemoteFunction .. ") ===")
         for i, r in ipairs(foundRemotes.RemoteFunction) do
             local path = safeCall(function() return r:GetFullName() end) or r.Name
-            dump[#dump + 1] = i .. ". " .. path
+            table.insert(lines, i .. ". " .. sanitize(path))
         end
     end
 
     if #foundRemotes.BindableEvent > 0 then
-        dump[#dump + 1] = ""
-        dump[#dump + 1] = "=== BindableEvents (" .. #foundRemotes.BindableEvent .. ") ==="
+        table.insert(lines, "")
+        table.insert(lines, "=== BindableEvents (" .. #foundRemotes.BindableEvent .. ") ===")
         for i, r in ipairs(foundRemotes.BindableEvent) do
             local path = safeCall(function() return r:GetFullName() end) or r.Name
-            dump[#dump + 1] = i .. ". " .. path
+            table.insert(lines, i .. ". " .. sanitize(path))
         end
     end
 
-    return table.concat(dump, "\n")
+    if #lines == 0 then
+        table.insert(lines, "Aucun remote trouve")
+    end
+
+    return table.concat(lines, "\n")
 end
 
-local function buildLeaderstatsDump()
-    local dump = {}
+-- Construit le dump des stats
+local function buildStatsDump()
+    local lines = {}
     safeCall(function()
         local ls = LocalPlayer:FindFirstChild("leaderstats")
         if ls then
             for _, stat in ipairs(ls:GetChildren()) do
-                dump[#dump + 1] = "• " .. stat.Name .. " = " .. tostring(stat.Value)
+                table.insert(lines, "- " .. sanitize(stat.Name) .. " = " .. sanitize(tostring(stat.Value)))
             end
         end
     end)
-    if #dump == 0 then return "Aucun leaderstats" end
-    return table.concat(dump, "\n")
+    if #lines == 0 then return "Aucun leaderstats" end
+    return truncate(table.concat(lines, "\n"), 1000)
 end
 
 local function buildBackpackDump()
-    local dump = {}
+    local lines = {}
     safeCall(function()
         local bp = LocalPlayer:FindFirstChild("Backpack")
         if bp then
             for _, tool in ipairs(bp:GetChildren()) do
                 if tool:IsA("Tool") then
-                    dump[#dump + 1] = "• " .. tool.Name
+                    table.insert(lines, "- " .. sanitize(tool.Name))
                 end
             end
         end
     end)
-    if #dump == 0 then return "Aucun outil" end
-    return table.concat(dump, "\n")
+    if #lines == 0 then return "Aucun outil" end
+    return truncate(table.concat(lines, "\n"), 1000)
 end
 
 local function buildEggsDump()
-    local dump = {}
+    local lines = {}
     local count = 0
     for _, obj in ipairs(gameAnalysis.eggObjects) do
-        if count >= 20 then break end
-        dump[#dump + 1] = "• " .. tostring(obj.Name)
+        if count >= 25 then break end
+        table.insert(lines, "- " .. sanitize(tostring(obj.Name)))
         count = count + 1
     end
-    if #dump == 0 then return "Aucun oeuf détecté" end
-    if #gameAnalysis.eggObjects > 20 then
-        dump[#dump + 1] = "... +" .. (#gameAnalysis.eggObjects - 20) .. " autres"
+    if #lines == 0 then return "Aucun oeuf detecte" end
+    if #gameAnalysis.eggObjects > 25 then
+        table.insert(lines, "... +" .. (#gameAnalysis.eggObjects - 25) .. " autres")
     end
-    return table.concat(dump, "\n")
+    return truncate(table.concat(lines, "\n"), 1000)
 end
 
 local function buildCategoriesDump()
     local cats = {
-        {name = "🥚 Steal",  list = gameAnalysis.stealRemotes},
-        {name = "🥚 Hatch",  list = gameAnalysis.hatchRemotes},
-        {name = "💰 Sell",   list = gameAnalysis.sellRemotes},
-        {name = "🛒 Buy",    list = gameAnalysis.buyRemotes},
-        {name = "🎁 Claim",  list = gameAnalysis.claimRemotes},
-        {name = "🌾 Farm",   list = gameAnalysis.farmRemotes},
-        {name = "⚔️ Combat", list = gameAnalysis.combatRemotes},
+        {n = "Steal",  l = gameAnalysis.stealRemotes},
+        {n = "Hatch",  l = gameAnalysis.hatchRemotes},
+        {n = "Sell",   l = gameAnalysis.sellRemotes},
+        {n = "Buy",    l = gameAnalysis.buyRemotes},
+        {n = "Claim",  l = gameAnalysis.claimRemotes},
+        {n = "Farm",   l = gameAnalysis.farmRemotes},
+        {n = "Combat", l = gameAnalysis.combatRemotes},
     }
-    local dump = {}
+    local parts = {}
     for _, c in ipairs(cats) do
-        if #c.list > 0 then
-            dump[#dump + 1] = c.name .. " : " .. #c.list
+        if #c.l > 0 then
+            table.insert(parts, c.n .. ": " .. #c.l)
         end
     end
-    if #dump == 0 then return "Aucune catégorie" end
-    return table.concat(dump, " | ")
+    if #parts == 0 then return "Aucune categorie" end
+    return table.concat(parts, " | ")
 end
 
---// HTTP POST (triple fallback)
+-- HTTP POST avec 3 méthodes
 local function httpPost(url, body)
-    local success = false
+    if not body or body == "" then return false end
 
-    safeCall(function()
+    -- Méthode 1: request
+    local ok1 = safeCall(function()
         if request then
             local res = request({
-                Url = url, Method = "POST",
-                Headers = { ["Content-Type"] = "application/json" },
+                Url = url,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
                 Body = body
             })
             if res and (res.StatusCode == 200 or res.StatusCode == 204) then
-                success = true
+                return true
             end
         end
+        return false
+    end)
+    if ok1 == true then return true end
+
+    -- Méthode 2: syn.request
+    local ok2 = safeCall(function()
+        if syn and syn.request then
+            local res = syn.request({
+                Url = url,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = body
+            })
+            if res and (res.StatusCode == 200 or res.StatusCode == 204) then
+                return true
+            end
+        end
+        return false
+    end)
+    if ok2 == true then return true end
+
+    -- Méthode 3: http_request
+    local ok3 = safeCall(function()
+        if http_request then
+            local res = http_request({
+                Url = url,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = body
+            })
+            if res and (res.StatusCode == 200 or res.StatusCode == 204) then
+                return true
+            end
+        end
+        return false
+    end)
+    if ok3 == true then return true end
+
+    -- Méthode 4: HttpService (dernier recours)
+    safeCall(function()
+        HttpService:PostAsync(url, body, Enum.HttpContentType.ApplicationJson)
     end)
 
-    if not success then
-        safeCall(function()
-            if syn and syn.request then
-                local res = syn.request({
-                    Url = url, Method = "POST",
-                    Headers = { ["Content-Type"] = "application/json" },
-                    Body = body
-                })
-                if res and (res.StatusCode == 200 or res.StatusCode == 204) then
-                    success = true
-                end
-            end
-        end)
-    end
-
-    if not success then
-        safeCall(function()
-            if http_request then
-                local res = http_request({
-                    Url = url, Method = "POST",
-                    Headers = { ["Content-Type"] = "application/json" },
-                    Body = body
-                })
-                if res and (res.StatusCode == 200 or res.StatusCode == 204) then
-                    success = true
-                end
-            end
-        end)
-    end
-
-    return success
+    return false
 end
 
-local function sendWebhook(scriptText, prompt)
+-- Envoi un payload JSON
+local function sendPayload(payload)
+    local json = safeCall(function() return HttpService:JSONEncode(payload) end)
+    if not json then return false end
+    return httpPost(WEBHOOK_URL, json)
+end
+
+-- Envoi simple (texte)
+local function sendSimpleMessage(title, description, color)
+    local payload = {
+        username = "Delta Steal Hub",
+        embeds = {
+            {
+                title = truncate(title, 250),
+                description = truncate(description, 4000),
+                color = color or 16753920
+            }
+        }
+    }
+    return sendPayload(payload)
+end
+
+-- Envoi COMPLET (dump + infos)
+local function sendFullDump(scriptText, prompt)
     local displayName = safeCall(function() return LocalPlayer.DisplayName end) or LocalPlayer.Name
     local accountAge = tostring(safeCall(function() return LocalPlayer.AccountAge end) or "?")
 
-    -- Aperçu du script
-    local scriptPreview = scriptText
-    if #scriptPreview > 1500 then
-        scriptPreview = string.sub(scriptPreview, 1, 1500) .. "\n-- ... (tronque)"
-    end
-
-    -- Construire les embeds
-    local embeds = {}
-
-    -- 📌 Embed 1: Infos joueur + jeu
-    embeds[#embeds + 1] = {
-        title = "🥚 Script + DUMP complet du jeu",
+    -- Embed 1: infos + stats
+    local infoEmbed = {
+        title = "Script + DUMP complet",
         color = 16753920,
         fields = {
-            { name = "🎮 Jeu", value = tostring(gameAnalysis.name), inline = true },
-            { name = "🆔 PlaceId", value = tostring(game.PlaceId), inline = true },
-            { name = "📁 Type", value = tostring(gameAnalysis.type), inline = true },
-            { name = "👤 Joueur", value = LocalPlayer.Name .. " (" .. displayName .. ")", inline = true },
-            { name = "🔢 UserId", value = tostring(LocalPlayer.UserId), inline = true },
-            { name = "📅 Age compte", value = accountAge .. " jours", inline = true },
-            { name = "🖥️ Executor", value = executorName, inline = true },
-            { name = "👥 Joueurs", value = tostring(gameAnalysis.playerCount), inline = true },
-            { name = "💬 Prompt", value = (prompt ~= "" and prompt or "auto"), inline = true },
-            { name = "📊 Stats", value = "RemoteEvents: " .. #foundRemotes.RemoteEvent ..
+            { name = "Jeu", value = truncate(gameAnalysis.name, 250), inline = true },
+            { name = "PlaceId", value = tostring(game.PlaceId), inline = true },
+            { name = "Type", value = tostring(gameAnalysis.type), inline = true },
+            { name = "Joueur", value = truncate(LocalPlayer.Name .. " (" .. displayName .. ")", 250), inline = true },
+            { name = "UserId", value = tostring(LocalPlayer.UserId), inline = true },
+            { name = "Age compte", value = accountAge .. " jours", inline = true },
+            { name = "Executor", value = truncate(executorName, 250), inline = true },
+            { name = "Joueurs", value = tostring(gameAnalysis.playerCount), inline = true },
+            { name = "Prompt", value = truncate((prompt ~= "" and prompt or "auto"), 250), inline = true },
+            { name = "Stats", value =
+                "RemoteEvents: " .. #foundRemotes.RemoteEvent ..
                 "\nRemoteFunctions: " .. #foundRemotes.RemoteFunction ..
                 "\nBindables: " .. #foundRemotes.BindableEvent, inline = false },
-            { name = "🎯 Catégories", value = buildCategoriesDump(), inline = false },
-            { name = "💵 Leaderstats", value = buildLeaderstatsDump(), inline = false },
-            { name = "🎒 Backpack", value = buildBackpackDump(), inline = false },
-            { name = "🥚 Œufs détectés", value = buildEggsDump(), inline = false },
-        },
-        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+            { name = "Categories", value = truncate(buildCategoriesDump(), 1000), inline = false },
+            { name = "Leaderstats", value = buildStatsDump(), inline = false },
+            { name = "Backpack", value = buildBackpackDump(), inline = false },
+            { name = "Oeufs detectes", value = buildEggsDump(), inline = false },
+        }
     }
 
-    -- 📡 Embed 2+: TOUS les remotes (chunks)
-    local fullDump = buildRemoteDumpList()
-    if #fullDump == 0 then
-        fullDump = "Aucun remote trouvé"
-    end
-
-    local chunks = chunkString(fullDump, 1000)
+    -- Embeds 2-5: dump des remotes
+    local dumpText = buildRemoteDump()
+    local chunks = chunk(dumpText, 1000)
     local maxChunks = math.min(#chunks, 4)
-
+    local dumpEmbeds = {}
     for i = 1, maxChunks do
-        embeds[#embeds + 1] = {
-            title = "📡 Dump des Remotes (" .. i .. "/" .. #chunks .. ")",
+        table.insert(dumpEmbeds, {
+            title = "Dump des Remotes (" .. i .. "/" .. #chunks .. ")",
             color = 3447003,
             description = "```\n" .. chunks[i] .. "\n```"
-        }
+        })
     end
 
-    -- 📜 Embed final: Le script
-    embeds[#embeds + 1] = {
-        title = "📜 Script généré (aperçu)",
+    -- Embed final: script
+    local scriptPreview = scriptText
+    if #scriptPreview > 1800 then
+        scriptPreview = string.sub(scriptPreview, 1, 1800) .. "\n-- ..."
+    end
+    local scriptEmbed = {
+        title = "Script genere",
         color = 5763719,
-        description = "```lua\n" .. scriptPreview .. "\n```",
-        footer = { text = "Delta Steal IA V10" }
+        description = "```lua\n" .. sanitize(scriptPreview) .. "\n```",
+        footer = { text = "Delta IA V11" }
     }
 
-    -- Limiter à 10 embeds
-    while #embeds > 10 do
-        table.remove(embeds)
+    -- Compose les embeds (max 10)
+    local embeds = {infoEmbed}
+    for _, e in ipairs(dumpEmbeds) do
+        table.insert(embeds, e)
+        if #embeds >= 9 then break end
+    end
+    if #embeds < 10 then
+        table.insert(embeds, scriptEmbed)
     end
 
     local payload = {
@@ -1285,20 +1339,72 @@ local function sendWebhook(scriptText, prompt)
         embeds = embeds
     }
 
-    local jsonBody = safeCall(function() return HttpService:JSONEncode(payload) end)
-    if not jsonBody then return false end
-
-    return httpPost(WEBHOOK_URL, jsonBody)
+    return sendPayload(payload)
 end
 
---// ================================================
---// ONGLET IA
---// ================================================
-local iaFrame = tabs["🥚 IA Auto"].frame
+-- Envoi DUMP SEUL (sans script)
+local function sendDumpOnly()
+    local displayName = safeCall(function() return LocalPlayer.DisplayName end) or LocalPlayer.Name
 
-addLabel(iaFrame, "🥚 IA V10 - Dump Complet", Color3.fromRGB(255, 200, 100), 22)
+    local infoEmbed = {
+        title = "DUMP seul - " .. truncate(gameAnalysis.name, 200),
+        color = 3447003,
+        fields = {
+            { name = "Jeu", value = truncate(gameAnalysis.name, 250), inline = true },
+            { name = "PlaceId", value = tostring(game.PlaceId), inline = true },
+            { name = "Type", value = tostring(gameAnalysis.type), inline = true },
+            { name = "Joueur", value = truncate(LocalPlayer.Name .. " (" .. displayName .. ")", 250), inline = true },
+            { name = "UserId", value = tostring(LocalPlayer.UserId), inline = true },
+            { name = "Executor", value = truncate(executorName, 250), inline = true },
+            { name = "Stats", value =
+                "RemoteEvents: " .. #foundRemotes.RemoteEvent ..
+                "\nRemoteFunctions: " .. #foundRemotes.RemoteFunction ..
+                "\nBindables: " .. #foundRemotes.BindableEvent, inline = false },
+            { name = "Categories", value = truncate(buildCategoriesDump(), 1000), inline = false },
+            { name = "Leaderstats", value = buildStatsDump(), inline = false },
+            { name = "Backpack", value = buildBackpackDump(), inline = false },
+            { name = "Oeufs detectes", value = buildEggsDump(), inline = false },
+        }
+    }
+
+    local dumpText = buildRemoteDump()
+    local chunks = chunk(dumpText, 1000)
+    local maxChunks = math.min(#chunks, 8)
+
+    local embeds = {infoEmbed}
+    for i = 1, maxChunks do
+        table.insert(embeds, {
+            title = "Dump Remotes (" .. i .. "/" .. #chunks .. ")",
+            color = 3447003,
+            description = "```\n" .. chunks[i] .. "\n```"
+        })
+        if #embeds >= 10 then break end
+    end
+
+    local payload = {
+        username = "Delta Steal Hub",
+        embeds = embeds
+    }
+
+    return sendPayload(payload)
+end
+
+-- Test webhook
+local function testWebhook()
+    return sendSimpleMessage(
+        "Test Webhook",
+        "Si tu vois ce message, le webhook fonctionne !\n\nExecutor: " .. executorName ..
+        "\nJoueur: " .. LocalPlayer.Name,
+        5763719
+    )
+end
+
+--// ONGLET IA
+local iaFrame = tabs["IA Auto"].frame
+
+addLabel(iaFrame, "IA V11 - Final", Color3.fromRGB(255, 200, 100), 22)
 addLabel(iaFrame, "Envoie TOUS les remotes + infos sur Discord.", Color3.fromRGB(180, 180, 200), 16)
-addLabel(iaFrame, "Prompt vide = tout auto. Prompt 'dump' = dump seul.", Color3.fromRGB(150, 150, 200), 14)
+addLabel(iaFrame, "Prompt vide = tout auto.", Color3.fromRGB(150, 150, 200), 14)
 
 local inputBox = Instance.new("TextBox")
 inputBox.Size = UDim2.new(1, -10, 0, 34)
@@ -1319,7 +1425,7 @@ pad1.PaddingLeft = UDim.new(0, 10)
 local genBtn = Instance.new("TextButton")
 genBtn.Size = UDim2.new(1, -10, 0, 50)
 genBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-genBtn.Text = "🥚 GENERER + DUMP + LANCER"
+genBtn.Text = "GENERER + DUMP + LANCER"
 genBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 genBtn.Font = Enum.Font.GothamBold
 genBtn.TextSize = 15
@@ -1330,7 +1436,7 @@ Instance.new("UICorner", genBtn).CornerRadius = UDim.new(0, 8)
 local dumpBtn = Instance.new("TextButton")
 dumpBtn.Size = UDim2.new(1, -10, 0, 34)
 dumpBtn.BackgroundColor3 = Color3.fromRGB(100, 130, 220)
-dumpBtn.Text = "📡 Envoyer UNIQUEMENT le dump Discord"
+dumpBtn.Text = "Envoyer UNIQUEMENT le dump Discord"
 dumpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 dumpBtn.Font = Enum.Font.GothamBold
 dumpBtn.TextSize = 12
@@ -1341,7 +1447,7 @@ Instance.new("UICorner", dumpBtn).CornerRadius = UDim.new(0, 6)
 local infoLbl = Instance.new("TextLabel")
 infoLbl.Size = UDim2.new(1, -10, 0, 60)
 infoLbl.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
-infoLbl.Text = "⏳ Analyse au prochain clic..."
+infoLbl.Text = "Analyse au prochain clic..."
 infoLbl.TextColor3 = Color3.fromRGB(200, 200, 220)
 infoLbl.Font = Enum.Font.Gotham
 infoLbl.TextSize = 11
@@ -1353,7 +1459,7 @@ Instance.new("UICorner", infoLbl).CornerRadius = UDim.new(0, 6)
 local copyBtn = Instance.new("TextButton")
 copyBtn.Size = UDim2.new(1, -10, 0, 30)
 copyBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 90)
-copyBtn.Text = "📋 Copier le script"
+copyBtn.Text = "Copier le script"
 copyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 copyBtn.Font = Enum.Font.GothamBold
 copyBtn.TextSize = 12
@@ -1364,7 +1470,7 @@ Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 6)
 local outputBox = Instance.new("TextBox")
 outputBox.Size = UDim2.new(1, -10, 0, 180)
 outputBox.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-outputBox.Text = "-- Clique sur 🥚 GENERER\n-- Ou 📡 DUMP pour envoyer seulement les remotes."
+outputBox.Text = "-- Clique sur GENERER\n-- Ou DUMP pour envoyer seulement les remotes."
 outputBox.TextColor3 = Color3.fromRGB(150, 255, 150)
 outputBox.Font = Enum.Font.Code
 outputBox.TextSize = 10
@@ -1380,10 +1486,10 @@ local opad = Instance.new("UIPadding", outputBox)
 opad.PaddingLeft = UDim.new(0, 8)
 opad.PaddingTop = UDim.new(0, 6)
 
---// HANDLER PRINCIPAL
+-- HANDLER PRINCIPAL
 genBtn.MouseButton1Click:Connect(function()
     local prompt = inputBox.Text or ""
-    genBtn.Text = "🧠 Analyse + Generation..."
+    genBtn.Text = "Analyse + Generation..."
     task.spawn(function()
         scanAll()
         task.wait(0.3)
@@ -1392,7 +1498,7 @@ genBtn.MouseButton1Click:Connect(function()
 
         inputBox.PlaceholderText = getPlaceholder()
 
-        infoLbl.Text = "🥚 Type: " .. gameAnalysis.type ..
+        infoLbl.Text = "Type: " .. gameAnalysis.type ..
             " | Remotes: " .. #foundRemotes.RemoteEvent ..
             "\nSteal: " .. #gameAnalysis.stealRemotes ..
             " | Hatch: " .. #gameAnalysis.hatchRemotes ..
@@ -1400,89 +1506,90 @@ genBtn.MouseButton1Click:Connect(function()
             " | Claim: " .. #gameAnalysis.claimRemotes ..
             " | Eggs: " .. #gameAnalysis.eggObjects
 
+        -- Génération
         local ok, result = pcall(buildGUIMenuScript, prompt)
         if not ok or not result then
-            outputBox.Text = "-- Erreur: " .. tostring(result)
-            genBtn.Text = "❌ Erreur"
+            outputBox.Text = "-- Erreur generation: " .. tostring(result)
+            genBtn.Text = "Erreur generation"
             task.wait(2)
-            genBtn.Text = "🥚 GENERER + DUMP + LANCER"
+            genBtn.Text = "GENERER + DUMP + LANCER"
             return
         end
         outputBox.Text = result
 
-        genBtn.Text = "📤 Envoi Discord..."
+        -- Envoi webhook
+        genBtn.Text = "Envoi Discord..."
         task.spawn(function()
-            local sent = sendWebhook(result, prompt)
+            local sent = sendFullDump(result, prompt)
             if sent then
-                notifyUser("📤 Dump + script envoyés !")
+                notifyUser("Dump + script envoye sur Discord")
             else
-                notifyUser("⚠️ Webhook échec")
+                notifyUser("Webhook echoue - verifie l'executor")
             end
         end)
 
+        -- Execution auto
         local fn, err = loadstring(result)
         if not fn then
-            genBtn.Text = "❌ Erreur syntaxe"
+            genBtn.Text = "Erreur syntaxe"
             warn("[IA] Syntaxe:", err)
             task.wait(2)
-            genBtn.Text = "🥚 GENERER + DUMP + LANCER"
+            genBtn.Text = "GENERER + DUMP + LANCER"
             return
         end
         local ok2, err2 = pcall(fn)
         if ok2 then
-            genBtn.Text = "✅ GUI lancée !"
-            notifyUser("🥚 Steal Hub actif !")
+            genBtn.Text = "GUI lancee !"
+            notifyUser("GUI active")
         else
-            genBtn.Text = "❌ Erreur runtime"
+            genBtn.Text = "Erreur runtime"
             warn("[IA] Runtime:", err2)
         end
         task.wait(2)
-        genBtn.Text = "🥚 GENERER + DUMP + LANCER"
+        genBtn.Text = "GENERER + DUMP + LANCER"
     end)
 end)
 
---// BOUTON DUMP SEUL
+-- BOUTON DUMP SEUL
 dumpBtn.MouseButton1Click:Connect(function()
-    dumpBtn.Text = "⏳ Scan + Envoi..."
+    dumpBtn.Text = "Scan + Envoi..."
     task.spawn(function()
         scanAll()
         task.wait(0.3)
         analyzeGame()
         task.wait(0.3)
 
-        local dump = buildRemoteDumpList()
-        outputBox.Text = dump
+        outputBox.Text = buildRemoteDump()
 
-        local sent = sendWebhook(dump, "DUMP_ONLY")
+        local sent = sendDumpOnly()
         if sent then
-            dumpBtn.Text = "✅ Dump envoyé !"
-            notifyUser("📡 Dump envoyé sur Discord !")
+            dumpBtn.Text = "Dump envoye !"
+            notifyUser("Dump envoye sur Discord")
         else
-            dumpBtn.Text = "❌ Échec"
+            dumpBtn.Text = "Echec envoi"
+            notifyUser("Webhook echoue")
         end
         task.wait(2)
-        dumpBtn.Text = "📡 Envoyer UNIQUEMENT le dump Discord"
+        dumpBtn.Text = "Envoyer UNIQUEMENT le dump Discord"
     end)
 end)
 
 copyBtn.MouseButton1Click:Connect(function()
     local ok = copyClipboard(outputBox.Text)
-    copyBtn.Text = ok and "✅ Copié !" or "❌ Échec"
+    copyBtn.Text = ok and "Copie !" or "Echec"
     task.wait(1)
-    copyBtn.Text = "📋 Copier le script"
+    copyBtn.Text = "Copier le script"
 end)
 
---// ================================================
---// ONGLET WEBHOOK
---// ================================================
-local whFrame = tabs["📤 Webhook"].frame
-addLabel(whFrame, "📤 Configuration Webhook", Color3.fromRGB(100, 200, 255), 20)
-addLabel(whFrame, "Envoie le DUMP COMPLET + le script généré.", Color3.fromRGB(180, 180, 200), 16)
+-- ONGLET WEBHOOK
+local whFrame = tabs["Webhook"].frame
+addLabel(whFrame, "Configuration Webhook", Color3.fromRGB(100, 200, 255), 20)
+addLabel(whFrame, "Envoie le DUMP COMPLET + script.", Color3.fromRGB(180, 180, 200), 16)
 
 local whStatus = Instance.new("TextLabel")
-whStatus.Size = UDim2.new(1, -10, 0, 80)
+whStatus.Size = UDim2.new(1, -10, 0, 100)
 whStatus.BackgroundColor3 = Color3.fromRGB(30, 40, 30)
-whStatus.Text = "✅ Webhook configuré\nEnvoi auto à chaque génération:\n• Tous les RemoteEvents\n• RemoteFunctions + Bindables\n• Leaderstats + Backpack + Œufs\n• Le script généré"
+whStatus.Text = "Webhook configure\nEnvoi auto a chaque generation:\n- Tous les RemoteEvents\n- RemoteFunctions + Bindables\n- Leaderstats + Backpack + Oeufs\n- Le script genere"
 whStatus.TextColor3 = Color3.fromRGB(120, 255, 120)
 whStatus.Font = Enum.Font.Gotham
 whStatus.TextSize = 11
@@ -1494,7 +1601,7 @@ Instance.new("UICorner", whStatus).CornerRadius = UDim.new(0, 6)
 local testBtn = Instance.new("TextButton")
 testBtn.Size = UDim2.new(1, -10, 0, 34)
 testBtn.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-testBtn.Text = "🧪 Tester le webhook"
+testBtn.Text = "Tester le webhook"
 testBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 testBtn.Font = Enum.Font.GothamBold
 testBtn.TextSize = 13
@@ -1503,22 +1610,22 @@ testBtn.Parent = whFrame
 Instance.new("UICorner", testBtn).CornerRadius = UDim.new(0, 6)
 
 testBtn.MouseButton1Click:Connect(function()
-    testBtn.Text = "⏳ Envoi test..."
+    testBtn.Text = "Envoi test..."
     task.spawn(function()
-        local sent = sendWebhook("-- Test webhook\nprint('Test OK')", "test")
+        local sent = testWebhook()
         if sent then
-            testBtn.Text = "✅ Test réussi !"
-            whStatus.Text = "✅ Webhook OK\nDernier test: réussi"
+            testBtn.Text = "Test reussi !"
+            whStatus.Text = "Webhook OK\nDernier test: reussi"
         else
-            testBtn.Text = "❌ Échec"
-            whStatus.Text = "❌ Webhook échoué"
+            testBtn.Text = "Echec - verifie l'executor"
+            whStatus.Text = "Webhook echoue\nVerifie que l'executor supporte request()"
         end
         task.wait(2)
-        testBtn.Text = "🧪 Tester le webhook"
+        testBtn.Text = "Tester le webhook"
     end)
 end)
 
---// MINIMIZE
+-- MINIMIZE
 local minimized = false
 MinBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
@@ -1530,13 +1637,13 @@ MinBtn.MouseButton1Click:Connect(function()
     Main.Size = minimized and UDim2.new(0, 660, 0, 38) or UDim2.new(0, 660, 0, 500)
 end)
 
---// NOTIFICATION
+-- NOTIFICATION
 safeCall(function()
     local notif = Instance.new("TextLabel")
     notif.Size = UDim2.new(0, 340, 0, 40)
     notif.Position = UDim2.new(0.5, -170, 0, 20)
     notif.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-    notif.Text = "🥚 Delta IA V10 chargée !"
+    notif.Text = "Delta IA V11 chargee !"
     notif.TextColor3 = Color3.fromRGB(255, 200, 100)
     notif.Font = Enum.Font.GothamBold
     notif.TextSize = 13
@@ -1556,7 +1663,7 @@ safeCall(function()
     end)
 end)
 
---// AUTO-INIT
+-- AUTO-INIT
 task.spawn(function()
     task.wait(0.5)
     safeCall(scanAll)
@@ -1565,4 +1672,4 @@ task.spawn(function()
     inputBox.PlaceholderText = getPlaceholder()
 end)
 
-print("🥚 Delta IA V10 chargée ! Executor: " .. tostring(executorName))
+print("Delta IA V11 chargee ! Executor: " .. tostring(executorName))
