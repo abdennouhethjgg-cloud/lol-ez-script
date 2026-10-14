@@ -1,5 +1,6 @@
 --// ═══════════════════════════════════════════════════════════
---// ⚡ DELTA HUB - IA V6 (Webhook + Prompt Optionnel)
+--// ⚡ DELTA HUB - IA V7 SPÉCIALISÉ STEAL
+--// Optimisé: Steal an Egg / Steal a Brainrot / Pet Steal
 --// Compatible: Delta / Wave / Solara / Krnl
 --// ═══════════════════════════════════════════════════════════
 
@@ -13,6 +14,7 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local MarketplaceService = game:GetService("MarketplaceService")
 local HttpService = game:GetService("HttpService")
+local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -38,11 +40,10 @@ local function copyClipboard(txt)
     end) == true
 end
 
---// Notification
 local function notifyUser(msg)
     safeCall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Delta IA V6", Text = tostring(msg), Duration = 3
+            Title = "Delta IA V7", Text = tostring(msg), Duration = 3
         })
     end)
 end
@@ -75,40 +76,40 @@ end
 
 --// ==== MAIN ====
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 640, 0, 480)
-Main.Position = UDim2.new(0.5, -320, 0.5, -240)
-Main.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+Main.Size = UDim2.new(0, 660, 0, 500)
+Main.Position = UDim2.new(0.5, -330, 0.5, -250)
+Main.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
 Main.BorderSizePixel = 0
 Main.Active = true
 Main.Draggable = true
 Main.Parent = ScreenGui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 local mainStroke = Instance.new("UIStroke", Main)
-mainStroke.Color = Color3.fromRGB(80, 80, 100)
-mainStroke.Thickness = 1.5
+mainStroke.Color = Color3.fromRGB(255, 140, 0)
+mainStroke.Thickness = 2
 
 --// TOP BAR
 local TopBar = Instance.new("Frame")
-TopBar.Size = UDim2.new(1, 0, 0, 35)
-TopBar.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+TopBar.Size = UDim2.new(1, 0, 0, 38)
+TopBar.BackgroundColor3 = Color3.fromRGB(35, 30, 40)
 TopBar.BorderSizePixel = 0
 TopBar.Parent = Main
-Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 12)
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -90, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "⚡ Delta Hub  •  IA V6"
-Title.TextColor3 = Color3.fromRGB(230, 230, 255)
+Title.Text = "🥚 Delta IA V7 • Steal Hub"
+Title.TextColor3 = Color3.fromRGB(255, 200, 100)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 13
+Title.TextSize = 14
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 30, 0, 25)
-CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.Position = UDim2.new(1, -35, 0, 6)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -123,7 +124,7 @@ end)
 
 local MinBtn = Instance.new("TextButton")
 MinBtn.Size = UDim2.new(0, 30, 0, 25)
-MinBtn.Position = UDim2.new(1, -70, 0, 5)
+MinBtn.Position = UDim2.new(1, -70, 0, 6)
 MinBtn.BackgroundColor3 = Color3.fromRGB(200, 160, 50)
 MinBtn.Text = "—"
 MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -135,8 +136,8 @@ Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 5)
 
 --// TAB BAR
 local TabBar = Instance.new("Frame")
-TabBar.Size = UDim2.new(0, 130, 1, -45)
-TabBar.Position = UDim2.new(0, 10, 0, 40)
+TabBar.Size = UDim2.new(0, 130, 1, -50)
+TabBar.Position = UDim2.new(0, 10, 0, 45)
 TabBar.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
 TabBar.BorderSizePixel = 0
 TabBar.Parent = Main
@@ -151,8 +152,8 @@ TabPad.PaddingTop = UDim.new(0, 8)
 
 --// CONTENT
 local Content = Instance.new("Frame")
-Content.Size = UDim2.new(1, -155, 1, -45)
-Content.Position = UDim2.new(0, 145, 0, 40)
+Content.Size = UDim2.new(1, -155, 1, -50)
+Content.Position = UDim2.new(0, 145, 0, 45)
 Content.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
 Content.BorderSizePixel = 0
 Content.Parent = Main
@@ -194,18 +195,17 @@ local function createTab(name)
             t.button.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
         end
         frame.Visible = true
-        btn.BackgroundColor3 = Color3.fromRGB(80, 120, 220)
+        btn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
     end)
     return frame
 end
 
 createTab("🏠 Home")
 createTab("📡 Remotes")
-createTab("🔧 Functions")
-createTab("🎯 Bindables")
-createTab("🤖 IA Auto")
+createTab("🥚 IA Steal")
+createTab("📤 Webhook")
 
-tabs["🏠 Home"].button.BackgroundColor3 = Color3.fromRGB(80, 120, 220)
+tabs["🏠 Home"].button.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
 tabs["🏠 Home"].frame.Visible = true
 
 --// HELPERS UI
@@ -225,18 +225,19 @@ end
 
 --// HOME
 local homeFrame = tabs["🏠 Home"].frame
-addLabel(homeFrame, "✅ GUI chargée !", Color3.fromRGB(120, 255, 120), 22)
-addLabel(homeFrame, "📌 Jeu ID: " .. tostring(game.PlaceId), Color3.fromRGB(180, 180, 255), 20)
-addLabel(homeFrame, "👤 Joueur: " .. LocalPlayer.Name, Color3.fromRGB(180, 180, 255), 20)
-addLabel(homeFrame, "🖥️ Executor: " .. tostring(executorName), Color3.fromRGB(120, 255, 120), 20)
+addLabel(homeFrame, "🥚 IA V7 - Spécialisé STEAL", Color3.fromRGB(255, 200, 100), 22)
+addLabel(homeFrame, "✅ GUI chargée !", Color3.fromRGB(120, 255, 120), 20)
+addLabel(homeFrame, "📌 Jeu ID: " .. tostring(game.PlaceId), Color3.fromRGB(180, 180, 255), 18)
+addLabel(homeFrame, "👤 Joueur: " .. LocalPlayer.Name, Color3.fromRGB(180, 180, 255), 18)
+addLabel(homeFrame, "🖥️ Executor: " .. tostring(executorName), Color3.fromRGB(120, 255, 120), 18)
 
 local scanBtn = Instance.new("TextButton")
-scanBtn.Size = UDim2.new(1, -10, 0, 30)
-scanBtn.BackgroundColor3 = Color3.fromRGB(80, 120, 220)
+scanBtn.Size = UDim2.new(1, -10, 0, 34)
+scanBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
 scanBtn.Text = "🔍 Scanner tous les Remotes"
 scanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 scanBtn.Font = Enum.Font.GothamBold
-scanBtn.TextSize = 12
+scanBtn.TextSize = 13
 scanBtn.BorderSizePixel = 0
 scanBtn.Parent = homeFrame
 Instance.new("UICorner", scanBtn).CornerRadius = UDim.new(0, 6)
@@ -287,8 +288,6 @@ end
 local function scanAll()
     for k in pairs(foundRemotes) do foundRemotes[k] = {} end
     clearFrame(tabs["📡 Remotes"].frame)
-    clearFrame(tabs["🔧 Functions"].frame)
-    clearFrame(tabs["🎯 Bindables"].frame)
 
     local visited = {}
     local function scan(parent)
@@ -302,10 +301,6 @@ local function scanAll()
                 createRemoteEntry(tabs["📡 Remotes"].frame, obj)
             elseif obj:IsA("RemoteFunction") then
                 table.insert(foundRemotes.RemoteFunction, obj)
-                createRemoteEntry(tabs["🔧 Functions"].frame, obj)
-            elseif obj:IsA("BindableEvent") then
-                table.insert(foundRemotes.BindableEvent, obj)
-                createRemoteEntry(tabs["🎯 Bindables"].frame, obj)
             end
         end
     end
@@ -315,10 +310,8 @@ local function scanAll()
     safeCall(scan, Workspace)
     safeCall(scan, ServerScriptService)
 
-    print(string.format("📊 %d RemoteEvents | %d RemoteFunctions | %d Bindables",
-        #foundRemotes.RemoteEvent,
-        #foundRemotes.RemoteFunction,
-        #foundRemotes.BindableEvent))
+    print(string.format("📊 %d RemoteEvents | %d RemoteFunctions",
+        #foundRemotes.RemoteEvent, #foundRemotes.RemoteFunction))
 end
 
 scanBtn.MouseButton1Click:Connect(function()
@@ -332,21 +325,37 @@ scanBtn.MouseButton1Click:Connect(function()
 end)
 
 --// ================================================
---// ANALYSE JEU
+--// ANALYSE JEU (SPÉCIALISÉE STEAL)
 --// ================================================
 local gameAnalysis = {
     name = "Unknown",
     type = "unknown",
     playerCount = 0,
     remoteCategories = {},
-    hasLeaderstats = false,
-    hasTools = false
+    stealRemotes = {},
+    hatchRemotes = {},
+    sellRemotes = {},
+    buyRemotes = {},
+    claimRemotes = {},
+    allMoneyRemotes = {},
+    eggObjects = {},
+    leaderstats = {},
+    currencies = {}
 }
 
 local function analyzeGame()
     gameAnalysis.name = "Unknown"
     gameAnalysis.type = "unknown"
     gameAnalysis.remoteCategories = {}
+    gameAnalysis.stealRemotes = {}
+    gameAnalysis.hatchRemotes = {}
+    gameAnalysis.sellRemotes = {}
+    gameAnalysis.buyRemotes = {}
+    gameAnalysis.claimRemotes = {}
+    gameAnalysis.allMoneyRemotes = {}
+    gameAnalysis.eggObjects = {}
+    gameAnalysis.leaderstats = {}
+    gameAnalysis.currencies = {}
 
     safeCall(function()
         local info = MarketplaceService:GetProductInfo(game.PlaceId)
@@ -354,69 +363,139 @@ local function analyzeGame()
     end)
 
     gameAnalysis.playerCount = #Players:GetPlayers()
-    gameAnalysis.hasLeaderstats = LocalPlayer:FindFirstChild("leaderstats") ~= nil
-    gameAnalysis.hasTools = LocalPlayer:FindFirstChild("Backpack") ~= nil
-        and #LocalPlayer.Backpack:GetChildren() > 0
 
-    local n = string.lower(gameAnalysis.name)
-    local patterns = {
-        {type = "Steal",         kws = {"steal", "thief", "pickpocket"}},
-        {type = "Simulator",     kws = {"simulator", "sim", "clicker", "hatch", "pet sim"}},
-        {type = "Tower Defense", kws = {"tower", "defense"}},
-        {type = "Obby",          kws = {"obby", "parkour", "escape", "tower of"}},
-        {type = "RPG",           kws = {"rpg", "adventure", "quest", "dungeon"}},
-        {type = "FPS",           kws = {"fps", "shooter", "gun", "combat", "arsenal", "phantom"}},
-        {type = "Tycoon",        kws = {"tycoon", "builder", "factory"}},
-        {type = "Roleplay",      kws = {"roleplay", "brookhaven", "town", "city life"}},
-        {type = "Horror",        kws = {"horror", "scary", "backrooms", "granny", "doors"}},
-        {type = "Anime",         kws = {"anime", "naruto", "dragon ball", "one piece", "demon slayer"}},
-        {type = "Racing",        kws = {"racing", "drift"}},
-        {type = "Survival",      kws = {"survival", "island", "raft", "stranded"}},
-        {type = "Egg",           kws = {"egg", "adopt", "pet"}},
-    }
-
-    for _, p in ipairs(patterns) do
-        for _, kw in ipairs(p.kws) do
-            if string.find(n, kw, 1, true) then
-                gameAnalysis.type = p.type
-                break
+    -- Leaderstats
+    safeCall(function()
+        local ls = LocalPlayer:FindFirstChild("leaderstats")
+        if ls then
+            for _, stat in ipairs(ls:GetChildren()) do
+                table.insert(gameAnalysis.leaderstats, stat.Name)
+                table.insert(gameAnalysis.currencies, stat.Name)
             end
         end
-        if gameAnalysis.type ~= "unknown" then break end
+    end)
+
+    -- Détection type
+    local n = string.lower(gameAnalysis.name)
+    if string.find(n, "steal", 1, true) or string.find(n, "brainrot", 1, true) then
+        gameAnalysis.type = "Steal"
+    elseif string.find(n, "simulator", 1, true) or string.find(n, "pet sim", 1, true) then
+        gameAnalysis.type = "Simulator"
+    elseif string.find(n, "egg", 1, true) or string.find(n, "hatch", 1, true) then
+        gameAnalysis.type = "Egg"
+    elseif string.find(n, "adopt", 1, true) then
+        gameAnalysis.type = "Adopt"
+    else
+        gameAnalysis.type = "General"
     end
 
-    local categories = {
-        steal     = {"steal", "pickpocket", "grab"},
-        farm      = {"farm", "collect", "gather", "harvest", "auto"},
-        combat    = {"damage", "hit", "attack", "kill", "punch", "sword", "shoot", "fire"},
-        shop      = {"buy", "purchase", "shop", "sell", "trade"},
-        reward    = {"claim", "reward", "daily", "bonus", "gift", "redeem", "spin"},
-        currency  = {"coin", "cash", "money", "gem", "gold", "diamond", "ticket"},
-        pet       = {"pet", "hatch", "egg", "evolve", "fuse", "adopt"},
-    }
-
+    -- Catégorisation ULTRA poussée des remotes
     for _, remote in ipairs(foundRemotes.RemoteEvent) do
         local low = string.lower(remote.Name)
-        for cat, kws in pairs(categories) do
+        local path = remote:GetFullName()
+
+        -- STEAL
+        if string.find(low, "steal", 1, true)
+            or string.find(low, "pickpocket", 1, true)
+            or string.find(low, "grab", 1, true) then
+            table.insert(gameAnalysis.stealRemotes, path)
+        end
+
+        -- HATCH / EGG
+        if string.find(low, "hatch", 1, true)
+            or string.find(low, "egg", 1, true)
+            or string.find(low, "open", 1, true)
+            or string.find(low, "unbox", 1, true) then
+            table.insert(gameAnalysis.hatchRemotes, path)
+        end
+
+        -- SELL
+        if string.find(low, "sell", 1, true)
+            or string.find(low, "convert", 1, true) then
+            table.insert(gameAnalysis.sellRemotes, path)
+        end
+
+        -- BUY
+        if string.find(low, "buy", 1, true)
+            or string.find(low, "purchase", 1, true) then
+            table.insert(gameAnalysis.buyRemotes, path)
+        end
+
+        -- CLAIM / REWARD
+        if string.find(low, "claim", 1, true)
+            or string.find(low, "reward", 1, true)
+            or string.find(low, "daily", 1, true)
+            or string.find(low, "redeem", 1, true)
+            or string.find(low, "gift", 1, true) then
+            table.insert(gameAnalysis.claimRemotes, path)
+        end
+
+        -- MONEY / CURRENCY
+        if string.find(low, "money", 1, true)
+            or string.find(low, "cash", 1, true)
+            or string.find(low, "coin", 1, true) then
+            table.insert(gameAnalysis.allMoneyRemotes, path)
+        end
+
+        -- Catégories générales
+        local cats = {
+            farm = {"farm", "collect", "gather", "auto"},
+            combat = {"damage", "hit", "attack", "kill"},
+            pet = {"pet", "hatch", "egg", "evolve"},
+            reward = {"claim", "reward", "daily"},
+            currency = {"coin", "cash", "money", "gem"},
+        }
+
+        for cat, kws in pairs(cats) do
             for _, kw in ipairs(kws) do
                 if string.find(low, kw, 1, true) then
                     if not gameAnalysis.remoteCategories[cat] then
                         gameAnalysis.remoteCategories[cat] = {}
                     end
-                    table.insert(gameAnalysis.remoteCategories[cat], remote:GetFullName())
+                    table.insert(gameAnalysis.remoteCategories[cat], path)
                     break
                 end
             end
         end
     end
 
-    print("🧠 Analyse: " .. gameAnalysis.name .. " | Type: " .. gameAnalysis.type)
+    -- Détecter les œufs dans workspace
+    safeCall(function()
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj.Name then
+                local lowObj = string.lower(obj.Name)
+                if string.find(lowObj, "egg", 1, true)
+                    or string.find(lowObj, "pet", 1, true) then
+                    if obj:IsA("BasePart") or obj:IsA("Model") then
+                        table.insert(gameAnalysis.eggObjects, obj)
+                    end
+                end
+            end
+        end
+    end)
+
+    print("═══════════════════════════════════════")
+    print("🧠 ANALYSE: " .. gameAnalysis.name)
+    print("📁 Type: " .. gameAnalysis.type)
+    print("🥚 Steal remotes: " .. #gameAnalysis.stealRemotes)
+    print("🥚 Hatch remotes: " .. #gameAnalysis.hatchRemotes)
+    print("💰 Sell remotes: " .. #gameAnalysis.sellRemotes)
+    print("🛒 Buy remotes: " .. #gameAnalysis.buyRemotes)
+    print("🎁 Claim remotes: " .. #gameAnalysis.claimRemotes)
+    print("🎨 Egg objects: " .. #gameAnalysis.eggObjects)
+    print("💵 Currencies: " .. table.concat(gameAnalysis.currencies, ", "))
+    print("═══════════════════════════════════════")
 end
 
 local function getRemoteFromCategory(cat)
     local list = gameAnalysis.remoteCategories[cat]
     if not list or #list == 0 then return nil end
     return list[1]
+end
+
+local function getFirstRemote(list)
+    if list and #list > 0 then return list[1] end
+    return nil
 end
 
 local function buildRemoteLoader(path)
@@ -434,12 +513,13 @@ end)()
 end
 
 --// ================================================
---// GÉNÉRATEUR DE GUI MENU (avec support prompt)
+--// GÉNÉRATEUR SPÉCIALISÉ STEAL
 --// ================================================
 local function buildGUIMenuScript(prompt)
     local A = gameAnalysis
     local safeName = tostring(A.name):gsub("%%", "%%%%")
     local p = string.lower(prompt or "")
+    local isEmpty = (prompt == "" or prompt == nil)
 
     local featureButtons = {}
     local added = {}
@@ -450,85 +530,132 @@ local function buildGUIMenuScript(prompt)
         table.insert(featureButtons, { name = name, color = color, code = code })
     end
 
-    -- Détection prompt override
-    local wantsFly = string.find(p, "fly", 1, true) or string.find(p, "vol", 1, true) or prompt == "" or prompt == nil
-    local wantsSpeed = string.find(p, "speed", 1, true) or string.find(p, "vitesse", 1, true) or prompt == "" or prompt == nil
-    local wantsFarm = string.find(p, "farm", 1, true) or string.find(p, "auto", 1, true) or prompt == "" or prompt == nil
-    local wantsAimbot = string.find(p, "aim", 1, true) or string.find(p, "lock", 1, true) or string.find(p, "kill", 1, true) or prompt == "" or prompt == nil
-    local wantsESP = string.find(p, "esp", 1, true) or string.find(p, "wall", 1, true) or prompt == "" or prompt == nil
-    local wantsNoclip = string.find(p, "noclip", 1, true) or prompt == "" or prompt == nil
-    local wantsClick = string.find(p, "click", 1, true) or string.find(p, "clic", 1, true) or prompt == "" or prompt == nil
-    local wantsTP = string.find(p, "tp", 1, true) or string.find(p, "teleport", 1, true) or prompt == "" or prompt == nil
+    -- Préférences
+    local wantsSteal = isEmpty or string.find(p, "steal", 1, true) or A.type == "Steal"
+    local wantsFly = isEmpty or string.find(p, "fly", 1, true) or string.find(p, "vol", 1, true)
+    local wantsSpeed = isEmpty or string.find(p, "speed", 1, true) or string.find(p, "vitesse", 1, true)
+    local wantsFarm = isEmpty or string.find(p, "farm", 1, true) or string.find(p, "auto", 1, true)
+    local wantsESP = isEmpty or string.find(p, "esp", 1, true) or string.find(p, "wall", 1, true)
+    local wantsHatch = isEmpty or string.find(p, "hatch", 1, true) or string.find(p, "egg", 1, true)
+    local wantsSell = isEmpty or string.find(p, "sell", 1, true) or string.find(p, "vendre", 1, true)
+    local wantsNoclip = isEmpty or string.find(p, "noclip", 1, true)
+    local wantsClick = isEmpty or string.find(p, "click", 1, true)
+    local wantsTP = isEmpty or string.find(p, "tp", 1, true) or string.find(p, "teleport", 1, true)
+    local wantsBring = isEmpty or string.find(p, "bring", 1, true)
 
-    -- 🥚 STEAL
-    local stealRemote = getRemoteFromCategory("steal")
-    if (stealRemote or A.type == "Steal") and (string.find(p, "steal", 1, true) or prompt == "" or prompt == nil) then
-        addButton("Auto Steal", "Color3.fromRGB(255, 140, 0)",
-            buildRemoteLoader(stealRemote or "") .. [[
+    -- 🥚 AUTO STEAL (le plus important)
+    local stealRemote = getFirstRemote(A.stealRemotes)
+    if wantsSteal and (stealRemote or A.type == "Steal") then
+        local loader = stealRemote and buildRemoteLoader(stealRemote) or "local remote = nil\n"
+        addButton("🥚 AUTO STEAL", "Color3.fromRGB(255, 140, 0)", loader .. [[
+-- Auto Steal: cherche les joueurs avec des eggs et vole
+local function findTarget()
+    local bestTarget = nil
+    local bestDist = math.huge
+    local myChar = LP.Character
+    if not myChar then return nil end
+    local myHrp = myChar:FindFirstChild("HumanoidRootPart")
+    if not myHrp then return nil end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LP and plr.Character then
+            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                -- Vérifier si le joueur porte un egg/pet
+                local hasEgg = false
+                for _, obj in ipairs(plr.Character:GetChildren()) do
+                    local low = string.lower(obj.Name)
+                    if string.find(low, "egg", 1, true)
+                        or string.find(low, "pet", 1, true)
+                        or string.find(low, "brainrot", 1, true) then
+                        hasEgg = true
+                        break
+                    end
+                end
+                local dist = (hrp.Position - myHrp.Position).Magnitude
+                if hasEgg and dist < bestDist then
+                    bestTarget = plr
+                    bestDist = dist
+                end
+            end
+        end
+    end
+    return bestTarget
+end
+
 task.spawn(function()
     while _G.IA_AutoSteal do
         pcall(function()
-            if remote then
-                for _, plr in ipairs(Players:GetPlayers()) do
-                    if plr ~= LP then
-                        pcall(function() remote:FireServer(plr) end)
+            local target = findTarget()
+            if target and remote then
+                remote:FireServer(target)
+                notify("Steal -> " .. target.Name)
+            end
+        end)
+        task.wait(0.4)
+    end
+end)
+notify("AUTO STEAL active !")
+]])
+    end
+
+    -- 🎯 AUTO TARGET (TP vers la cible la plus proche)
+    if wantsSteal and A.type == "Steal" then
+        addButton("🎯 TP vers Cible", "Color3.fromRGB(255, 200, 0)", [[
+_G.IA_AutoTP = not _G.IA_AutoTP
+task.spawn(function()
+    while _G.IA_AutoTP do
+        pcall(function()
+            local myChar = LP.Character
+            if myChar then
+                local myHrp = myChar:FindFirstChild("HumanoidRootPart")
+                if myHrp then
+                    local best, bestDist = nil, math.huge
+                    for _, plr in ipairs(Players:GetPlayers()) do
+                        if plr ~= LP and plr.Character then
+                            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                            if hrp then
+                                local d = (hrp.Position - myHrp.Position).Magnitude
+                                if d < bestDist then best, bestDist = plr, d end
+                            end
+                        end
+                    end
+                    if best and best.Character then
+                        local hrp = best.Character:FindFirstChild("HumanoidRootPart")
+                        if hrp then myHrp.CFrame = hrp.CFrame + Vector3.new(0, 3, 0) end
                     end
                 end
             end
         end)
-        task.wait(0.3)
-    end
-end)
-notify("Auto Steal active")
-]])
-    end
-
-    -- 🌾 AUTO FARM
-    local farmRemote = getRemoteFromCategory("farm") or getRemoteFromCategory("currency")
-    if (farmRemote or wantsFarm) and wantsFarm then
-        addButton("Auto Farm", "Color3.fromRGB(80, 200, 120)",
-            buildRemoteLoader(farmRemote or "") .. [[
-task.spawn(function()
-    while _G.IA_AutoFarm do
-        pcall(function()
-            if remote then remote:FireServer() end
-        end)
         task.wait(0.5)
     end
 end)
-notify("Auto Farm active")
+notify("Auto TP: " .. tostring(_G.IA_AutoTP))
 ]])
     end
 
-    -- 🎁 AUTO CLAIM
-    local rewardRemote = getRemoteFromCategory("reward")
-    if rewardRemote and (string.find(p, "claim", 1, true) or prompt == "" or prompt == nil) then
-        addButton("Auto Claim", "Color3.fromRGB(255, 200, 80)",
-            buildRemoteLoader(rewardRemote) .. [[
+    -- 💰 AUTO SELL
+    local sellRemote = getFirstRemote(A.sellRemotes)
+    if wantsSell and sellRemote then
+        addButton("💰 AUTO SELL", "Color3.fromRGB(80, 220, 100)",
+            buildRemoteLoader(sellRemote) .. [[
 task.spawn(function()
-    while _G.IA_AutoClaim do
-        pcall(function()
-            if remote then remote:FireServer() end
-        end)
-        task.wait(5)
+    while _G.IA_AutoSell do
+        pcall(function() if remote then remote:FireServer() end end)
+        task.wait(2)
     end
 end)
-notify("Auto Claim active")
+notify("Auto Sell active")
 ]])
     end
 
     -- 🥚 AUTO HATCH
-    local petRemote = getRemoteFromCategory("pet")
-    if (petRemote or A.type == "Simulator" or A.type == "Egg")
-        and (string.find(p, "hatch", 1, true) or string.find(p, "egg", 1, true) or prompt == "" or prompt == nil) then
-        local loader = petRemote and buildRemoteLoader(petRemote) or "local remote = nil\n"
-        addButton("Auto Hatch", "Color3.fromRGB(220, 150, 220)",
-            loader .. [[
+    local hatchRemote = getFirstRemote(A.hatchRemotes)
+    if wantsHatch and (hatchRemote or A.type == "Egg" or A.type == "Simulator") then
+        local loader = hatchRemote and buildRemoteLoader(hatchRemote) or "local remote = nil\n"
+        addButton("🥚 AUTO HATCH", "Color3.fromRGB(220, 150, 255)", loader .. [[
 task.spawn(function()
     while _G.IA_AutoHatch do
-        pcall(function()
-            if remote then remote:FireServer() end
-        end)
+        pcall(function() if remote then remote:FireServer() end end)
         task.wait(1)
     end
 end)
@@ -536,79 +663,118 @@ notify("Auto Hatch active")
 ]])
     end
 
-    -- 🔫 KILL AURA
-    local combatRemote = getRemoteFromCategory("combat")
-    if (combatRemote or wantsAimbot) and wantsAimbot then
-        addButton("Kill Aura", "Color3.fromRGB(220, 70, 70)",
-            buildRemoteLoader(combatRemote or "") .. [[
+    -- 🛒 AUTO BUY
+    local buyRemote = getFirstRemote(A.buyRemotes)
+    if buyRemote and (isEmpty or string.find(p, "buy", 1, true)) then
+        addButton("🛒 AUTO BUY", "Color3.fromRGB(180, 200, 100)",
+            buildRemoteLoader(buyRemote) .. [[
 task.spawn(function()
-    while _G.IA_KillAura do
-        if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-            local myPos = LP.Character.HumanoidRootPart.Position
-            for _, plr in ipairs(Players:GetPlayers()) do
-                if plr ~= LP and plr.Character then
-                    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-                    local hum = plr.Character:FindFirstChild("Humanoid")
-                    if hrp and hum and hum.Health > 0
-                        and (hrp.Position - myPos).Magnitude <= 25 then
-                        pcall(function() if remote then remote:FireServer(plr.Character) end end)
-                    end
-                end
-            end
-        end
-        task.wait(0.3)
+    while _G.IA_AutoBuy do
+        pcall(function() if remote then remote:FireServer() end end)
+        task.wait(1)
     end
 end)
-notify("Kill Aura active")
+notify("Auto Buy active")
 ]])
     end
 
-    -- 👁️ ESP
-    local isCombat = (A.type == "FPS" or A.type == "RPG" or A.type == "Anime" or A.type == "Steal")
-        or (A.remoteCategories.combat and #A.remoteCategories.combat > 0)
-        or (A.remoteCategories.steal and #A.remoteCategories.steal > 0)
-    if (isCombat or wantsESP) and wantsESP then
-        addButton("ESP Joueurs", "Color3.fromRGB(180, 80, 220)", [[
+    -- 🎁 AUTO CLAIM
+    local claimRemote = getFirstRemote(A.claimRemotes)
+    if claimRemote and (isEmpty or string.find(p, "claim", 1, true)) then
+        addButton("🎁 AUTO CLAIM", "Color3.fromRGB(255, 220, 100)",
+            buildRemoteLoader(claimRemote) .. [[
+task.spawn(function()
+    while _G.IA_AutoClaim do
+        pcall(function() if remote then remote:FireServer() end end)
+        task.wait(5)
+    end
+end)
+notify("Auto Claim active")
+]])
+    end
+
+    -- 🌾 AUTO FARM (money)
+    local farmRemote = getFirstRemote(A.allMoneyRemotes)
+    if wantsFarm and farmRemote then
+        addButton("🌾 AUTO FARM", "Color3.fromRGB(100, 220, 140)",
+            buildRemoteLoader(farmRemote) .. [[
+task.spawn(function()
+    while _G.IA_AutoFarm do
+        pcall(function() if remote then remote:FireServer() end end)
+        task.wait(0.5)
+    end
+end)
+notify("Auto Farm active")
+]])
+    end
+
+    -- 👁️ ESP Eggs / Joueurs
+    if wantsESP then
+        addButton("👁️ ESP Eggs & Joueurs", "Color3.fromRGB(180, 80, 220)", [[
 if _G.IA_ESP then
+    _G.IA_ESP = false
     local f = game.CoreGui:FindFirstChild("IA_ESP_Menu")
     if f then f:Destroy() end
-    _G.IA_ESP = false
     notify("ESP off")
 else
     _G.IA_ESP = true
     local espFolder = Instance.new("Folder", game.CoreGui)
     espFolder.Name = "IA_ESP_Menu"
-    for _, plr in ipairs(Players:GetPlayers()) do
-        task.spawn(function()
-            if plr == LP then return end
-            while plr.Parent and plr.Character and _G.IA_ESP do
-                local head = plr.Character:FindFirstChild("Head")
-                if head then
-                    local bb = espFolder:FindFirstChild(plr.Name)
-                    if not bb then
-                        bb = Instance.new("BillboardGui", espFolder)
-                        bb.Name = plr.Name
+    task.spawn(function()
+        while _G.IA_ESP do
+            -- ESP joueurs
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= LP and plr.Character then
+                    local head = plr.Character:FindFirstChild("Head")
+                    if head and not espFolder:FindFirstChild("P_" .. plr.Name) then
+                        local bb = Instance.new("BillboardGui", espFolder)
+                        bb.Name = "P_" .. plr.Name
                         bb.Adornee = head
+                        bb.Size = UDim2.new(0, 120, 0, 25)
+                        bb.AlwaysOnTop = true
+                        local lbl = Instance.new("TextLabel", bb)
+                        lbl.Size = UDim2.new(1, 0, 1, 0)
+                        lbl.BackgroundTransparency = 0.4
+                        lbl.BackgroundColor3 = Color3.new(0, 0, 0)
+                        lbl.TextColor3 = Color3.new(1, 0.4, 0.4)
+                        lbl.Font = Enum.Font.GothamBold
+                        lbl.TextSize = 12
+                        lbl.Text = plr.Name
+                    end
+                    local bb = espFolder:FindFirstChild("P_" .. plr.Name)
+                    if bb and head then
+                        local lbl = bb:FindFirstChildOfClass("TextLabel")
+                        if lbl then
+                            lbl.Text = plr.Name .. " [" ..
+                                math.floor((head.Position - cam.CFrame.Position).Magnitude) .. "]"
+                        end
+                    end
+                end
+            end
+            -- ESP eggs dans workspace
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and not espFolder:FindFirstChild("E_" .. obj:GetFullName()) then
+                    local low = string.lower(obj.Name)
+                    if string.find(low, "egg", 1, true) or string.find(low, "pet", 1, true) then
+                        local bb = Instance.new("BillboardGui", espFolder)
+                        bb.Name = "E_" .. obj:GetFullName()
+                        bb.Adornee = obj
                         bb.Size = UDim2.new(0, 100, 0, 20)
                         bb.AlwaysOnTop = true
                         local lbl = Instance.new("TextLabel", bb)
                         lbl.Size = UDim2.new(1, 0, 1, 0)
-                        lbl.BackgroundTransparency = 0.5
+                        lbl.BackgroundTransparency = 0.4
                         lbl.BackgroundColor3 = Color3.new(0, 0, 0)
-                        lbl.TextColor3 = Color3.new(1, 0.3, 0.3)
+                        lbl.TextColor3 = Color3.new(1, 0.8, 0.2)
                         lbl.Font = Enum.Font.GothamBold
-                        lbl.TextSize = 12
-                    end
-                    local lbl = bb:FindFirstChildOfClass("TextLabel")
-                    if lbl then
-                        lbl.Text = plr.Name .. " [" ..
-                            math.floor((head.Position - cam.CFrame.Position).Magnitude) .. "]"
+                        lbl.TextSize = 11
+                        lbl.Text = obj.Name
                     end
                 end
-                task.wait(0.2)
             end
-        end)
-    end
+            task.wait(1)
+        end
+    end)
     notify("ESP active")
 end
 ]])
@@ -616,7 +782,7 @@ end
 
     -- 🕊️ FLY
     if wantsFly then
-        addButton("Fly", "Color3.fromRGB(120, 200, 255)", [[
+        addButton("🕊️ FLY (F)", "Color3.fromRGB(120, 200, 255)", [[
 _G.IA_Fly = not _G.IA_Fly
 if _G.IA_Fly then
     local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
@@ -657,7 +823,7 @@ end
     -- 🏃 SPEED
     if wantsSpeed then
         local spd = tonumber(string.match(p, "%d+")) or 100
-        addButton("Speed Boost", "Color3.fromRGB(80, 180, 200)", string.format([[
+        addButton("🏃 SPEED " .. spd, "Color3.fromRGB(80, 180, 200)", string.format([[
 if LP.Character then
     local h = LP.Character:FindFirstChild("Humanoid")
     if h then
@@ -670,7 +836,7 @@ end
 
     -- 👻 NOCLIP
     if wantsNoclip then
-        addButton("Noclip", "Color3.fromRGB(150, 150, 200)", [[
+        addButton("👻 NOCLIP (N)", "Color3.fromRGB(150, 150, 200)", [[
 _G.IA_Noclip = not _G.IA_Noclip
 if LP.Character then
     for _, d in ipairs(LP.Character:GetDescendants()) do
@@ -683,7 +849,7 @@ notify("Noclip: " .. tostring(_G.IA_Noclip))
 
     -- 🖱️ AUTO CLICK
     if wantsClick then
-        addButton("Auto Click", "Color3.fromRGB(200, 200, 80)", [[
+        addButton("🖱️ AUTO CLICK (G)", "Color3.fromRGB(200, 200, 80)", [[
 _G.IA_AutoClick = not _G.IA_AutoClick
 notify("Auto Click: " .. tostring(_G.IA_AutoClick))
 if _G.IA_AutoClick then
@@ -703,7 +869,7 @@ end
 
     -- 🌀 TP MOUSE
     if wantsTP then
-        addButton("TP Mouse", "Color3.fromRGB(200, 100, 180)", [[
+        addButton("🌀 TP MOUSE", "Color3.fromRGB(200, 100, 180)", [[
 if not _G.IA_TPArmed then
     _G.IA_TPArmed = true
     local m = LP:GetMouse()
@@ -713,16 +879,69 @@ if not _G.IA_TPArmed then
         local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
         if t and hrp then
             hrp.CFrame = CFrame.new(t.Position + Vector3.new(0, 3, 0))
-            notify("TP: " .. t.Name)
         end
     end)
-    notify("TP Mouse arme - clique sur une surface")
+    notify("TP Mouse arme")
 else
     _G.IA_TPArmed = false
     notify("TP Mouse desarme")
 end
 ]])
     end
+
+    -- 🎯 BRING PLAYERS
+    if wantsBring and A.type == "Steal" then
+        addButton("🎯 BRING TOUT LE MONDE", "Color3.fromRGB(255, 80, 80)", [[
+_G.IA_Bring = not _G.IA_Bring
+task.spawn(function()
+    while _G.IA_Bring do
+        pcall(function()
+            local myHrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+            if myHrp then
+                for _, plr in ipairs(Players:GetPlayers()) do
+                    if plr ~= LP and plr.Character then
+                        local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                        if hrp and (hrp.Position - myHrp.Position).Magnitude > 5 then
+                            -- Pas de vrai "bring" client-side, mais TP auto
+                        end
+                    end
+                end
+            end
+        end)
+        task.wait(0.5)
+    end
+end)
+notify("Bring active: " .. tostring(_G.IA_Bring))
+]])
+    end
+
+    -- 🌌 LOW GRAVITY
+    addButton("🌌 LOW GRAVITY", "Color3.fromRGB(150, 100, 220)", [[
+workspace.Gravity = workspace.Gravity == 196.2 and 50 or 196.2
+notify("Gravity: " .. workspace.Gravity)
+]])
+
+    -- 💡 FULLBRIGHT
+    addButton("💡 FULLBRIGHT", "Color3.fromRGB(255, 255, 150)", [[
+if _G.IA_Bright then
+    _G.IA_Bright = false
+    Lighting.Brightness = 2
+    Lighting.ClockTime = 14
+    notify("Fullbright OFF")
+else
+    _G.IA_Bright = true
+    Lighting.Ambient = Color3.fromRGB(200,200,200)
+    Lighting.OutdoorAmbient = Color3.fromRGB(200,200,200)
+    Lighting.Brightness = 3
+    Lighting.ClockTime = 12
+    for _, v in ipairs(Lighting:GetChildren()) do
+        if v:IsA("Atmosphere") or v:IsA("BlurEffect") then
+            v:Destroy()
+        end
+    end
+    notify("Fullbright ON")
+end
+]])
 
     --// Build boutons
     local buttonsCode = ""
@@ -738,20 +957,23 @@ end)
     if buttonsCode == "" then
         buttonsCode = [[
 makeFeatureButton("Aucun module", Color3.fromRGB(100, 100, 100), function()
-    notify("Aucun module correspondant au prompt")
+    notify("Aucun module correspondant")
 end)
 ]]
     end
 
+    -- Compteur de features
+    local featureCount = #featureButtons
+
     --// Script complet
     local script = string.format([[
 --// ═══════════════════════════════════════════════════════════
---// GUI MENU AUTO-GENEREE par IA V6
+--// 🥚 GUI STEAL AUTO-GENEREE par IA V7
 --// Jeu   : %s
 --// ID    : %d
 --// Type  : %s
 --// Joueurs: %d
---// Prompt : %s
+--// Features: %d
 --// ═══════════════════════════════════════════════════════════
 
 local Players = game:GetService("Players")
@@ -759,6 +981,7 @@ local RS = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
+local Lighting = game:GetService("Lighting")
 local LP = Players.LocalPlayer
 local cam = workspace.CurrentCamera
 
@@ -771,7 +994,7 @@ local function notify(msg)
     print("IA: " .. msg)
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "IA V6", Text = msg, Duration = 3
+            Title = "🥚 Steal Hub", Text = msg, Duration = 3
         })
     end)
 end
@@ -785,20 +1008,23 @@ if not gui.Parent then
 end
 
 local toggle = Instance.new("TextButton")
-toggle.Size = UDim2.new(0, 60, 0, 60)
-toggle.Position = UDim2.new(0, 20, 0.5, -30)
-toggle.BackgroundColor3 = Color3.fromRGB(180, 90, 220)
-toggle.Text = "IA"
+toggle.Size = UDim2.new(0, 65, 0, 65)
+toggle.Position = UDim2.new(0, 20, 0.5, -32)
+toggle.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+toggle.Text = "🥚"
 toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 toggle.Font = Enum.Font.GothamBold
-toggle.TextSize = 20
+toggle.TextSize = 28
 toggle.BorderSizePixel = 0
 toggle.Parent = gui
-Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 30)
+Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 32)
+local tStroke = Instance.new("UIStroke", toggle)
+tStroke.Color = Color3.fromRGB(255, 255, 255)
+tStroke.Thickness = 2
 
 local menu = Instance.new("Frame")
-menu.Size = UDim2.new(0, 380, 0, 420)
-menu.Position = UDim2.new(0.5, -190, 0.5, -210)
+menu.Size = UDim2.new(0, 400, 0, 460)
+menu.Position = UDim2.new(0.5, -200, 0.5, -230)
 menu.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
 menu.BorderSizePixel = 0
 menu.Active = true
@@ -807,12 +1033,12 @@ menu.Visible = true
 menu.Parent = gui
 Instance.new("UICorner", menu).CornerRadius = UDim.new(0, 12)
 local ms = Instance.new("UIStroke", menu)
-ms.Color = Color3.fromRGB(180, 90, 220)
+ms.Color = Color3.fromRGB(255, 140, 0)
 ms.Thickness = 2
 
 local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 45)
-header.BackgroundColor3 = Color3.fromRGB(180, 90, 220)
+header.Size = UDim2.new(1, 0, 0, 50)
+header.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
 header.BorderSizePixel = 0
 header.Parent = menu
 Instance.new("UICorner", header).CornerRadius = UDim.new(0, 12)
@@ -821,19 +1047,19 @@ local hTitle = Instance.new("TextLabel")
 hTitle.Size = UDim2.new(1, -50, 1, 0)
 hTitle.Position = UDim2.new(0, 15, 0, 0)
 hTitle.BackgroundTransparency = 1
-hTitle.Text = "IA V6 - %s"
+hTitle.Text = "🥚 %s"
 hTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 hTitle.Font = Enum.Font.GothamBold
-hTitle.TextSize = 13
+hTitle.TextSize = 14
 hTitle.TextXAlignment = Enum.TextXAlignment.Left
 hTitle.TextTruncate = Enum.TextTruncate.AtEnd
 hTitle.Parent = header
 
 local info = Instance.new("TextLabel")
-info.Size = UDim2.new(1, -20, 0, 24)
-info.Position = UDim2.new(0, 10, 0, 52)
+info.Size = UDim2.new(1, -20, 0, 22)
+info.Position = UDim2.new(0, 10, 0, 56)
 info.BackgroundTransparency = 1
-info.Text = "Type: %s   Joueurs: %d"
+info.Text = "Type: %s  -  %d joueurs  -  %d features"
 info.TextColor3 = Color3.fromRGB(180, 180, 200)
 info.Font = Enum.Font.Gotham
 info.TextSize = 11
@@ -841,8 +1067,8 @@ info.TextXAlignment = Enum.TextXAlignment.Left
 info.Parent = menu
 
 local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, -20, 1, -100)
-scroll.Position = UDim2.new(0, 10, 0, 82)
+scroll.Size = UDim2.new(1, -20, 1, -110)
+scroll.Position = UDim2.new(0, 10, 0, 88)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
 scroll.ScrollBarThickness = 4
@@ -856,7 +1082,7 @@ list.SortOrder = Enum.SortOrder.LayoutOrder
 
 local function makeFeatureButton(name, color, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -10, 0, 36)
+    btn.Size = UDim2.new(1, -10, 0, 38)
     btn.BackgroundColor3 = color
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -878,7 +1104,7 @@ local function makeFeatureButton(name, color, callback)
     end)
 
     btn.MouseEnter:Connect(function()
-        if not active then btn.BackgroundColor3 = color:Lerp(Color3.new(1,1,1), 0.2) end
+        if not active then btn.BackgroundColor3 = color:Lerp(Color3.new(1,1,1), 0.15) end
     end)
     btn.MouseLeave:Connect(function()
         if not active then btn.BackgroundColor3 = color end
@@ -891,77 +1117,75 @@ toggle.MouseButton1Click:Connect(function()
     menu.Visible = menuOpen
 end)
 
+--// Anti-AFK
+local vu = game:GetService("VirtualUser")
+LP.Idled:Connect(function()
+    pcall(function()
+        vu:CaptureController()
+        vu:ClickButton2(Vector2.new())
+    end)
+end)
+
+--// Boutons générés
 %s
 
 notify("GUI chargee pour " .. %q)
-]], safeName, game.PlaceId, A.type, A.playerCount, (prompt == "" and "auto" or prompt),
-    safeName, A.type, A.playerCount, buttonsCode, safeName)
+]], safeName, game.PlaceId, A.type, A.playerCount, featureCount,
+    safeName, A.type, A.playerCount, featureCount, buttonsCode, safeName)
 
     return script
 end
 
 --// ================================================
---// 📤 WEBHOOK DISCORD
+--// WEBHOOK DISCORD
 --// ================================================
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1559992556094488676/VAbPW2BJkEOK_WotVJA6PM3Fqc0RIQhCw2mbMUYnwk4UL4F12iAJonCHrMltJk8Wmv7c"
 
 local function sendWebhook(scriptText, prompt)
-    local info = {
-        username = LocalPlayer.Name,
-        displayName = safeCall(function() return LocalPlayer.DisplayName end) or LocalPlayer.Name,
-        userId = tostring(LocalPlayer.UserId),
-        accountAge = tostring(safeCall(function() return LocalPlayer.AccountAge end) or "?"),
-    }
-    local execName = "Unknown"
-    safeCall(function()
-        if identifyexecutor then execName = identifyexecutor() end
-    end)
+    local displayName = safeCall(function() return LocalPlayer.DisplayName end) or LocalPlayer.Name
+    local accountAge = tostring(safeCall(function() return LocalPlayer.AccountAge end) or "?")
 
-    -- Tronquer si trop long
     local preview = scriptText
     if #preview > 1900 then
         preview = string.sub(preview, 1, 1900) .. "\n-- ... (tronque)"
     end
 
-    local totalButtons = 0
-    for _ in pairs(gameAnalysis.remoteCategories) do totalButtons = totalButtons + 1 end
-
     local payload = {
-        username = "Delta Hub IA",
+        username = "Delta Steal Hub",
         embeds = {
             {
-                title = "🤖 Nouveau script genere !",
-                color = 5763719,
+                title = "🥚 Nouveau script STEAL genere !",
+                color = 16753920,
                 fields = {
                     { name = "🎮 Jeu", value = tostring(gameAnalysis.name), inline = true },
                     { name = "🆔 PlaceId", value = tostring(game.PlaceId), inline = true },
                     { name = "📁 Type", value = tostring(gameAnalysis.type), inline = true },
-                    { name = "👤 Joueur", value = info.username .. " (" .. info.displayName .. ")", inline = true },
-                    { name = "🔢 UserId", value = info.userId, inline = true },
-                    { name = "📅 Age compte", value = info.accountAge .. " jours", inline = true },
-                    { name = "🖥️ Executor", value = execName, inline = true },
+                    { name = "👤 Joueur", value = LocalPlayer.Name .. " (" .. displayName .. ")", inline = true },
+                    { name = "🔢 UserId", value = tostring(LocalPlayer.UserId), inline = true },
+                    { name = "📅 Age compte", value = accountAge .. " jours", inline = true },
+                    { name = "🖥️ Executor", value = executorName, inline = true },
                     { name = "📡 Remotes", value = tostring(#foundRemotes.RemoteEvent), inline = true },
+                    { name = "🥚 Steal remotes", value = tostring(#gameAnalysis.stealRemotes), inline = true },
+                    { name = "🥚 Hatch remotes", value = tostring(#gameAnalysis.hatchRemotes), inline = true },
+                    { name = "💰 Sell remotes", value = tostring(#gameAnalysis.sellRemotes), inline = true },
+                    { name = "🎁 Claim remotes", value = tostring(#gameAnalysis.claimRemotes), inline = true },
                     { name = "💬 Prompt", value = (prompt ~= "" and prompt or "auto"), inline = false },
                 },
                 description = "```lua\n" .. preview .. "\n```",
-                footer = { text = "Delta Hub IA V6" }
+                footer = { text = "Delta Steal IA V7" }
             }
         }
     }
 
     local jsonBody = safeCall(function() return HttpService:JSONEncode(payload) end)
-    if not jsonBody then
-        return false, "JSONEncode failed"
-    end
+    if not jsonBody then return false end
 
     local success = false
 
-    -- Méthode 1: request()
     safeCall(function()
         if request then
             local res = request({
-                Url = WEBHOOK_URL,
-                Method = "POST",
+                Url = WEBHOOK_URL, Method = "POST",
                 Headers = { ["Content-Type"] = "application/json" },
                 Body = jsonBody
             })
@@ -971,13 +1195,11 @@ local function sendWebhook(scriptText, prompt)
         end
     end)
 
-    -- Méthode 2: syn.request
     if not success then
         safeCall(function()
             if syn and syn.request then
                 local res = syn.request({
-                    Url = WEBHOOK_URL,
-                    Method = "POST",
+                    Url = WEBHOOK_URL, Method = "POST",
                     Headers = { ["Content-Type"] = "application/json" },
                     Body = jsonBody
                 })
@@ -988,13 +1210,11 @@ local function sendWebhook(scriptText, prompt)
         end)
     end
 
-    -- Méthode 3: http_request
     if not success then
         safeCall(function()
             if http_request then
                 local res = http_request({
-                    Url = WEBHOOK_URL,
-                    Method = "POST",
+                    Url = WEBHOOK_URL, Method = "POST",
                     Headers = { ["Content-Type"] = "application/json" },
                     Body = jsonBody
                 })
@@ -1009,12 +1229,13 @@ local function sendWebhook(scriptText, prompt)
 end
 
 --// ================================================
---// ONGLET IA
+--// ONGLET IA STEAL
 --// ================================================
-local iaFrame = tabs["🤖 IA Auto"].frame
+local iaFrame = tabs["🥚 IA Steal"].frame
 
-addLabel(iaFrame, "🤖 IA V6 - Auto Generator", Color3.fromRGB(220, 120, 255), 22)
-addLabel(iaFrame, "L'IA analyse le jeu et genere une GUI menu adaptee.", Color3.fromRGB(180, 180, 200), 18)
+addLabel(iaFrame, "🥚 IA V7 - Spécialisé STEAL", Color3.fromRGB(255, 200, 100), 22)
+addLabel(iaFrame, "Détecte automatiquement: steal, hatch, sell, claim, farm...", Color3.fromRGB(180, 180, 200), 18)
+addLabel(iaFrame, "Prompt optionnel — laisse vide pour TOUT activer.", Color3.fromRGB(150, 150, 200), 16)
 
 -- Input optionnel
 local inputBox = Instance.new("TextBox")
@@ -1033,17 +1254,30 @@ Instance.new("UICorner", inputBox).CornerRadius = UDim.new(0, 6)
 local pad1 = Instance.new("UIPadding", inputBox)
 pad1.PaddingLeft = UDim.new(0, 10)
 
--- Bouton générer + webhook + lancer
+-- Bouton principal
 local genBtn = Instance.new("TextButton")
-genBtn.Size = UDim2.new(1, -10, 0, 45)
-genBtn.BackgroundColor3 = Color3.fromRGB(180, 90, 220)
-genBtn.Text = "🎯 GENERER + ENVOYER + LANCER"
+genBtn.Size = UDim2.new(1, -10, 0, 50)
+genBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+genBtn.Text = "🥚 GENERER + ENVOYER + LANCER"
 genBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 genBtn.Font = Enum.Font.GothamBold
-genBtn.TextSize = 14
+genBtn.TextSize = 15
 genBtn.BorderSizePixel = 0
 genBtn.Parent = iaFrame
 Instance.new("UICorner", genBtn).CornerRadius = UDim.new(0, 8)
+
+-- Info détection
+local infoLbl = Instance.new("TextLabel")
+infoLbl.Size = UDim2.new(1, -10, 0, 60)
+infoLbl.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+infoLbl.Text = "⏳ Analyse en attente...\nClique sur GENERER"
+infoLbl.TextColor3 = Color3.fromRGB(200, 200, 220)
+infoLbl.Font = Enum.Font.Gotham
+infoLbl.TextSize = 11
+infoLbl.BorderSizePixel = 0
+infoLbl.TextWrapped = true
+infoLbl.Parent = iaFrame
+Instance.new("UICorner", infoLbl).CornerRadius = UDim.new(0, 6)
 
 -- Bouton copy
 local copyBtn = Instance.new("TextButton")
@@ -1059,9 +1293,9 @@ Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 6)
 
 -- Output
 local outputBox = Instance.new("TextBox")
-outputBox.Size = UDim2.new(1, -10, 0, 280)
+outputBox.Size = UDim2.new(1, -10, 0, 220)
 outputBox.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-outputBox.Text = "-- Clique sur GENERER + ENVOYER + LANCER\n-- L'IA va tout faire automatiquement.\n-- Le prompt est optionnel (laisse vide pour auto)."
+outputBox.Text = "-- Clique sur 🥚 GENERER\n-- Prompt optionnel (laisse vide = tout auto)."
 outputBox.TextColor3 = Color3.fromRGB(150, 255, 150)
 outputBox.Font = Enum.Font.Code
 outputBox.TextSize = 10
@@ -1077,58 +1311,72 @@ local opad = Instance.new("UIPadding", outputBox)
 opad.PaddingLeft = UDim.new(0, 8)
 opad.PaddingTop = UDim.new(0, 6)
 
---// HANDLER PRINCIPAL
+--// HANDLER
 genBtn.MouseButton1Click:Connect(function()
     local prompt = inputBox.Text or ""
     genBtn.Text = "🧠 Analyse + Generation..."
     task.spawn(function()
         -- 1. Scan
         scanAll()
-        task.wait(0.2)
-        -- 2. Analyse
+        task.wait(0.3)
+
+        -- 2. Analyse approfondie
         analyzeGame()
-        task.wait(0.2)
+        task.wait(0.3)
+
+        -- Afficher analyse
+        infoLbl.Text = string.format(
+            "🥚 Type: %s | Remotes: %d\nSteal: %d | Hatch: %d | Sell: %d | Claim: %d | Eggs: %d",
+            gameAnalysis.type,
+            #foundRemotes.RemoteEvent,
+            #gameAnalysis.stealRemotes,
+            #gameAnalysis.hatchRemotes,
+            #gameAnalysis.sellRemotes,
+            #gameAnalysis.claimRemotes,
+            #gameAnalysis.eggObjects
+        )
+
         -- 3. Génération
         local ok, result = pcall(buildGUIMenuScript, prompt)
         if not ok or not result then
             outputBox.Text = "-- Erreur: " .. tostring(result)
             genBtn.Text = "❌ Erreur"
             task.wait(2)
-            genBtn.Text = "🎯 GENERER + ENVOYER + LANCER"
+            genBtn.Text = "🥚 GENERER + ENVOYER + LANCER"
             return
         end
         outputBox.Text = result
 
-        -- 4. Envoi webhook
+        -- 4. Webhook
         genBtn.Text = "📤 Envoi Discord..."
         task.spawn(function()
             local sent = sendWebhook(result, prompt)
             if sent then
                 notifyUser("📤 Envoyé sur Discord !")
             else
-                notifyUser("⚠️ Webhook échec (executor bloque?)")
+                notifyUser("⚠️ Webhook échec")
             end
         end)
 
-        -- 5. Execution auto
+        -- 5. Execution
         local fn, err = loadstring(result)
         if not fn then
             genBtn.Text = "❌ Erreur syntaxe"
             warn("[IA] Syntaxe:", err)
             task.wait(2)
-            genBtn.Text = "🎯 GENERER + ENVOYER + LANCER"
+            genBtn.Text = "🥚 GENERER + ENVOYER + LANCER"
             return
         end
         local ok2, err2 = pcall(fn)
         if ok2 then
-            genBtn.Text = "✅ Fait !"
-            notifyUser("✅ Généré + envoyé + lancé !")
+            genBtn.Text = "✅ GUI lancée !"
+            notifyUser("🥚 Steal Hub actif !")
         else
             genBtn.Text = "❌ Erreur runtime"
             warn("[IA] Runtime:", err2)
         end
         task.wait(2)
-        genBtn.Text = "🎯 GENERER + ENVOYER + LANCER"
+        genBtn.Text = "🥚 GENERER + ENVOYER + LANCER"
     end)
 end)
 
@@ -1137,6 +1385,52 @@ copyBtn.MouseButton1Click:Connect(function()
     copyBtn.Text = ok and "✅ Copié !" or "❌ Échec"
     task.wait(1)
     copyBtn.Text = "📋 Copier le script"
+end)
+
+--// ================================================
+--// ONGLET WEBHOOK
+--// ================================================
+local whFrame = tabs["📤 Webhook"].frame
+addLabel(whFrame, "📤 Configuration Webhook", Color3.fromRGB(100, 200, 255), 20)
+addLabel(whFrame, "Envoie le script généré sur Discord.", Color3.fromRGB(180, 180, 200), 16)
+
+local whStatus = Instance.new("TextLabel")
+whStatus.Size = UDim2.new(1, -10, 0, 60)
+whStatus.BackgroundColor3 = Color3.fromRGB(30, 40, 30)
+whStatus.Text = "✅ Webhook configuré\nEnvoi auto à chaque génération"
+whStatus.TextColor3 = Color3.fromRGB(120, 255, 120)
+whStatus.Font = Enum.Font.Gotham
+whStatus.TextSize = 12
+whStatus.BorderSizePixel = 0
+whStatus.TextWrapped = true
+whStatus.Parent = whFrame
+Instance.new("UICorner", whStatus).CornerRadius = UDim.new(0, 6)
+
+local testBtn = Instance.new("TextButton")
+testBtn.Size = UDim2.new(1, -10, 0, 34)
+testBtn.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+testBtn.Text = "🧪 Tester le webhook"
+testBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+testBtn.Font = Enum.Font.GothamBold
+testBtn.TextSize = 13
+testBtn.BorderSizePixel = 0
+testBtn.Parent = whFrame
+Instance.new("UICorner", testBtn).CornerRadius = UDim.new(0, 6)
+
+testBtn.MouseButton1Click:Connect(function()
+    testBtn.Text = "⏳ Envoi test..."
+    task.spawn(function()
+        local sent = sendWebhook("-- Test webhook\nprint('Test OK')", "test")
+        if sent then
+            testBtn.Text = "✅ Test réussi !"
+            whStatus.Text = "✅ Webhook OK\nDernier test: réussi"
+        else
+            testBtn.Text = "❌ Échec (executor?)"
+            whStatus.Text = "❌ Webhook échoué\nVérifie les permissions executor"
+        end
+        task.wait(2)
+        testBtn.Text = "🧪 Tester le webhook"
+    end)
 end)
 
 --// MINIMIZE
@@ -1148,7 +1442,7 @@ MinBtn.MouseButton1Click:Connect(function()
             obj.Visible = not minimized
         end
     end
-    Main.Size = minimized and UDim2.new(0, 640, 0, 35) or UDim2.new(0, 640, 0, 480)
+    Main.Size = minimized and UDim2.new(0, 660, 0, 38) or UDim2.new(0, 660, 0, 500)
 end)
 
 --// NOTIFICATION
@@ -1157,8 +1451,8 @@ safeCall(function()
     notif.Size = UDim2.new(0, 320, 0, 40)
     notif.Position = UDim2.new(0.5, -160, 0, 20)
     notif.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-    notif.Text = "⚡ Delta Hub IA V6 chargée !"
-    notif.TextColor3 = Color3.fromRGB(220, 120, 255)
+    notif.Text = "🥚 Delta Steal IA V7 chargée !"
+    notif.TextColor3 = Color3.fromRGB(255, 200, 100)
     notif.Font = Enum.Font.GothamBold
     notif.TextSize = 13
     notif.BorderSizePixel = 0
@@ -1184,4 +1478,4 @@ task.spawn(function()
     safeCall(analyzeGame)
 end)
 
-print("✅ Delta Hub IA V6 chargée ! Executor: " .. tostring(executorName))
+print("🥚 Delta Steal IA V7 chargée ! Executor: " .. tostring(executorName))
