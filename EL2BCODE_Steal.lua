@@ -1,7 +1,6 @@
 --// ═══════════════════════════════════════════════════════════
---// ⚡ DELTA HUB - IA V7 SPÉCIALISÉ STEAL
---// Optimisé: Steal an Egg / Steal a Brainrot / Pet Steal
---// Compatible: Delta / Wave / Solara / Krnl
+--// ⚡ DELTA HUB - IA V8 (Placeholder Adapté au Jeu)
+--// Spécialisé: Steal an Egg / Steal a Brainrot / Simulator
 --// ═══════════════════════════════════════════════════════════
 
 local Players = game:GetService("Players")
@@ -43,7 +42,7 @@ end
 local function notifyUser(msg)
     safeCall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Delta IA V7", Text = tostring(msg), Duration = 3
+            Title = "Delta IA V8", Text = tostring(msg), Duration = 3
         })
     end)
 end
@@ -100,7 +99,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -90, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "🥚 Delta IA V7 • Steal Hub"
+Title.Text = "🥚 Delta IA V8"
 Title.TextColor3 = Color3.fromRGB(255, 200, 100)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
@@ -225,7 +224,7 @@ end
 
 --// HOME
 local homeFrame = tabs["🏠 Home"].frame
-addLabel(homeFrame, "🥚 IA V7 - Spécialisé STEAL", Color3.fromRGB(255, 200, 100), 22)
+addLabel(homeFrame, "🥚 IA V8 - Adaptée au Jeu", Color3.fromRGB(255, 200, 100), 22)
 addLabel(homeFrame, "✅ GUI chargée !", Color3.fromRGB(120, 255, 120), 20)
 addLabel(homeFrame, "📌 Jeu ID: " .. tostring(game.PlaceId), Color3.fromRGB(180, 180, 255), 18)
 addLabel(homeFrame, "👤 Joueur: " .. LocalPlayer.Name, Color3.fromRGB(180, 180, 255), 18)
@@ -309,9 +308,6 @@ local function scanAll()
     safeCall(scan, ReplicatedFirst)
     safeCall(scan, Workspace)
     safeCall(scan, ServerScriptService)
-
-    print(string.format("📊 %d RemoteEvents | %d RemoteFunctions",
-        #foundRemotes.RemoteEvent, #foundRemotes.RemoteFunction))
 end
 
 scanBtn.MouseButton1Click:Connect(function()
@@ -325,7 +321,7 @@ scanBtn.MouseButton1Click:Connect(function()
 end)
 
 --// ================================================
---// ANALYSE JEU (SPÉCIALISÉE STEAL)
+--// ANALYSE JEU
 --// ================================================
 local gameAnalysis = {
     name = "Unknown",
@@ -339,7 +335,6 @@ local gameAnalysis = {
     claimRemotes = {},
     allMoneyRemotes = {},
     eggObjects = {},
-    leaderstats = {},
     currencies = {}
 }
 
@@ -354,7 +349,6 @@ local function analyzeGame()
     gameAnalysis.claimRemotes = {}
     gameAnalysis.allMoneyRemotes = {}
     gameAnalysis.eggObjects = {}
-    gameAnalysis.leaderstats = {}
     gameAnalysis.currencies = {}
 
     safeCall(function()
@@ -364,12 +358,10 @@ local function analyzeGame()
 
     gameAnalysis.playerCount = #Players:GetPlayers()
 
-    -- Leaderstats
     safeCall(function()
         local ls = LocalPlayer:FindFirstChild("leaderstats")
         if ls then
             for _, stat in ipairs(ls:GetChildren()) do
-                table.insert(gameAnalysis.leaderstats, stat.Name)
                 table.insert(gameAnalysis.currencies, stat.Name)
             end
         end
@@ -389,19 +381,17 @@ local function analyzeGame()
         gameAnalysis.type = "General"
     end
 
-    -- Catégorisation ULTRA poussée des remotes
+    -- Catégorisation remotes
     for _, remote in ipairs(foundRemotes.RemoteEvent) do
         local low = string.lower(remote.Name)
         local path = remote:GetFullName()
 
-        -- STEAL
         if string.find(low, "steal", 1, true)
             or string.find(low, "pickpocket", 1, true)
             or string.find(low, "grab", 1, true) then
             table.insert(gameAnalysis.stealRemotes, path)
         end
 
-        -- HATCH / EGG
         if string.find(low, "hatch", 1, true)
             or string.find(low, "egg", 1, true)
             or string.find(low, "open", 1, true)
@@ -409,19 +399,14 @@ local function analyzeGame()
             table.insert(gameAnalysis.hatchRemotes, path)
         end
 
-        -- SELL
-        if string.find(low, "sell", 1, true)
-            or string.find(low, "convert", 1, true) then
+        if string.find(low, "sell", 1, true) or string.find(low, "convert", 1, true) then
             table.insert(gameAnalysis.sellRemotes, path)
         end
 
-        -- BUY
-        if string.find(low, "buy", 1, true)
-            or string.find(low, "purchase", 1, true) then
+        if string.find(low, "buy", 1, true) or string.find(low, "purchase", 1, true) then
             table.insert(gameAnalysis.buyRemotes, path)
         end
 
-        -- CLAIM / REWARD
         if string.find(low, "claim", 1, true)
             or string.find(low, "reward", 1, true)
             or string.find(low, "daily", 1, true)
@@ -430,14 +415,12 @@ local function analyzeGame()
             table.insert(gameAnalysis.claimRemotes, path)
         end
 
-        -- MONEY / CURRENCY
         if string.find(low, "money", 1, true)
             or string.find(low, "cash", 1, true)
             or string.find(low, "coin", 1, true) then
             table.insert(gameAnalysis.allMoneyRemotes, path)
         end
 
-        -- Catégories générales
         local cats = {
             farm = {"farm", "collect", "gather", "auto"},
             combat = {"damage", "hit", "attack", "kill"},
@@ -445,7 +428,6 @@ local function analyzeGame()
             reward = {"claim", "reward", "daily"},
             currency = {"coin", "cash", "money", "gem"},
         }
-
         for cat, kws in pairs(cats) do
             for _, kw in ipairs(kws) do
                 if string.find(low, kw, 1, true) then
@@ -459,13 +441,12 @@ local function analyzeGame()
         end
     end
 
-    -- Détecter les œufs dans workspace
+    -- Détecter les œufs dans le workspace
     safeCall(function()
         for _, obj in ipairs(Workspace:GetDescendants()) do
             if obj.Name then
                 local lowObj = string.lower(obj.Name)
-                if string.find(lowObj, "egg", 1, true)
-                    or string.find(lowObj, "pet", 1, true) then
+                if string.find(lowObj, "egg", 1, true) or string.find(lowObj, "pet", 1, true) then
                     if obj:IsA("BasePart") or obj:IsA("Model") then
                         table.insert(gameAnalysis.eggObjects, obj)
                     end
@@ -473,24 +454,6 @@ local function analyzeGame()
             end
         end
     end)
-
-    print("═══════════════════════════════════════")
-    print("🧠 ANALYSE: " .. gameAnalysis.name)
-    print("📁 Type: " .. gameAnalysis.type)
-    print("🥚 Steal remotes: " .. #gameAnalysis.stealRemotes)
-    print("🥚 Hatch remotes: " .. #gameAnalysis.hatchRemotes)
-    print("💰 Sell remotes: " .. #gameAnalysis.sellRemotes)
-    print("🛒 Buy remotes: " .. #gameAnalysis.buyRemotes)
-    print("🎁 Claim remotes: " .. #gameAnalysis.claimRemotes)
-    print("🎨 Egg objects: " .. #gameAnalysis.eggObjects)
-    print("💵 Currencies: " .. table.concat(gameAnalysis.currencies, ", "))
-    print("═══════════════════════════════════════")
-end
-
-local function getRemoteFromCategory(cat)
-    local list = gameAnalysis.remoteCategories[cat]
-    if not list or #list == 0 then return nil end
-    return list[1]
 end
 
 local function getFirstRemote(list)
@@ -513,7 +476,7 @@ end)()
 end
 
 --// ================================================
---// GÉNÉRATEUR SPÉCIALISÉ STEAL
+--// GÉNÉRATEUR
 --// ================================================
 local function buildGUIMenuScript(prompt)
     local A = gameAnalysis
@@ -530,28 +493,24 @@ local function buildGUIMenuScript(prompt)
         table.insert(featureButtons, { name = name, color = color, code = code })
     end
 
-    -- Préférences
     local wantsSteal = isEmpty or string.find(p, "steal", 1, true) or A.type == "Steal"
     local wantsFly = isEmpty or string.find(p, "fly", 1, true) or string.find(p, "vol", 1, true)
-    local wantsSpeed = isEmpty or string.find(p, "speed", 1, true) or string.find(p, "vitesse", 1, true)
-    local wantsFarm = isEmpty or string.find(p, "farm", 1, true) or string.find(p, "auto", 1, true)
-    local wantsESP = isEmpty or string.find(p, "esp", 1, true) or string.find(p, "wall", 1, true)
+    local wantsSpeed = isEmpty or string.find(p, "speed", 1, true)
+    local wantsFarm = isEmpty or string.find(p, "farm", 1, true)
+    local wantsESP = isEmpty or string.find(p, "esp", 1, true)
     local wantsHatch = isEmpty or string.find(p, "hatch", 1, true) or string.find(p, "egg", 1, true)
-    local wantsSell = isEmpty or string.find(p, "sell", 1, true) or string.find(p, "vendre", 1, true)
+    local wantsSell = isEmpty or string.find(p, "sell", 1, true)
     local wantsNoclip = isEmpty or string.find(p, "noclip", 1, true)
     local wantsClick = isEmpty or string.find(p, "click", 1, true)
     local wantsTP = isEmpty or string.find(p, "tp", 1, true) or string.find(p, "teleport", 1, true)
-    local wantsBring = isEmpty or string.find(p, "bring", 1, true)
 
-    -- 🥚 AUTO STEAL (le plus important)
+    -- 🥚 AUTO STEAL
     local stealRemote = getFirstRemote(A.stealRemotes)
     if wantsSteal and (stealRemote or A.type == "Steal") then
         local loader = stealRemote and buildRemoteLoader(stealRemote) or "local remote = nil\n"
         addButton("🥚 AUTO STEAL", "Color3.fromRGB(255, 140, 0)", loader .. [[
--- Auto Steal: cherche les joueurs avec des eggs et vole
 local function findTarget()
-    local bestTarget = nil
-    local bestDist = math.huge
+    local bestTarget, bestDist = nil, math.huge
     local myChar = LP.Character
     if not myChar then return nil end
     local myHrp = myChar:FindFirstChild("HumanoidRootPart")
@@ -560,7 +519,6 @@ local function findTarget()
         if plr ~= LP and plr.Character then
             local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
             if hrp then
-                -- Vérifier si le joueur porte un egg/pet
                 local hasEgg = false
                 for _, obj in ipairs(plr.Character:GetChildren()) do
                     local low = string.lower(obj.Name)
@@ -573,8 +531,7 @@ local function findTarget()
                 end
                 local dist = (hrp.Position - myHrp.Position).Magnitude
                 if hasEgg and dist < bestDist then
-                    bestTarget = plr
-                    bestDist = dist
+                    bestTarget, bestDist = plr, dist
                 end
             end
         end
@@ -598,7 +555,7 @@ notify("AUTO STEAL active !")
 ]])
     end
 
-    -- 🎯 AUTO TARGET (TP vers la cible la plus proche)
+    -- 🎯 TP vers cible
     if wantsSteal and A.type == "Steal" then
         addButton("🎯 TP vers Cible", "Color3.fromRGB(255, 200, 0)", [[
 _G.IA_AutoTP = not _G.IA_AutoTP
@@ -693,7 +650,7 @@ notify("Auto Claim active")
 ]])
     end
 
-    -- 🌾 AUTO FARM (money)
+    -- 🌾 AUTO FARM
     local farmRemote = getFirstRemote(A.allMoneyRemotes)
     if wantsFarm and farmRemote then
         addButton("🌾 AUTO FARM", "Color3.fromRGB(100, 220, 140)",
@@ -708,7 +665,7 @@ notify("Auto Farm active")
 ]])
     end
 
-    -- 👁️ ESP Eggs / Joueurs
+    -- 👁️ ESP
     if wantsESP then
         addButton("👁️ ESP Eggs & Joueurs", "Color3.fromRGB(180, 80, 220)", [[
 if _G.IA_ESP then
@@ -722,7 +679,6 @@ else
     espFolder.Name = "IA_ESP_Menu"
     task.spawn(function()
         while _G.IA_ESP do
-            -- ESP joueurs
             for _, plr in ipairs(Players:GetPlayers()) do
                 if plr ~= LP and plr.Character then
                     local head = plr.Character:FindFirstChild("Head")
@@ -739,7 +695,6 @@ else
                         lbl.TextColor3 = Color3.new(1, 0.4, 0.4)
                         lbl.Font = Enum.Font.GothamBold
                         lbl.TextSize = 12
-                        lbl.Text = plr.Name
                     end
                     local bb = espFolder:FindFirstChild("P_" .. plr.Name)
                     if bb and head then
@@ -751,11 +706,11 @@ else
                     end
                 end
             end
-            -- ESP eggs dans workspace
             for _, obj in ipairs(workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and not espFolder:FindFirstChild("E_" .. obj:GetFullName()) then
+                if obj:IsA("BasePart") then
                     local low = string.lower(obj.Name)
-                    if string.find(low, "egg", 1, true) or string.find(low, "pet", 1, true) then
+                    local hasEsp = espFolder:FindFirstChild("E_" .. obj:GetFullName())
+                    if not hasEsp and (string.find(low, "egg", 1, true) or string.find(low, "pet", 1, true)) then
                         local bb = Instance.new("BillboardGui", espFolder)
                         bb.Name = "E_" .. obj:GetFullName()
                         bb.Adornee = obj
@@ -782,7 +737,7 @@ end
 
     -- 🕊️ FLY
     if wantsFly then
-        addButton("🕊️ FLY (F)", "Color3.fromRGB(120, 200, 255)", [[
+        addButton("🕊️ FLY", "Color3.fromRGB(120, 200, 255)", [[
 _G.IA_Fly = not _G.IA_Fly
 if _G.IA_Fly then
     local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
@@ -836,7 +791,7 @@ end
 
     -- 👻 NOCLIP
     if wantsNoclip then
-        addButton("👻 NOCLIP (N)", "Color3.fromRGB(150, 150, 200)", [[
+        addButton("👻 NOCLIP", "Color3.fromRGB(150, 150, 200)", [[
 _G.IA_Noclip = not _G.IA_Noclip
 if LP.Character then
     for _, d in ipairs(LP.Character:GetDescendants()) do
@@ -849,7 +804,7 @@ notify("Noclip: " .. tostring(_G.IA_Noclip))
 
     -- 🖱️ AUTO CLICK
     if wantsClick then
-        addButton("🖱️ AUTO CLICK (G)", "Color3.fromRGB(200, 200, 80)", [[
+        addButton("🖱️ AUTO CLICK", "Color3.fromRGB(200, 200, 80)", [[
 _G.IA_AutoClick = not _G.IA_AutoClick
 notify("Auto Click: " .. tostring(_G.IA_AutoClick))
 if _G.IA_AutoClick then
@@ -889,32 +844,6 @@ end
 ]])
     end
 
-    -- 🎯 BRING PLAYERS
-    if wantsBring and A.type == "Steal" then
-        addButton("🎯 BRING TOUT LE MONDE", "Color3.fromRGB(255, 80, 80)", [[
-_G.IA_Bring = not _G.IA_Bring
-task.spawn(function()
-    while _G.IA_Bring do
-        pcall(function()
-            local myHrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-            if myHrp then
-                for _, plr in ipairs(Players:GetPlayers()) do
-                    if plr ~= LP and plr.Character then
-                        local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-                        if hrp and (hrp.Position - myHrp.Position).Magnitude > 5 then
-                            -- Pas de vrai "bring" client-side, mais TP auto
-                        end
-                    end
-                end
-            end
-        end)
-        task.wait(0.5)
-    end
-end)
-notify("Bring active: " .. tostring(_G.IA_Bring))
-]])
-    end
-
     -- 🌌 LOW GRAVITY
     addButton("🌌 LOW GRAVITY", "Color3.fromRGB(150, 100, 220)", [[
 workspace.Gravity = workspace.Gravity == 196.2 and 50 or 196.2
@@ -935,9 +864,7 @@ else
     Lighting.Brightness = 3
     Lighting.ClockTime = 12
     for _, v in ipairs(Lighting:GetChildren()) do
-        if v:IsA("Atmosphere") or v:IsA("BlurEffect") then
-            v:Destroy()
-        end
+        if v:IsA("Atmosphere") or v:IsA("BlurEffect") then v:Destroy() end
     end
     notify("Fullbright ON")
 end
@@ -962,17 +889,15 @@ end)
 ]]
     end
 
-    -- Compteur de features
     local featureCount = #featureButtons
 
     --// Script complet
     local script = string.format([[
 --// ═══════════════════════════════════════════════════════════
---// 🥚 GUI STEAL AUTO-GENEREE par IA V7
+--// 🥚 GUI AUTO-GENEREE par IA V8
 --// Jeu   : %s
 --// ID    : %d
 --// Type  : %s
---// Joueurs: %d
 --// Features: %d
 --// ═══════════════════════════════════════════════════════════
 
@@ -1059,7 +984,7 @@ local info = Instance.new("TextLabel")
 info.Size = UDim2.new(1, -20, 0, 22)
 info.Position = UDim2.new(0, 10, 0, 56)
 info.BackgroundTransparency = 1
-info.Text = "Type: %s  -  %d joueurs  -  %d features"
+info.Text = "Type: %s  -  %d features"
 info.TextColor3 = Color3.fromRGB(180, 180, 200)
 info.Font = Enum.Font.Gotham
 info.TextSize = 11
@@ -1117,7 +1042,6 @@ toggle.MouseButton1Click:Connect(function()
     menu.Visible = menuOpen
 end)
 
---// Anti-AFK
 local vu = game:GetService("VirtualUser")
 LP.Idled:Connect(function()
     pcall(function()
@@ -1126,18 +1050,36 @@ LP.Idled:Connect(function()
     end)
 end)
 
---// Boutons générés
 %s
 
 notify("GUI chargee pour " .. %q)
-]], safeName, game.PlaceId, A.type, A.playerCount, featureCount,
-    safeName, A.type, A.playerCount, featureCount, buttonsCode, safeName)
+]], safeName, game.PlaceId, A.type, featureCount,
+    safeName, A.type, featureCount, buttonsCode, safeName)
 
     return script
 end
 
 --// ================================================
---// WEBHOOK DISCORD
+--// FONCTION PLACEHOLDER ADAPTÉ
+--// ================================================
+local function getAdaptivePlaceholder()
+    if gameAnalysis.type == "Steal" then
+        return "Ex: steal, tp, esp, fly speed 100..."
+    elseif gameAnalysis.type == "Simulator" or gameAnalysis.type == "Egg" then
+        return "Ex: hatch, sell, fly, speed 100..."
+    elseif gameAnalysis.type == "FPS" then
+        return "Ex: aimbot, esp, fly, noclip..."
+    elseif gameAnalysis.type == "Obby" then
+        return "Ex: fly, speed 100, noclip..."
+    elseif gameAnalysis.type == "Adopt" then
+        return "Ex: hatch, farm, fly, speed 100..."
+    else
+        return "Ex: fly, speed 100, farm, esp..."
+    end
+end
+
+--// ================================================
+--// WEBHOOK
 --// ================================================
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1559992556094488676/VAbPW2BJkEOK_WotVJA6PM3Fqc0RIQhCw2mbMUYnwk4UL4F12iAJonCHrMltJk8Wmv7c"
 
@@ -1154,7 +1096,7 @@ local function sendWebhook(scriptText, prompt)
         username = "Delta Steal Hub",
         embeds = {
             {
-                title = "🥚 Nouveau script STEAL genere !",
+                title = "🥚 Nouveau script genere !",
                 color = 16753920,
                 fields = {
                     { name = "🎮 Jeu", value = tostring(gameAnalysis.name), inline = true },
@@ -1165,14 +1107,14 @@ local function sendWebhook(scriptText, prompt)
                     { name = "📅 Age compte", value = accountAge .. " jours", inline = true },
                     { name = "🖥️ Executor", value = executorName, inline = true },
                     { name = "📡 Remotes", value = tostring(#foundRemotes.RemoteEvent), inline = true },
-                    { name = "🥚 Steal remotes", value = tostring(#gameAnalysis.stealRemotes), inline = true },
-                    { name = "🥚 Hatch remotes", value = tostring(#gameAnalysis.hatchRemotes), inline = true },
-                    { name = "💰 Sell remotes", value = tostring(#gameAnalysis.sellRemotes), inline = true },
-                    { name = "🎁 Claim remotes", value = tostring(#gameAnalysis.claimRemotes), inline = true },
+                    { name = "🥚 Steal", value = tostring(#gameAnalysis.stealRemotes), inline = true },
+                    { name = "🥚 Hatch", value = tostring(#gameAnalysis.hatchRemotes), inline = true },
+                    { name = "💰 Sell", value = tostring(#gameAnalysis.sellRemotes), inline = true },
+                    { name = "🎁 Claim", value = tostring(#gameAnalysis.claimRemotes), inline = true },
                     { name = "💬 Prompt", value = (prompt ~= "" and prompt or "auto"), inline = false },
                 },
                 description = "```lua\n" .. preview .. "\n```",
-                footer = { text = "Delta Steal IA V7" }
+                footer = { text = "Delta Steal IA V8" }
             }
         }
     }
@@ -1229,20 +1171,20 @@ local function sendWebhook(scriptText, prompt)
 end
 
 --// ================================================
---// ONGLET IA STEAL
+--// ONGLET IA
 --// ================================================
 local iaFrame = tabs["🥚 IA Steal"].frame
 
-addLabel(iaFrame, "🥚 IA V7 - Spécialisé STEAL", Color3.fromRGB(255, 200, 100), 22)
-addLabel(iaFrame, "Détecte automatiquement: steal, hatch, sell, claim, farm...", Color3.fromRGB(180, 180, 200), 18)
-addLabel(iaFrame, "Prompt optionnel — laisse vide pour TOUT activer.", Color3.fromRGB(150, 150, 200), 16)
+addLabel(iaFrame, "🥚 IA V8 - Adaptée au Jeu", Color3.fromRGB(255, 200, 100), 22)
+addLabel(iaFrame, "Prompt s'adapte automatiquement au jeu détecté.", Color3.fromRGB(180, 180, 200), 16)
+addLabel(iaFrame, "Laisse vide = active TOUT automatiquement.", Color3.fromRGB(150, 150, 200), 14)
 
--- Input optionnel
+-- Input avec placeholder adaptatif
 local inputBox = Instance.new("TextBox")
-inputBox.Size = UDim2.new(1, -10, 0, 32)
+inputBox.Size = UDim2.new(1, -10, 0, 34)
 inputBox.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
 inputBox.Text = ""
-inputBox.PlaceholderText = "Optionnel : fly, speed 100, farm, aimbot..."
+inputBox.PlaceholderText = "Analyse en cours..."
 inputBox.TextColor3 = Color3.fromRGB(220, 220, 240)
 inputBox.PlaceholderColor3 = Color3.fromRGB(140, 140, 160)
 inputBox.Font = Enum.Font.Gotham
@@ -1266,11 +1208,11 @@ genBtn.BorderSizePixel = 0
 genBtn.Parent = iaFrame
 Instance.new("UICorner", genBtn).CornerRadius = UDim.new(0, 8)
 
--- Info détection
+-- Info
 local infoLbl = Instance.new("TextLabel")
 infoLbl.Size = UDim2.new(1, -10, 0, 60)
 infoLbl.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
-infoLbl.Text = "⏳ Analyse en attente...\nClique sur GENERER"
+infoLbl.Text = "⏳ Analyse au prochain clic..."
 infoLbl.TextColor3 = Color3.fromRGB(200, 200, 220)
 infoLbl.Font = Enum.Font.Gotham
 infoLbl.TextSize = 11
@@ -1279,7 +1221,7 @@ infoLbl.TextWrapped = true
 infoLbl.Parent = iaFrame
 Instance.new("UICorner", infoLbl).CornerRadius = UDim.new(0, 6)
 
--- Bouton copy
+-- Copy
 local copyBtn = Instance.new("TextButton")
 copyBtn.Size = UDim2.new(1, -10, 0, 30)
 copyBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 90)
@@ -1293,9 +1235,9 @@ Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 6)
 
 -- Output
 local outputBox = Instance.new("TextBox")
-outputBox.Size = UDim2.new(1, -10, 0, 220)
+outputBox.Size = UDim2.new(1, -10, 0, 200)
 outputBox.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-outputBox.Text = "-- Clique sur 🥚 GENERER\n-- Prompt optionnel (laisse vide = tout auto)."
+outputBox.Text = "-- Clique sur 🥚 GENERER\n-- Le placeholder s'adapte au jeu."
 outputBox.TextColor3 = Color3.fromRGB(150, 255, 150)
 outputBox.Font = Enum.Font.Code
 outputBox.TextSize = 10
@@ -1316,15 +1258,15 @@ genBtn.MouseButton1Click:Connect(function()
     local prompt = inputBox.Text or ""
     genBtn.Text = "🧠 Analyse + Generation..."
     task.spawn(function()
-        -- 1. Scan
         scanAll()
         task.wait(0.3)
 
-        -- 2. Analyse approfondie
         analyzeGame()
         task.wait(0.3)
 
-        -- Afficher analyse
+        -- Mettre à jour le placeholder selon le jeu
+        inputBox.PlaceholderText = getAdaptivePlaceholder()
+
         infoLbl.Text = string.format(
             "🥚 Type: %s | Remotes: %d\nSteal: %d | Hatch: %d | Sell: %d | Claim: %d | Eggs: %d",
             gameAnalysis.type,
@@ -1336,7 +1278,6 @@ genBtn.MouseButton1Click:Connect(function()
             #gameAnalysis.eggObjects
         )
 
-        -- 3. Génération
         local ok, result = pcall(buildGUIMenuScript, prompt)
         if not ok or not result then
             outputBox.Text = "-- Erreur: " .. tostring(result)
@@ -1347,7 +1288,6 @@ genBtn.MouseButton1Click:Connect(function()
         end
         outputBox.Text = result
 
-        -- 4. Webhook
         genBtn.Text = "📤 Envoi Discord..."
         task.spawn(function()
             local sent = sendWebhook(result, prompt)
@@ -1358,7 +1298,6 @@ genBtn.MouseButton1Click:Connect(function()
             end
         end)
 
-        -- 5. Execution
         local fn, err = loadstring(result)
         if not fn then
             genBtn.Text = "❌ Erreur syntaxe"
@@ -1425,8 +1364,8 @@ testBtn.MouseButton1Click:Connect(function()
             testBtn.Text = "✅ Test réussi !"
             whStatus.Text = "✅ Webhook OK\nDernier test: réussi"
         else
-            testBtn.Text = "❌ Échec (executor?)"
-            whStatus.Text = "❌ Webhook échoué\nVérifie les permissions executor"
+            testBtn.Text = "❌ Échec"
+            whStatus.Text = "❌ Webhook échoué"
         end
         task.wait(2)
         testBtn.Text = "🧪 Tester le webhook"
@@ -1451,7 +1390,7 @@ safeCall(function()
     notif.Size = UDim2.new(0, 320, 0, 40)
     notif.Position = UDim2.new(0.5, -160, 0, 20)
     notif.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-    notif.Text = "🥚 Delta Steal IA V7 chargée !"
+    notif.Text = "🥚 Delta IA V8 chargée !"
     notif.TextColor3 = Color3.fromRGB(255, 200, 100)
     notif.Font = Enum.Font.GothamBold
     notif.TextSize = 13
@@ -1471,11 +1410,14 @@ safeCall(function()
     end)
 end)
 
---// AUTO-INIT
+--// AUTO-INIT avec placeholder adaptatif
 task.spawn(function()
     task.wait(0.5)
     safeCall(scanAll)
     safeCall(analyzeGame)
+    task.wait(0.2)
+    -- Mettre à jour le placeholder selon le jeu détecté
+    inputBox.PlaceholderText = getAdaptivePlaceholder()
 end)
 
-print("🥚 Delta Steal IA V7 chargée ! Executor: " .. tostring(executorName))
+print("🥚 Delta IA V8 chargée ! Executor: " .. tostring(executorName))
